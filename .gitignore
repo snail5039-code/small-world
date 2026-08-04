@@ -1,0 +1,44 @@
+# Unity project generated data (Unity project is nested under SmallWorld)
+/SmallWorld/[Ll]ibrary/
+/SmallWorld/[Tt]emp/
+/SmallWorld/[Oo]bj/
+/SmallWorld/[Bb]uild/
+/SmallWorld/[Bb]uilds/
+/SmallWorld/[Ll]ogs/
+/SmallWorld/[Uu]ser[Ss]ettings/
+/SmallWorld/[Mm]emoryCaptures/
+/SmallWorld/[Rr]ecordings/
+
+# IDE and generated solution files
+/SmallWorld/.vs/
+/SmallWorld/.vscode/
+/SmallWorld/*.csproj
+/SmallWorld/*.sln
+/SmallWorld/*.slnx
+/SmallWorld/*.user
+/SmallWorld/*.pidb
+/SmallWorld/*.booproj
+/SmallWorld/*.svd
+/SmallWorld/*.pdb
+/SmallWorld/*.mdb
+/SmallWorld/*.opendb
+/SmallWorld/*.VC.db
+
+# Unity-generated crash and build artifacts
+/SmallWorld/sysinfo.txt
+/SmallWorld/crashlytics-build.properties
+/SmallWorld/[Aa]ssets/AssetStoreTools*
+/SmallWorld/[Aa]ssets/StreamingAssets/aa.meta
+/SmallWorld/[Aa]ssets/StreamingAssets/aa/*
+
+# Local setup remnants and sensitive Unity Hub account data
+/.unity-template-stage/
+/SmallWorld-incomplete-*/
+/unityhub-auth-backup/
+/unity-create.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
