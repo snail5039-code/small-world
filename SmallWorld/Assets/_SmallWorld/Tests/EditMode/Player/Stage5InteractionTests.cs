@@ -48,6 +48,28 @@ namespace SmallWorld.Player.Tests
         }
 
         [Test]
+        public void Pickup_RaisesCompletionBeforeDisabledColliderCanDropDetection()
+        {
+            var gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var pickup = gameObject.AddComponent<PickupInteractable>();
+            pickup.ConfigurePickup("줍기", "test.atomic", "획득");
+            int completed = 0;
+            pickup.InteractionCompleted += _ => completed++;
+
+            try
+            {
+                Assert.That(pickup.TryInteract(new InteractionContext(null, null)), Is.True);
+                Assert.That(gameObject.GetComponent<Collider>().enabled, Is.False);
+                Assert.That(completed, Is.EqualTo(1),
+                    "Completion must be delivered atomically even when pickup disables its collider.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [Test]
         public void Detector_ExecutesOnlyInsideTwoMetres()
         {
             var detectorObject = new GameObject("Detector");

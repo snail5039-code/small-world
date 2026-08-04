@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace SmallWorld.Player
@@ -16,6 +17,7 @@ namespace SmallWorld.Player
         public virtual bool CanInteract => isActiveAndEnabled && !busy;
         public bool IsBusy => busy;
         public int InteractionCount { get; private set; }
+        public event Action<InteractableBase> InteractionCompleted;
 
         public void Configure(string interactionPrompt, params Renderer[] renderers)
         {
@@ -44,6 +46,7 @@ namespace SmallWorld.Player
         protected void CompleteInteraction()
         {
             busy = false;
+            InteractionCompleted?.Invoke(this);
         }
 
         protected void SetPrompt(string value)

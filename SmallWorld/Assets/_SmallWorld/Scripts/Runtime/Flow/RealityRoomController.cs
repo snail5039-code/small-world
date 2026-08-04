@@ -1,7 +1,9 @@
 ﻿using SmallWorld.Core;
 using SmallWorld.Player;
+using SmallWorld.Inventory.Stage8;
 using SmallWorld.UI;
 using SmallWorld.UI.Stage7;
+using SmallWorld.UI.Stage8;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -16,9 +18,9 @@ namespace SmallWorld.Flow
         [SerializeField] private FirstPersonPlayerController player;
         [SerializeField] private PlayerInteractionDetector interactionDetector;
         [SerializeField] private Stage7DialogueView dialogueView;
+        [SerializeField] private Stage8RecordView recordView;
 
-        private InteractableBase observedInteractable;
-        private int observedInteractionCount;
+        private InteractableBase[] trackedInteractables = System.Array.Empty<InteractableBase>();
 
         public void ConfigureStage6(Stage6UIController controller, InspectionView inspection,
             NotificationQueueView notificationView, Stage6LoadingView loading,
@@ -37,15 +39,25 @@ namespace SmallWorld.Flow
             dialogueView = dialogue;
         }
 
+        public void ConfigureStage8(Stage8RecordView records)
+        {
+            if (recordView != null) recordView.NewRecordAdded -= OnNewRecordAdded;
+            recordView = records;
+            if (recordView != null) recordView.NewRecordAdded += OnNewRecordAdded;
+        }
+
         private void Awake()
         {
             if (dialogueView == null) dialogueView = FindFirstObjectByType<Stage7DialogueView>();
+            if (recordView == null) recordView = FindFirstObjectByType<Stage8RecordView>();
+            if (recordView != null) recordView.NewRecordAdded += OnNewRecordAdded;
             if (stage6UI == null) return;
             stage6UI.ResumeRequested += RestoreGameplay;
             stage6UI.ReturnToTitleRequested += ReturnToTitle;
             stage6UI.QuitRequested += QuitGame;
             stage6UI.StateMachine.Changed += OnUIStateChanged;
             if (inspectionView != null) inspectionView.CloseRequested += CloseInspection;
+            SubscribeInteractions();
             stage6UI.ConfigureInitialState(UIState.Gameplay);
         }
 
@@ -59,12 +71,18 @@ namespace SmallWorld.Flow
                 stage6UI.StateMachine.Changed -= OnUIStateChanged;
             }
             if (inspectionView != null) inspectionView.CloseRequested -= CloseInspection;
+            if (recordView != null) recordView.NewRecordAdded -= OnNewRecordAdded;
+            UnsubscribeInteractions();
             RestoreRuntimeState();
         }
 
         private async void Update()
         {
-            ObserveInteraction();
+            if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
+            {
+                recordView?.Toggle();
+                return;
+            }
             if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 return;
@@ -83,6 +101,7 @@ namespace SmallWorld.Flow
 
         internal bool HandleEscapePressed()
         {
+            if (recordView != null && recordView.IsOpen) return recordView.Close();
             if (dialogueView != null && dialogueView.HandleEscape()) return true;
             if (stage6UI == null) return false;
 
@@ -93,25 +112,35 @@ namespace SmallWorld.Flow
             return true;
         }
 
-        private void ObserveInteraction()
+        private void OnInteractionCompleted(InteractableBase current)
         {
-            InteractableBase current = interactionDetector != null
-                ? interactionDetector.CurrentInteractable as InteractableBase
-                : null;
-            if (current != observedInteractable)
-            {
-                observedInteractable = current;
-                observedInteractionCount = current != null ? current.InteractionCount : 0;
-                return;
-            }
-            if (current == null || current.InteractionCount == observedInteractionCount) return;
-            observedInteractionCount = current.InteractionCount;
             if (current is InspectableInteractable inspectable)
             {
                 inspectionView?.Show(current.name, inspectable.Description);
                 stage6UI?.ShowInspection();
+                AddDemoRecord(current.name, inspectable.Description);
             }
-            else notifications?.Enqueue("상호작용을 완료했습니다.");
+            else
+            {
+                AddDemoRecord(current.name, string.Empty);
+                notifications?.Enqueue("상호작용을 완료했습니다.");
+            }
+        }
+
+        private void SubscribeInteractions()
+        {
+            UnsubscribeInteractions();
+            trackedInteractables = FindObjectsByType<InteractableBase>(FindObjectsSortMode.None);
+            for (int i = 0; i < trackedInteractables.Length; i++)
+                trackedInteractables[i].InteractionCompleted += OnInteractionCompleted;
+        }
+
+        private void UnsubscribeInteractions()
+        {
+            for (int i = 0; i < trackedInteractables.Length; i++)
+                if (trackedInteractables[i] != null)
+                    trackedInteractables[i].InteractionCompleted -= OnInteractionCompleted;
+            trackedInteractables = System.Array.Empty<InteractableBase>();
         }
 
         private void OnUIStateChanged(UIState previous, UIState current)
@@ -124,6 +153,41 @@ namespace SmallWorld.Flow
         private void CloseInspection()
         {
             stage6UI?.CloseOverlay();
+        }
+
+        private void AddDemoRecord(string objectName, string description)
+        {
+            if (recordView == null) return;
+            InventoryRecord record = null;
+            switch (objectName)
+            {
+                case "Old Telephone":
+                    record = new InventoryRecord("reality.old_phone", RecordKind.KeyItem, "낡은 전화기",
+                        "수화기 너머에서 희미한 숨소리가 들린다.", 10);
+                    break;
+                case "Midnight Clock":
+                    record = new InventoryRecord("memory.midnight", RecordKind.MemoryFragment, "멈춘 자정",
+                        description, 20);
+                    break;
+                case "Empty Frame":
+                    record = new InventoryRecord("photo.empty_frame", RecordKind.Photo, "비어 있는 액자",
+                        description, 30);
+                    break;
+                case "Model House Table":
+                    record = new InventoryRecord("name.small_house", RecordKind.NameFragment, "작은 집",
+                        description, 40);
+                    break;
+                case "Monitor Screen":
+                    record = new InventoryRecord("investigation.monitor", RecordKind.Investigation, "켜진 모니터",
+                        "모니터에는 낯선 게임이 실행 중이다.", 50);
+                    break;
+            }
+            if (record != null) recordView.AddRecord(record);
+        }
+
+        private void OnNewRecordAdded(InventoryRecord record)
+        {
+            notifications?.Enqueue("새 기록: " + record.Title);
         }
 
         private void RestoreGameplay()

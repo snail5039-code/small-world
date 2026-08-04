@@ -34,6 +34,7 @@ namespace SmallWorld.UI.Stage7
         public string CurrentBody => bodyText != null ? bodyText.text : string.Empty;
         public bool IsDialogueActive => session != null && !session.IsComplete;
         public bool IsHistoryVisible => IsVisible(historyGroup);
+        public event Action<bool> DialogueActivityChanged;
 
         public void Configure(CanvasGroup dialogue, Text speaker, Text body, Text relationship,
             Button advance, Button skip, Toggle autoToggle, Button history, CanvasGroup historyPanel,
@@ -89,6 +90,7 @@ namespace SmallWorld.UI.Stage7
             SetVisible(dialogueGroup, true);
             SetVisible(historyGroup, false);
             Render(session.Current);
+            DialogueActivityChanged?.Invoke(true);
         }
 
         public void Advance()
@@ -162,6 +164,7 @@ namespace SmallWorld.UI.Stage7
         {
             SetVisible(dialogueGroup, false);
             SetVisible(historyGroup, false);
+            DialogueActivityChanged?.Invoke(false);
             if (CanRestoreGameplay())
             {
                 EnterGameplayInputMode();

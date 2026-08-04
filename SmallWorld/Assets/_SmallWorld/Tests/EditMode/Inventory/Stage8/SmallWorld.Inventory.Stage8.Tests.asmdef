@@ -1,0 +1,15 @@
+{
+  "name": "SmallWorld.Inventory.Stage8.Tests",
+  "rootNamespace": "SmallWorld.Inventory.Stage8.Tests",
+  "references": ["SmallWorld.Inventory.Stage8"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}
