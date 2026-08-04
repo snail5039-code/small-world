@@ -1,0 +1,23 @@
+{
+  "name": "SmallWorld.Services.Tests",
+  "rootNamespace": "SmallWorld.Services.Tests",
+  "references": [
+    "SmallWorld.Data",
+    "SmallWorld.Services"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "noEngineReferences": false
+}
+
