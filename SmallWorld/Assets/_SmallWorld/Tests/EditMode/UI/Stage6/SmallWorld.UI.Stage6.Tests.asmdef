@@ -1,0 +1,15 @@
+{
+  "name": "SmallWorld.UI.Stage6.Tests",
+  "rootNamespace": "SmallWorld.UI.Tests",
+  "references": ["SmallWorld.UI.Stage6", "SmallWorld.Data", "SmallWorld.Services"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}

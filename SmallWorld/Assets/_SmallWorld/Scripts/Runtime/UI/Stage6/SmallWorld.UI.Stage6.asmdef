@@ -1,0 +1,14 @@
+{
+  "name": "SmallWorld.UI.Stage6",
+  "rootNamespace": "SmallWorld.UI",
+  "references": ["Unity.ugui", "SmallWorld.Data", "SmallWorld.Services"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

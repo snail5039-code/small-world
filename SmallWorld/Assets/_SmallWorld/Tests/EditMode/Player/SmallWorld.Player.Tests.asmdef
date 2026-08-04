@@ -1,7 +1,7 @@
 {
   "name": "SmallWorld.Player.Tests",
   "rootNamespace": "SmallWorld.Player.Tests",
-  "references": ["SmallWorld.Player"],
+  "references": ["SmallWorld.Player", "SmallWorld.UI.Stage6", "Unity.ugui"],
   "optionalUnityReferences": ["TestAssemblies"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

@@ -1,4 +1,5 @@
 using SmallWorld.Core;
+using SmallWorld.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,7 @@ namespace SmallWorld.Flow
     {
         [SerializeField] private Button newGameButton;
         [SerializeField] private Button quitButton;
+        [SerializeField] private Stage6UIController stage6UI;
 
         public void Configure(Button newGame, Button quit)
         {
@@ -15,8 +17,22 @@ namespace SmallWorld.Flow
             quitButton = quit;
         }
 
+        public void ConfigureStage6(Stage6UIController controller)
+        {
+            stage6UI = controller;
+        }
+
         private void Awake()
         {
+            if (stage6UI != null)
+            {
+                stage6UI.NewGameRequested += StartNewGame;
+                stage6UI.ContinueRequested += ContinueGame;
+                stage6UI.QuitRequested += QuitGame;
+                stage6UI.ConfigureInitialState(UIState.Title);
+                stage6UI.SetCanContinue(false);
+                return;
+            }
             if (newGameButton != null)
             {
                 newGameButton.onClick.AddListener(StartNewGame);
@@ -30,6 +46,12 @@ namespace SmallWorld.Flow
 
         private void OnDestroy()
         {
+            if (stage6UI != null)
+            {
+                stage6UI.NewGameRequested -= StartNewGame;
+                stage6UI.ContinueRequested -= ContinueGame;
+                stage6UI.QuitRequested -= QuitGame;
+            }
             newGameButton?.onClick.RemoveListener(StartNewGame);
             quitButton?.onClick.RemoveListener(QuitGame);
         }
@@ -43,6 +65,11 @@ namespace SmallWorld.Flow
             }
 
             await SceneTransitionService.Instance.LoadSceneAsync(SceneId.RealityRoom);
+        }
+
+        private void ContinueGame()
+        {
+            // Stage 6 has no save-game service yet. The button remains disabled until one is supplied.
         }
 
         public void QuitGame()
