@@ -1,0 +1,50 @@
+using NUnit.Framework;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+
+namespace SmallWorld.Player.Tests
+{
+    public sealed class Stage4RealityRoomSceneTests
+    {
+        private const string ScenePath = "Assets/_SmallWorld/Scenes/02_RealityRoom.unity";
+
+        [Test]
+        public void RealityRoom_HasCompleteStage4Layout()
+        {
+            EditorSceneManager.OpenScene(ScenePath);
+
+            string[] requiredNames =
+            {
+                "Stage 4 Reality Room", "Floor", "Ceiling", "Door", "Window Glass", "Bed",
+                "Computer Desk", "Monitor Screen", "Wardrobe", "Bookshelf", "Model House Table",
+                "Door Corridor", "Empty Frame", "Old Telephone", "Midnight Clock",
+                "Reality Room Audio Zone", "First Person Player"
+            };
+            foreach (string name in requiredNames)
+                Assert.That(GameObject.Find(name), Is.Not.Null, $"Missing required object: {name}");
+
+            Assert.That(Object.FindObjectsByType<FirstPersonPlayerController>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
+            Assert.That(Object.FindObjectsByType<Camera>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
+            Assert.That(Object.FindObjectsByType<AudioListener>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
+            Assert.That(Object.FindObjectsByType<AudioReverbZone>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
+        }
+
+        [Test]
+        public void RealityRoom_HasCollisionLightingAndMaterials()
+        {
+            EditorSceneManager.OpenScene(ScenePath);
+            GameObject root = GameObject.Find("Stage 4 Reality Room");
+            Assert.That(root, Is.Not.Null);
+
+            Assert.That(root.GetComponentsInChildren<Collider>(true).Length, Is.GreaterThanOrEqualTo(25));
+            Assert.That(root.GetComponentsInChildren<Light>(true).Length, Is.GreaterThanOrEqualTo(3));
+
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                Assert.That(renderer.sharedMaterial, Is.Not.Null, $"Missing material on {renderer.name}");
+                Assert.That(renderer.sharedMaterial.shader, Is.Not.Null, $"Missing shader on {renderer.name}");
+                Assert.That(renderer.sharedMaterial.shader.name, Does.Not.Contain("Hidden/InternalErrorShader"));
+            }
+        }
+    }
+}
