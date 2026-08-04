@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SmallWorld.Player.Tests
 {
@@ -45,6 +46,20 @@ namespace SmallWorld.Player.Tests
                 Assert.That(renderer.sharedMaterial.shader, Is.Not.Null, $"Missing shader on {renderer.name}");
                 Assert.That(renderer.sharedMaterial.shader.name, Does.Not.Contain("Hidden/InternalErrorShader"));
             }
+        }
+
+        [Test]
+        public void RealityRoom_HasStage5InteractionConnections()
+        {
+            EditorSceneManager.OpenScene(ScenePath);
+
+            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(6));
+            InteractionPromptView[] views = Object.FindObjectsByType<InteractionPromptView>(FindObjectsSortMode.None);
+            Assert.That(views, Has.Length.EqualTo(1));
+            Assert.That(GameObject.Find("Door Hinge"), Is.Not.Null);
+            Text[] labels = views[0].GetComponentsInChildren<Text>(true);
+            Assert.That(labels, Has.Exactly(1).Matches<Text>(text => text.name == "Interaction Prompt"));
+            Assert.That(labels, Has.Exactly(1).Matches<Text>(text => text.name == "Interaction Feedback"));
         }
     }
 }

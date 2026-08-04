@@ -27,6 +27,7 @@ namespace SmallWorld.Player
         private InputAction lookAction;
         private InputAction sprintAction;
         private InputAction jumpAction;
+        private InputAction interactAction;
         private float verticalVelocity;
         private float pitch;
         private float bobTime;
@@ -80,6 +81,7 @@ namespace SmallWorld.Player
             lookAction = null;
             sprintAction = null;
             jumpAction = null;
+            interactAction = null;
             UnlockCursor();
         }
 
@@ -93,6 +95,7 @@ namespace SmallWorld.Player
 
             UpdateLook();
             UpdateMovement();
+            if (interactAction.WasPressedThisFrame()) interactionDetector?.TryInteract();
         }
 
         private bool CacheInputActions()
@@ -108,14 +111,17 @@ namespace SmallWorld.Player
             lookAction = playerMap?.FindAction("Look", false);
             sprintAction = playerMap?.FindAction("Sprint", false);
             jumpAction = playerMap?.FindAction("Jump", false);
-            if (playerMap != null && moveAction != null && lookAction != null && sprintAction != null && jumpAction != null) return true;
+            interactAction = playerMap?.FindAction("Interact", false);
+            if (playerMap != null && moveAction != null && lookAction != null && sprintAction != null &&
+                jumpAction != null && interactAction != null) return true;
 
-            Debug.LogError("[SmallWorld] Player input map requires Move, Look, Sprint, and Jump actions.", this);
+            Debug.LogError("[SmallWorld] Player input map requires Move, Look, Sprint, Jump, and Interact actions.", this);
             playerMap = null;
             moveAction = null;
             lookAction = null;
             sprintAction = null;
             jumpAction = null;
+            interactAction = null;
             return false;
         }
 

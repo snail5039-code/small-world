@@ -679,6 +679,58 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 151284322}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &151479298
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 151479299}
+  - component: {fileID: 151479300}
+  m_Layer: 0
+  m_Name: Interaction UI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &151479299
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 151479298}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1067834336}
+  - {fileID: 430485267}
+  m_Father: {fileID: 1872851072}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &151479300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 151479298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad016057d04072b49a7761f8c7bd0daa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SmallWorld.Player::SmallWorld.Player.InteractionPromptView
+  promptText: {fileID: 1067834337}
+  feedbackText: {fileID: 430485268}
 --- !u!1 &159207385
 GameObject:
   m_ObjectHideFlags: 0
@@ -943,12 +995,12 @@ Transform:
   - {fileID: 867639438}
   - {fileID: 85129060}
   - {fileID: 2108240733}
-  - {fileID: 571135365}
   - {fileID: 708023321}
   - {fileID: 1686345731}
   - {fileID: 1053570584}
   - {fileID: 1826397632}
   - {fileID: 546164325}
+  - {fileID: 1202187564}
   m_Father: {fileID: 1894347985}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &231870164
@@ -1778,6 +1830,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 370503210}
+  - component: {fileID: 370503211}
   m_Layer: 0
   m_Name: Old Telephone
   m_TagString: Untagged
@@ -1803,6 +1856,27 @@ Transform:
   - {fileID: 1157424760}
   m_Father: {fileID: 1658418116}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &370503211
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370503209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38d20c30ef942a14dbe516155c239b8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SmallWorld.Player::SmallWorld.Player.PickupInteractable
+  prompt: "\uC804\uD654\uAE30 \uC90D\uAE30"
+  highlightRenderers:
+  - {fileID: 470829844}
+  - {fileID: 1432234363}
+  - {fileID: 1157424761}
+  highlightColor: {r: 0.25, g: 0.9, b: 0.85, a: 1}
+  itemId: reality.old_phone
+  pickupMessage: "\uB0A1\uC740 \uC804\uD654\uAE30\uB97C \uC8FC\uC6E0\uB2E4. \uC218\uD654\uAE30
+    \uB108\uBA38\uC5D0\uC11C \uC228\uC18C\uB9AC\uAC00 \uB4E4\uB9B0\uB2E4."
 --- !u!1 &382086835
 GameObject:
   m_ObjectHideFlags: 0
@@ -2110,6 +2184,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 424458442}
+  - component: {fileID: 424458443}
   m_Layer: 0
   m_Name: Empty Frame
   m_TagString: Untagged
@@ -2137,6 +2212,109 @@ Transform:
   - {fileID: 897187267}
   m_Father: {fileID: 1658418116}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &424458443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 424458441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0c8724a567be5d47982734142df35db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SmallWorld.Player::SmallWorld.Player.InspectableInteractable
+  prompt: "\uC561\uC790 \uC870\uC0AC"
+  highlightRenderers:
+  - {fileID: 1210757520}
+  - {fileID: 851955195}
+  - {fileID: 253664791}
+  - {fileID: 289939447}
+  - {fileID: 897187268}
+  highlightColor: {r: 0.25, g: 0.9, b: 0.85, a: 1}
+  description: "\uC0AC\uC9C4\uC740 \uC5C6\uB2E4. \uC720\uB9AC\uC5D0\uB294 \uBC29\uB9CC
+    \uD76C\uBBF8\uD558\uAC8C \uBE44\uCE5C\uB2E4."
+  rotateTarget: {fileID: 0}
+  rotationStep: 0
+--- !u!1 &430485266
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 430485267}
+  - component: {fileID: 430485269}
+  - component: {fileID: 430485268}
+  m_Layer: 0
+  m_Name: Interaction Feedback
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &430485267
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 430485266}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 151479299}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.72}
+  m_AnchorMax: {x: 0.5, y: 0.72}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 820, y: 120}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &430485268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 430485266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 27
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 4
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 1
+    m_LineSpacing: 1
+  m_Text: 
+--- !u!222 &430485269
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 430485266}
+  m_CullTransparentMesh: 1
 --- !u!1 &444320364
 GameObject:
   m_ObjectHideFlags: 0
@@ -2746,11 +2924,11 @@ Transform:
   m_GameObject: {fileID: 571135364}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1, y: 1.1, z: -4.92}
+  m_LocalPosition: {x: 0.45000005, y: 1.1, z: 0}
   m_LocalScale: {x: 0.9, y: 2.2, z: 0.12}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 202978441}
+  m_Father: {fileID: 1202187564}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &571135366
 MeshRenderer:
@@ -3063,6 +3241,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 649099687}
+  - component: {fileID: 649099688}
   m_Layer: 0
   m_Name: Model House Table
   m_TagString: Untagged
@@ -3089,6 +3268,29 @@ Transform:
   - {fileID: 1853735525}
   m_Father: {fileID: 1133688244}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &649099688
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 649099686}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0c8724a567be5d47982734142df35db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SmallWorld.Player::SmallWorld.Player.InspectableInteractable
+  prompt: "\uBAA8\uD615 \uC9D1 \uC870\uC0AC"
+  highlightRenderers:
+  - {fileID: 652145149}
+  - {fileID: 263249063}
+  - {fileID: 1942403302}
+  - {fileID: 1853735526}
+  highlightColor: {r: 0.25, g: 0.9, b: 0.85, a: 1}
+  description: "\uC791\uC740 \uC9D1\uC758 \uAD6C\uC870\uAC00 \uC774 \uBC29\uACFC
+    \uBB18\uD558\uAC8C \uB2EE\uC558\uB2E4."
+  rotateTarget: {fileID: 649099687}
+  rotationStep: 18
 --- !u!1 &652145147
 GameObject:
   m_ObjectHideFlags: 0
@@ -3698,6 +3900,7 @@ GameObject:
   - component: {fileID: 794627931}
   - component: {fileID: 794627930}
   - component: {fileID: 794627929}
+  - component: {fileID: 794627932}
   m_Layer: 0
   m_Name: Monitor Screen
   m_TagString: Untagged
@@ -3798,6 +4001,26 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 794627927}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &794627932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794627927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c356c55bbaa09842bda8bb909a18078, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SmallWorld.Player::SmallWorld.Player.ToggleUseInteractable
+  prompt: "\uB044\uAE30"
+  highlightRenderers:
+  - {fileID: 794627929}
+  highlightColor: {r: 0.25, g: 0.9, b: 0.85, a: 1}
+  controlledLight: {fileID: 1743216477}
+  enabledMessage: "\uD654\uBA74\uC774 \uCF1C\uC84C\uB2E4. '\uB458\uB9CC\uC758 \uC791\uC740
+    \uC138\uACC4'\uAC00 \uC774\uBBF8 \uC2E4\uD589 \uC911\uC774\uB2E4."
+  disabledMessage: "\uD654\uBA74\uC744 \uAED0\uB2E4."
 --- !u!1 &851955193
 GameObject:
   m_ObjectHideFlags: 0
@@ -4479,6 +4702,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 927447297}
+  - component: {fileID: 927447298}
   m_Layer: 0
   m_Name: Midnight Clock
   m_TagString: Untagged
@@ -4504,6 +4728,27 @@ Transform:
   - {fileID: 1422193055}
   m_Father: {fileID: 1658418116}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &927447298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 927447296}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0c8724a567be5d47982734142df35db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SmallWorld.Player::SmallWorld.Player.InspectableInteractable
+  prompt: "\uC2DC\uACC4 \uC870\uC0AC"
+  highlightRenderers:
+  - {fileID: 490375105}
+  - {fileID: 399563879}
+  - {fileID: 1422193056}
+  highlightColor: {r: 0.25, g: 0.9, b: 0.85, a: 1}
+  description: "\uC2DC\uACD7\uBC14\uB298\uC740 00:00\uC5D0\uC11C \uBA48\uCDB0 \uC788\uB2E4."
+  rotateTarget: {fileID: 927447297}
+  rotationStep: 12
 --- !u!1 &938837892
 GameObject:
   m_ObjectHideFlags: 0
@@ -5064,6 +5309,85 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1053570583}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1067834335
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1067834336}
+  - component: {fileID: 1067834338}
+  - component: {fileID: 1067834337}
+  m_Layer: 0
+  m_Name: Interaction Prompt
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &1067834336
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1067834335}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 151479299}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.33}
+  m_AnchorMax: {x: 0.5, y: 0.33}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 640, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1067834337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1067834335}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.78, g: 1, b: 0.96, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 25
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 4
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 1
+    m_LineSpacing: 1
+  m_Text: 
+--- !u!222 &1067834338
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1067834335}
+  m_CullTransparentMesh: 1
 --- !u!1 &1123802984
 GameObject:
   m_ObjectHideFlags: 0
@@ -5326,6 +5650,58 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1157424759}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1202187563
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1202187564}
+  - component: {fileID: 1202187565}
+  m_Layer: 0
+  m_Name: Door Hinge
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1202187564
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1202187563}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.45, y: 0, z: -4.92}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 571135365}
+  m_Father: {fileID: 202978441}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1202187565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1202187563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1960f357f27e9434d9faa587e12e8284, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SmallWorld.Player::SmallWorld.Player.DoorInteractable
+  prompt: "\uBB38 \uC5F4\uAE30"
+  highlightRenderers:
+  - {fileID: 571135366}
+  highlightColor: {r: 0.25, g: 0.9, b: 0.85, a: 1}
+  doorPivot: {fileID: 1202187564}
+  openAngle: -95
+  duration: 0.45
 --- !u!1 &1206216074
 GameObject:
   m_ObjectHideFlags: 0
@@ -8195,6 +8571,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2092435255}
+  - {fileID: 151479299}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -8860,9 +9237,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SmallWorld.Player::SmallWorld.Player.PlayerInteractionDetector
   range: 2
+  focusRange: 2.75
   layers:
     serializedVersion: 2
     m_Bits: 4294967295
+  promptView: {fileID: 151479300}
 --- !u!114 &2013932108
 MonoBehaviour:
   m_ObjectHideFlags: 0
