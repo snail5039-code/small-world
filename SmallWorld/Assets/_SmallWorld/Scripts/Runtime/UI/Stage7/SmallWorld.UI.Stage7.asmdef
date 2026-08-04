@@ -1,7 +1,7 @@
 {
   "name": "SmallWorld.UI.Stage7",
   "rootNamespace": "SmallWorld.UI.Stage7",
-  "references": ["SmallWorld.Dialogue.Stage7", "SmallWorld.Player", "Unity.ugui"],
+  "references": ["SmallWorld.Dialogue.Stage7", "SmallWorld.Player", "SmallWorld.UI.Stage6", "Unity.ugui"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

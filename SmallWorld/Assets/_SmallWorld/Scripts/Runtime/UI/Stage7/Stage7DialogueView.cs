@@ -23,6 +23,7 @@ namespace SmallWorld.UI.Stage7
         [SerializeField] private Button closeHistoryButton;
         [SerializeField] private Button[] choiceButtons = Array.Empty<Button>();
         [SerializeField] private FirstPersonPlayerController player;
+        [SerializeField] private Stage6UIController stage6UI;
 
         private readonly DialogueState state = new DialogueState();
         private DialogueSession session;
@@ -31,10 +32,13 @@ namespace SmallWorld.UI.Stage7
         public DialogueState State => state;
         public string CurrentSpeaker => speakerText != null ? speakerText.text : string.Empty;
         public string CurrentBody => bodyText != null ? bodyText.text : string.Empty;
+        public bool IsDialogueActive => session != null && !session.IsComplete;
+        public bool IsHistoryVisible => IsVisible(historyGroup);
 
         public void Configure(CanvasGroup dialogue, Text speaker, Text body, Text relationship,
             Button advance, Button skip, Toggle autoToggle, Button history, CanvasGroup historyPanel,
-            Text historyLog, Button closeHistory, Button[] choices, FirstPersonPlayerController playerController)
+            Text historyLog, Button closeHistory, Button[] choices, FirstPersonPlayerController playerController,
+            Stage6UIController stage6Controller = null)
         {
             dialogueGroup = dialogue;
             speakerText = speaker;
@@ -49,12 +53,14 @@ namespace SmallWorld.UI.Stage7
             closeHistoryButton = closeHistory;
             choiceButtons = choices ?? Array.Empty<Button>();
             player = playerController;
+            stage6UI = stage6Controller != null ? stage6Controller : stage6UI;
             BindButtons();
             SetVisible(historyGroup, false);
         }
 
         private void Awake()
         {
+            if (stage6UI == null) stage6UI = FindFirstObjectByType<Stage6UIController>();
             BindButtons();
             StartDialogue(Stage7DemoDialogue.Create());
         }
@@ -79,6 +85,7 @@ namespace SmallWorld.UI.Stage7
             session.FrameChanged += Render;
             session.Completed += Complete;
             if (player != null) player.enabled = false;
+            EnterUiInputMode();
             SetVisible(dialogueGroup, true);
             SetVisible(historyGroup, false);
             Render(session.Current);
@@ -119,6 +126,19 @@ namespace SmallWorld.UI.Stage7
 
         public void HideHistory() => SetVisible(historyGroup, false);
 
+        public bool HandleEscape()
+        {
+            if (IsHistoryVisible)
+            {
+                HideHistory();
+                return true;
+            }
+
+            // Dialogue owns Escape while active. It must neither complete the dialogue nor
+            // leak the same key press into the Stage 6 pause toggle.
+            return IsDialogueActive;
+        }
+
         private void Render(DialogueFrame frame)
         {
             if (frame == null) return;
@@ -142,7 +162,12 @@ namespace SmallWorld.UI.Stage7
         {
             SetVisible(dialogueGroup, false);
             SetVisible(historyGroup, false);
-            if (player != null) player.enabled = true;
+            if (CanRestoreGameplay())
+            {
+                EnterGameplayInputMode();
+                if (player != null) player.enabled = true;
+            }
+            else EnterUiInputMode();
         }
 
         private void BindButtons()
@@ -176,6 +201,26 @@ namespace SmallWorld.UI.Stage7
         }
 
         private static string FormatSigned(int value) => value > 0 ? "+" + value : value.ToString();
+
+        private bool CanRestoreGameplay()
+        {
+            return stage6UI == null || stage6UI.StateMachine.Current == UIState.Gameplay;
+        }
+
+        private static void EnterUiInputMode()
+        {
+            DialogueCursorMode.RequestUi();
+        }
+
+        private static void EnterGameplayInputMode()
+        {
+            DialogueCursorMode.RequestGameplay();
+        }
+
+        private static bool IsVisible(CanvasGroup group)
+        {
+            return group != null && group.alpha > 0f && group.interactable && group.blocksRaycasts;
+        }
 
         private static void SetVisible(CanvasGroup group, bool visible)
         {

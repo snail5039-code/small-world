@@ -1,7 +1,9 @@
 using System;
 using SmallWorld.Core;
 using SmallWorld.Dialogue.Stage7;
+using SmallWorld.Flow;
 using SmallWorld.Player;
+using SmallWorld.UI;
 using SmallWorld.UI.Stage7;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -89,9 +91,14 @@ namespace SmallWorld.Editor
 
             FirstPersonPlayerController player = UnityEngine.Object.FindFirstObjectByType<FirstPersonPlayerController>();
             if (player == null) throw new InvalidOperationException("RealityRoom player is missing.");
+            Stage6UIController stage6Controller = stage6.GetComponent<Stage6UIController>();
+            if (stage6Controller == null) throw new InvalidOperationException("Stage 6 UI controller is missing.");
+            RealityRoomController roomController = UnityEngine.Object.FindFirstObjectByType<RealityRoomController>();
+            if (roomController == null) throw new InvalidOperationException("RealityRoom controller is missing.");
             Stage7DialogueView view = root.AddComponent<Stage7DialogueView>();
             view.Configure(dialogue, speaker, body, relationship, advance, skip, autoToggle, history,
-                historyGroup, historyText, close, choices, player);
+                historyGroup, historyText, close, choices, player, stage6Controller);
+            roomController.ConfigureStage7(view);
 
             Validate(stage6, view);
             EditorSceneManager.MarkSceneDirty(scene);

@@ -607,6 +607,7 @@ MonoBehaviour:
   - {fileID: 432288394}
   - {fileID: 658437694}
   player: {fileID: 2013932106}
+  stage6UI: {fileID: 1470718270}
 --- !u!225 &69415110
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -1666,6 +1667,7 @@ MonoBehaviour:
   loadingView: {fileID: 440122059}
   player: {fileID: 2013932106}
   interactionDetector: {fileID: 2013932107}
+  dialogueView: {fileID: 69415109}
 --- !u!4 &231870166
 Transform:
   m_ObjectHideFlags: 0

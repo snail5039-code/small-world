@@ -1,6 +1,7 @@
 ﻿using SmallWorld.Core;
 using SmallWorld.Player;
 using SmallWorld.UI;
+using SmallWorld.UI.Stage7;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -14,6 +15,7 @@ namespace SmallWorld.Flow
         [SerializeField] private Stage6LoadingView loadingView;
         [SerializeField] private FirstPersonPlayerController player;
         [SerializeField] private PlayerInteractionDetector interactionDetector;
+        [SerializeField] private Stage7DialogueView dialogueView;
 
         private InteractableBase observedInteractable;
         private int observedInteractionCount;
@@ -30,8 +32,14 @@ namespace SmallWorld.Flow
             interactionDetector = detector;
         }
 
+        public void ConfigureStage7(Stage7DialogueView dialogue)
+        {
+            dialogueView = dialogue;
+        }
+
         private void Awake()
         {
+            if (dialogueView == null) dialogueView = FindFirstObjectByType<Stage7DialogueView>();
             if (stage6UI == null) return;
             stage6UI.ResumeRequested += RestoreGameplay;
             stage6UI.ReturnToTitleRequested += ReturnToTitle;
@@ -62,14 +70,7 @@ namespace SmallWorld.Flow
                 return;
             }
 
-            if (stage6UI != null)
-            {
-                if (stage6UI.StateMachine.Current == UIState.Gameplay) stage6UI.Pause();
-                else if (stage6UI.StateMachine.Current == UIState.Paused) stage6UI.Resume();
-                else if (stage6UI.StateMachine.Current == UIState.Settings ||
-                         stage6UI.StateMachine.Current == UIState.Inspection) stage6UI.CloseOverlay();
-                return;
-            }
+            if (HandleEscapePressed()) return;
 
             if (SceneTransitionService.Instance == null)
             {
@@ -78,6 +79,18 @@ namespace SmallWorld.Flow
             }
 
             await SceneTransitionService.Instance.LoadSceneAsync(SceneId.MainMenu);
+        }
+
+        internal bool HandleEscapePressed()
+        {
+            if (dialogueView != null && dialogueView.HandleEscape()) return true;
+            if (stage6UI == null) return false;
+
+            if (stage6UI.StateMachine.Current == UIState.Gameplay) stage6UI.Pause();
+            else if (stage6UI.StateMachine.Current == UIState.Paused) stage6UI.Resume();
+            else if (stage6UI.StateMachine.Current == UIState.Settings ||
+                     stage6UI.StateMachine.Current == UIState.Inspection) stage6UI.CloseOverlay();
+            return true;
         }
 
         private void ObserveInteraction()
@@ -103,7 +116,8 @@ namespace SmallWorld.Flow
 
         private void OnUIStateChanged(UIState previous, UIState current)
         {
-            bool gameplay = current == UIState.Gameplay;
+            bool gameplay = current == UIState.Gameplay &&
+                            (dialogueView == null || !dialogueView.IsDialogueActive);
             if (player != null) player.enabled = gameplay;
         }
 
@@ -114,7 +128,8 @@ namespace SmallWorld.Flow
 
         private void RestoreGameplay()
         {
-            if (player != null) player.enabled = true;
+            if (player != null && (dialogueView == null || !dialogueView.IsDialogueActive))
+                player.enabled = true;
         }
 
         private async void ReturnToTitle()
