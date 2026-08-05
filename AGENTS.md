@@ -1,21 +1,18 @@
 # Visible Subtask Governance
 
-This repository is managed through a visible manager-and-subtask workflow in the Codex desktop project `White_Happy_Room`.
+작업 시작 시 다음 세 문서만 먼저 읽습니다.
 
-## Mandatory workflow
+1. `docs/INDEX.md`
+2. `docs/CURRENT_STATUS.md`
+3. `docs/roadmap/stage-09.md` (현재 단계 문서; 단계 변경 시 `CURRENT_STATUS.md`의 링크를 따름)
 
-1. Every development stage must create visible Codex project tasks in the `White_Happy_Room` sidebar before implementation begins.
-2. Visible tasks must be separated by responsibility, such as implementation, scene integration, and QA.
-3. Feature code and feature tests are implemented by the assigned visible tasks. The manager coordinates scope and ownership.
-4. The manager reviews diffs, resolves only necessary integration conflicts, orders final Unity tests/builds, approves results, commits, and pushes.
-5. Internal collaboration agents may assist with analysis, but they never replace the visible project tasks required above.
-6. Each visible task reports changed files, tests attempted, remaining issues, external assets, and license status.
-7. Subtasks do not commit or push unless the manager explicitly instructs them. Final Git approval belongs to the manager.
-8. A stage is not complete until the manager verifies compilation, relevant automated tests, Windows build, runtime smoke, and a clean Git scope.
-9. The manager reports completion to the user and waits for approval before starting the next stage.
+## 필수 운영 규칙
 
-## Cost and asset rule
+- 개발 단계마다 구현 전에 `White_Happy_Room` 사이드바에 책임별 가시적 작업(구현, 씬 통합, QA 등)을 만든다.
+- 기능 코드와 테스트는 배정된 가시적 작업이 작성하고, 관리자는 범위·충돌·통합을 조정한다. 내부 에이전트는 가시적 작업을 대체하지 않는다.
+- 하위 작업은 변경 파일, 시도한 테스트, 남은 문제, 외부 에셋과 라이선스 상태를 보고하며, 명시적 지시 없이는 커밋·푸시하지 않는다.
+- 관리자는 컴파일, 관련 자동 테스트, Windows 빌드, 런타임 스모크, 깨끗한 Git 범위를 직접 확인한 뒤 승인·커밋·푸시한다.
+- 한 번에 현재 단계만 진행하고, 단계 완료를 사용자에게 보고한 뒤 승인 전에는 다음 단계를 시작하지 않는다.
+- 비용은 0원으로 유지하며 프로젝트 소유 콘텐츠 또는 무료 상업 이용이 검증된 에셋만 사용한다. 외부 에셋은 통합 전에 출처와 라이선스를 기록한다.
 
-- Prototype development cost remains zero.
-- Use only project-owned content or assets explicitly verified for free commercial use.
-- Record every external asset and its license before integration.
+세부 운영 방식과 보고 양식은 `docs/management/WORKFLOW.md`를 읽습니다.
