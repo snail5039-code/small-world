@@ -1,0 +1,14 @@
+{
+  "name": "SmallWorld.Puzzle.Stage9.Persistence",
+  "rootNamespace": "SmallWorld.Puzzle.Stage9.Persistence",
+  "references": ["SmallWorld.Puzzle.Stage9"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

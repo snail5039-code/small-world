@@ -1,4 +1,7 @@
+using System;
+using System.Threading.Tasks;
 using SmallWorld.Core;
+using SmallWorld.Puzzle.Stage9.Persistence;
 using SmallWorld.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,6 +13,8 @@ namespace SmallWorld.Flow
         [SerializeField] private Button newGameButton;
         [SerializeField] private Button quitButton;
         [SerializeField] private Stage6UIController stage6UI;
+        private IPhotoPuzzleStorage newGameStorage;
+        private Func<string, Task> newGameSceneLoader;
 
         public void Configure(Button newGame, Button quit)
         {
@@ -20,6 +25,16 @@ namespace SmallWorld.Flow
         public void ConfigureStage6(Stage6UIController controller)
         {
             stage6UI = controller;
+        }
+
+        public void ConfigureNewGamePersistence(IPhotoPuzzleStorage storage)
+        {
+            newGameStorage = storage;
+        }
+
+        public void ConfigureNewGameSceneLoader(Func<string, Task> loader)
+        {
+            newGameSceneLoader = loader;
         }
 
         private void Awake()
@@ -58,6 +73,12 @@ namespace SmallWorld.Flow
 
         public async void StartNewGame()
         {
+            PhotoPuzzleSaveContract.Clear(newGameStorage ?? new PlayerPrefsPhotoPuzzleStorage());
+            if (newGameSceneLoader != null)
+            {
+                await newGameSceneLoader(SceneId.RealityRoom.ToString());
+                return;
+            }
             if (SceneTransitionService.Instance == null)
             {
                 Debug.LogError("[SmallWorld] Cannot start: SceneTransitionService is missing.", this);

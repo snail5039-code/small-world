@@ -1,0 +1,15 @@
+{
+  "name": "SmallWorld.Puzzle.Stage9Integration.Tests",
+  "rootNamespace": "SmallWorld.Puzzle.Stage9Integration.Tests",
+  "references": ["SmallWorld.Puzzle.Stage9Integration", "SmallWorld.Puzzle.Stage9", "SmallWorld.Puzzle.Stage9.Persistence", "SmallWorld.Inventory.Stage8", "SmallWorld.UI.Stage6", "SmallWorld.UI.Stage7", "SmallWorld.UI.Stage8", "SmallWorld.Dialogue.Stage7", "SmallWorld.Player", "Unity.ugui"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

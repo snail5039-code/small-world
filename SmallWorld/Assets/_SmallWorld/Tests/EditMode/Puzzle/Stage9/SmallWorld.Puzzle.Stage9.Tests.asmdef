@@ -1,0 +1,15 @@
+{
+  "name": "SmallWorld.Puzzle.Stage9.Tests",
+  "rootNamespace": "SmallWorld.Puzzle.Stage9.Tests",
+  "references": ["SmallWorld.Puzzle.Stage9"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}

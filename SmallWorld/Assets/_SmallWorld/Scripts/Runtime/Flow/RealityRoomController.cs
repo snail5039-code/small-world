@@ -1,6 +1,7 @@
 ﻿using SmallWorld.Core;
 using SmallWorld.Player;
 using SmallWorld.Inventory.Stage8;
+using SmallWorld.Puzzle.Stage9Integration;
 using SmallWorld.UI;
 using SmallWorld.UI.Stage7;
 using SmallWorld.UI.Stage8;
@@ -19,6 +20,7 @@ namespace SmallWorld.Flow
         [SerializeField] private PlayerInteractionDetector interactionDetector;
         [SerializeField] private Stage7DialogueView dialogueView;
         [SerializeField] private Stage8RecordView recordView;
+        [SerializeField] private PhotoPuzzleView photoPuzzleView;
 
         private InteractableBase[] trackedInteractables = System.Array.Empty<InteractableBase>();
 
@@ -44,6 +46,11 @@ namespace SmallWorld.Flow
             if (recordView != null) recordView.NewRecordAdded -= OnNewRecordAdded;
             recordView = records;
             if (recordView != null) recordView.NewRecordAdded += OnNewRecordAdded;
+        }
+
+        public void ConfigureStage9(PhotoPuzzleView photoPuzzle)
+        {
+            photoPuzzleView = photoPuzzle;
         }
 
         private void Awake()
@@ -80,6 +87,7 @@ namespace SmallWorld.Flow
         {
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
             {
+                if (photoPuzzleView != null && photoPuzzleView.IsOpen) return;
                 recordView?.Toggle();
                 return;
             }
@@ -101,6 +109,7 @@ namespace SmallWorld.Flow
 
         internal bool HandleEscapePressed()
         {
+            if (photoPuzzleView != null && photoPuzzleView.IsOpen) return photoPuzzleView.Close();
             if (recordView != null && recordView.IsOpen) return recordView.Close();
             if (dialogueView != null && dialogueView.HandleEscape()) return true;
             if (stage6UI == null) return false;
@@ -114,6 +123,7 @@ namespace SmallWorld.Flow
 
         private void OnInteractionCompleted(InteractableBase current)
         {
+            if (current is PhotoPuzzleInteractable) return;
             if (current is InspectableInteractable inspectable)
             {
                 inspectionView?.Show(current.name, inspectable.Description);
