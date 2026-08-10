@@ -1,4 +1,6 @@
 using NUnit.Framework;
+using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace SmallWorld.Player.Tests
@@ -25,6 +27,39 @@ namespace SmallWorld.Player.Tests
             {
                 Object.DestroyImmediate(gameObject);
             }
+        }
+
+        [Test]
+        public void MidnightClock_InspectionDoesNotRotateClock()
+        {
+            var clock = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            try
+            {
+                var inspectable = clock.AddComponent<InspectableInteractable>();
+                inspectable.ConfigureInspection("시계 조사", "시곗바늘은 00:00에서 멈춰 있다.", null, 0f);
+                Quaternion before = clock.transform.rotation;
+
+                Assert.That(inspectable.TryInteract(default), Is.True);
+                Assert.That(clock.transform.rotation, Is.EqualTo(before));
+            }
+            finally
+            {
+                Object.DestroyImmediate(clock);
+            }
+        }
+
+        [Test]
+        public void RealityRoom_MidnightClockHasNoRotationTarget()
+        {
+            EditorSceneManager.OpenScene("Assets/_SmallWorld/Scenes/02_RealityRoom.unity");
+            GameObject clock = GameObject.Find("Midnight Clock");
+
+            Assert.That(clock, Is.Not.Null);
+            var inspectable = clock.GetComponent<InspectableInteractable>();
+            Assert.That(inspectable, Is.Not.Null);
+            var serialized = new SerializedObject(inspectable);
+            Assert.That(serialized.FindProperty("rotateTarget").objectReferenceValue, Is.Null);
+            Assert.That(serialized.FindProperty("rotationStep").floatValue, Is.Zero);
         }
 
         [Test]

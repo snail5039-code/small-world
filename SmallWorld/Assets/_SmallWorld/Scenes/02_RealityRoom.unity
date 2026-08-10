@@ -9113,8 +9113,8 @@ MonoBehaviour:
   - {fileID: 1422193056}
   highlightColor: {r: 0.25, g: 0.9, b: 0.85, a: 1}
   description: "\uC2DC\uACD7\uBC14\uB298\uC740 00:00\uC5D0\uC11C \uBA48\uCDB0 \uC788\uB2E4."
-  rotateTarget: {fileID: 927447297}
-  rotationStep: 12
+  rotateTarget: {fileID: 0}
+  rotationStep: 0
 --- !u!1 &938837892
 GameObject:
   m_ObjectHideFlags: 0

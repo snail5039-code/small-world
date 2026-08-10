@@ -166,10 +166,15 @@ namespace SmallWorld.Puzzle.Stage9Integration.Tests
             GameObject root = GameObject.Find("Stage 9 Photo Puzzle UI");
             GameObject frame = GameObject.Find("Empty Frame");
             GameObject roof = GameObject.Find("Model House Roof");
+            GameObject clock = GameObject.Find("Midnight Clock");
             Assert.That(root, Is.Not.Null);
             Assert.That(root.GetComponent<PhotoPuzzleView>(), Is.Not.Null);
             Assert.That(frame.GetComponent<PhotoPuzzleInteractable>(), Is.Not.Null);
             Assert.That(roof, Is.Not.Null);
+            Assert.That(clock, Is.Not.Null);
+            var clockInspection = new SerializedObject(clock.GetComponent<InspectableInteractable>());
+            Assert.That(clockInspection.FindProperty("rotateTarget").objectReferenceValue, Is.Null);
+            Assert.That(clockInspection.FindProperty("rotationStep").floatValue, Is.Zero);
             var serialized = new SerializedObject(root.GetComponent<PhotoPuzzleView>());
             Assert.That(serialized.FindProperty("modelHouseRoof").objectReferenceValue, Is.SameAs(roof));
             Assert.That(serialized.FindProperty("persistenceKey").stringValue, Is.EqualTo(PhotoPuzzleView.PersistenceKey));

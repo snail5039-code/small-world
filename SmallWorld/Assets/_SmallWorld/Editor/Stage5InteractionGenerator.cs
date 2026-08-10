@@ -55,7 +55,7 @@ namespace SmallWorld.Editor
 
             ConfigureDoor();
             ConfigureInspectable("Empty Frame", "액자 조사", "사진은 없다. 유리에는 방만 희미하게 비친다.", 0f);
-            ConfigureInspectable("Midnight Clock", "시계 조사", "시곗바늘은 00:00에서 멈춰 있다.", 12f);
+            ConfigureInspectable("Midnight Clock", "시계 조사", "시곗바늘은 00:00에서 멈춰 있다.", 0f);
             ConfigureInspectable("Model House Table", "모형 집 조사", "작은 집의 구조가 이 방과 묘하게 닮았다.", 18f);
             ConfigurePickup();
             ConfigureComputer();
