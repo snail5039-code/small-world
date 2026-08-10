@@ -1,0 +1,9 @@
+{
+  "name": "SmallWorld.Save.Stage10.Integration.Tests",
+  "rootNamespace": "SmallWorld.Save.Stage10.Integration.Tests",
+  "references": ["SmallWorld.Save.Stage10.Integration", "SmallWorld.Save.Stage10", "SmallWorld.Dialogue.Stage7", "SmallWorld.Player", "SmallWorld.UI.Stage6", "SmallWorld.UI.Stage7", "SmallWorld.UI.Stage8", "SmallWorld.Inventory.Stage8", "SmallWorld.Puzzle.Stage9Integration", "SmallWorld.Puzzle.Stage9", "Unity.ugui"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

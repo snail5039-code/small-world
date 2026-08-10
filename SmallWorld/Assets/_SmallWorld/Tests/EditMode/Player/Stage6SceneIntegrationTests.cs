@@ -32,7 +32,8 @@ namespace SmallWorld.Player.Tests
             GameObject root = GameObject.Find("Stage 6 Reality Room UI");
 
             Assert.That(root, Is.Not.Null);
-            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(6));
+            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(7));
+            Assert.That(GameObject.Find("Stage 10 Save Integration"), Is.Not.Null);
             Assert.That(Object.FindObjectsByType<InteractionPromptView>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
             Assert.That(root.GetComponentsInChildren<InspectionView>(true), Has.Length.EqualTo(1));
             Assert.That(root.GetComponentsInChildren<NotificationQueueView>(true), Has.Length.EqualTo(1));

@@ -37,6 +37,12 @@ namespace SmallWorld.Inventory.Stage8
 
         public bool TryGet(string id, out StoredRecord record) => records.TryGetValue(id ?? string.Empty, out record);
 
+        public void Clear()
+        {
+            records.Clear();
+            sequence = 0;
+        }
+
         public IReadOnlyList<StoredRecord> GetAll(RecordKind? kind = null, RecordSort sort = RecordSort.Catalog)
         {
             var result = new List<StoredRecord>();

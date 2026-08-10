@@ -66,7 +66,6 @@ namespace SmallWorld.Puzzle.Stage9Integration
         private void Awake()
         {
             if (runtime == null) CreateRuntime();
-            if (Application.isPlaying) ConfigurePersistence(new PlayerPrefsPhotoPuzzleStorage());
             Bind();
             SetVisible(panel, false);
             RenderState();

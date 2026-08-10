@@ -28,7 +28,8 @@ namespace SmallWorld.Player.Tests
             Assert.That(stage6.GetComponentInChildren<SafeAreaFitter>(true), Is.Not.Null);
             Assert.That(stage8, Is.Not.Null);
             Assert.That(stage8.GetComponent<Stage8RecordView>(), Is.Not.Null);
-            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(6));
+            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(7));
+            Assert.That(GameObject.Find("Stage 10 Save Integration"), Is.Not.Null);
 
             Component room = Object.FindFirstObjectByType(GetRealityRoomControllerType()) as Component;
             Assert.That(room, Is.Not.Null);

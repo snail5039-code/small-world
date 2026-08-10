@@ -38,7 +38,8 @@ namespace SmallWorld.Player.Tests
             Assert.That(roomProperties.FindProperty("dialogueView").objectReferenceValue,
                 Is.SameAs(stage7.GetComponent<Stage7DialogueView>()));
             Assert.That(Object.FindObjectsByType<EventSystem>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
-            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(6));
+            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(7));
+            Assert.That(GameObject.Find("Stage 10 Save Integration"), Is.Not.Null);
         }
 
         [Test]

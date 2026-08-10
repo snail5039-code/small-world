@@ -23,6 +23,8 @@ namespace SmallWorld.Dialogue.Stage7
 
         public void Add(string key, int amount) => Set(key, Get(key) + amount);
 
+        public void Clear() => variables.Clear();
+
         internal void Apply(IReadOnlyList<DialogueEffect> effects)
         {
             for (int i = 0; i < effects.Count; i++)

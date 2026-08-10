@@ -10,6 +10,13 @@ namespace SmallWorld.Player
 
         public bool IsUsed { get; private set; }
 
+        public void RestoreUsedState(bool isUsed)
+        {
+            IsUsed = isUsed;
+            if (controlledLight != null) controlledLight.enabled = isUsed;
+            SetPrompt(IsUsed ? "끄기" : "사용하기");
+        }
+
         public void ConfigureUse(string interactionPrompt, Light target, string onMessage, string offMessage)
         {
             Configure(interactionPrompt, GetComponentsInChildren<Renderer>(true));

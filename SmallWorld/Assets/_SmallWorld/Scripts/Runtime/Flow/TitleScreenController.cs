@@ -2,6 +2,8 @@ using System;
 using System.Threading.Tasks;
 using SmallWorld.Core;
 using SmallWorld.Puzzle.Stage9.Persistence;
+using SmallWorld.Save.Stage10;
+using SmallWorld.Save.Stage10.Integration;
 using SmallWorld.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -45,7 +47,7 @@ namespace SmallWorld.Flow
                 stage6UI.ContinueRequested += ContinueGame;
                 stage6UI.QuitRequested += QuitGame;
                 stage6UI.ConfigureInitialState(UIState.Title);
-                stage6UI.SetCanContinue(false);
+                stage6UI.SetCanContinue(Stage10SaveRuntime.FindLatest().IsSuccess);
                 return;
             }
             if (newGameButton != null)
@@ -73,6 +75,7 @@ namespace SmallWorld.Flow
 
         public async void StartNewGame()
         {
+            Stage10SaveRuntime.QueueLoad(Stage10SaveRuntime.Service.StartNewGame());
             PhotoPuzzleSaveContract.Clear(newGameStorage ?? new PlayerPrefsPhotoPuzzleStorage());
             if (newGameSceneLoader != null)
             {
@@ -88,9 +91,13 @@ namespace SmallWorld.Flow
             await SceneTransitionService.Instance.LoadSceneAsync(SceneId.RealityRoom);
         }
 
-        private void ContinueGame()
+        private async void ContinueGame()
         {
-            // Stage 6 has no save-game service yet. The button remains disabled until one is supplied.
+            SaveReadResult result = Stage10SaveRuntime.FindLatest();
+            if (!result.IsSuccess) { stage6UI?.SetCanContinue(false); return; }
+            Stage10SaveRuntime.QueueLoad(result.Data);
+            if (newGameSceneLoader != null) { await newGameSceneLoader(SceneId.RealityRoom.ToString()); return; }
+            if (SceneTransitionService.Instance != null) await SceneTransitionService.Instance.LoadSceneAsync(SceneId.RealityRoom);
         }
 
         public void QuitGame()

@@ -178,7 +178,8 @@ namespace SmallWorld.Puzzle.Stage9Integration.Tests
             var serialized = new SerializedObject(root.GetComponent<PhotoPuzzleView>());
             Assert.That(serialized.FindProperty("modelHouseRoof").objectReferenceValue, Is.SameAs(roof));
             Assert.That(serialized.FindProperty("persistenceKey").stringValue, Is.EqualTo(PhotoPuzzleView.PersistenceKey));
-            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(6));
+            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(7));
+            Assert.That(GameObject.Find("Stage 10 Save Integration"), Is.Not.Null);
         }
 
         private static Fixture CreateFixture(UIState state, IPhotoPuzzleStorage storage = null)

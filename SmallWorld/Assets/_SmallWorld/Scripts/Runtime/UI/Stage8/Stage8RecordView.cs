@@ -71,6 +71,17 @@ namespace SmallWorld.UI.Stage8
 
         public bool AddRecord(InventoryRecord record) => journal.Add(record);
 
+        public IReadOnlyList<StoredRecord> CaptureRecords() => journal.GetAll(null, RecordSort.AcquiredNewest);
+
+        public void RestoreRecords(IEnumerable<InventoryRecord> records)
+        {
+            journal.Clear();
+            if (records != null)
+                foreach (InventoryRecord record in records)
+                    if (record != null) journal.Add(record);
+            Refresh();
+        }
+
         public bool Open()
         {
             if (IsOpen || stage6UI == null || stage6UI.StateMachine.Current != UIState.Gameplay ||

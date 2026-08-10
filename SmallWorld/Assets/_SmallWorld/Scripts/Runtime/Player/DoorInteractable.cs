@@ -12,6 +12,14 @@ namespace SmallWorld.Player
 
         public bool IsOpen { get; private set; }
 
+        public void RestoreOpenState(bool isOpen)
+        {
+            IsOpen = isOpen;
+            if (doorPivot == null) doorPivot = transform;
+            doorPivot.localRotation = closedRotation * Quaternion.Euler(0f, IsOpen ? openAngle : 0f, 0f);
+            SetPrompt(IsOpen ? "문 닫기" : "문 열기");
+        }
+
         public void ConfigureDoor(string interactionPrompt, Transform pivot, float angle = 95f, float seconds = 0.45f)
         {
             Configure(interactionPrompt, GetComponentsInChildren<Renderer>(true));
