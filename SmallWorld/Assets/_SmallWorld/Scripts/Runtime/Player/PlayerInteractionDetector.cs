@@ -8,7 +8,9 @@ namespace SmallWorld.Player
         [SerializeField, Min(0.1f)] private float focusRange = 2.75f;
         [SerializeField] private LayerMask layers = ~0;
         [SerializeField] private InteractionPromptView promptView;
+        private const float OriginContactRadius = 0.05f;
         private Transform view;
+        private float currentTargetDistance;
 
         public bool HasTarget { get; private set; }
         public RaycastHit CurrentHit { get; private set; }
@@ -47,9 +49,24 @@ namespace SmallWorld.Player
         {
             RaycastHit hit = default;
             IInteractable next = null;
-            if (view != null && Physics.Raycast(view.position, view.forward, out hit,
-                    focusRange, layers, QueryTriggerInteraction.Ignore))
-                next = hit.collider.GetComponentInParent<InteractableBase>();
+            float targetDistance = float.PositiveInfinity;
+            if (view != null)
+            {
+                bool originBlocked = TryGetOriginContact(out RaycastHit originHit,
+                    out IInteractable originInteractable);
+                if (originInteractable != null)
+                {
+                    hit = originHit;
+                    next = originInteractable;
+                    targetDistance = 0f;
+                }
+                else if (!originBlocked && Physics.Raycast(view.position, view.forward, out hit,
+                             focusRange, layers, QueryTriggerInteraction.Ignore))
+                {
+                    next = hit.collider.GetComponentInParent<InteractableBase>();
+                    targetDistance = hit.distance;
+                }
+            }
 
             if (!ReferenceEquals(CurrentInteractable, next))
             {
@@ -60,19 +77,57 @@ namespace SmallWorld.Player
 
             HasTarget = next != null;
             CurrentHit = HasTarget ? hit : default;
+            currentTargetDistance = HasTarget ? targetDistance : float.PositiveInfinity;
             if (promptView != null)
             {
                 string prompt = HasTarget
-                    ? (hit.distance <= range && next.CanInteract ? next.Prompt : "가까이 가기")
+                    ? (currentTargetDistance <= range && next.CanInteract ? next.Prompt : "가까이 가기")
                     : string.Empty;
                 promptView.SetPrompt(prompt);
             }
         }
 
+        private bool TryGetOriginContact(out RaycastHit hit, out IInteractable interactable)
+        {
+            hit = default;
+            interactable = null;
+            Collider[] contacts = Physics.OverlapSphere(view.position, OriginContactRadius, layers,
+                QueryTriggerInteraction.Ignore);
+
+            foreach (Collider contact in contacts)
+            {
+                if (contact.transform.IsChildOf(transform) || transform.IsChildOf(contact.transform))
+                    continue;
+
+                if (Vector3.Dot(contact.bounds.center - view.position, view.forward) < -OriginContactRadius)
+                    continue;
+
+                float reverseDistance = focusRange + contact.bounds.extents.magnitude
+                    + Vector3.Distance(view.position, contact.bounds.center);
+                Ray reverseRay = new Ray(view.position + view.forward * reverseDistance, -view.forward);
+                if (!contact.Raycast(reverseRay, out RaycastHit contactHit, reverseDistance + OriginContactRadius))
+                    continue;
+
+                float forwardOffset = Vector3.Dot(contactHit.point - view.position, view.forward);
+                if (forwardOffset < -OriginContactRadius) continue;
+
+                IInteractable candidate = contact.GetComponentInParent<InteractableBase>();
+                if (candidate == null) return true;
+
+                if (interactable == null)
+                {
+                    hit = contactHit;
+                    interactable = candidate;
+                }
+            }
+
+            return false;
+        }
+
         public bool TryInteract()
         {
             RefreshDetection();
-            if (!HasTarget || CurrentHit.distance > range || !CurrentInteractable.CanInteract) return false;
+            if (!HasTarget || currentTargetDistance > range || !CurrentInteractable.CanInteract) return false;
             return CurrentInteractable.TryInteract(new InteractionContext(gameObject, this));
         }
 
