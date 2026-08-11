@@ -8,7 +8,7 @@ namespace SmallWorld.Player.Tests
     public sealed class Stage15PrologueChapter1SceneTests
     {
         [Test]
-        public void StoryRoute_IntegratesPrologueAndFourthSeatWithAllEntryPoints()
+        public void StoryRoute_IntegratesLastPlatformLandmarksBetweenChaptersOneAndThree()
         {
             EditorSceneManager.OpenScene("Assets/_SmallWorld/Scenes/04_StoryRoute.unity");
             GameObject route = GameObject.Find("Stage 15 Story Route");
@@ -20,9 +20,11 @@ namespace SmallWorld.Player.Tests
 
             SerializedProperty nodes = new SerializedObject(controller).FindProperty("nodes");
             Assert.That(nodes, Is.Not.Null);
-            Assert.That(nodes.arraySize, Is.GreaterThanOrEqualTo(2));
+            Assert.That(nodes.arraySize, Is.GreaterThanOrEqualTo(4));
             AssertNode(nodes.GetArrayElementAtIndex(0), "prologue", "Prologue");
             AssertNode(nodes.GetArrayElementAtIndex(1), "chapter-1", "Fourth Place");
+            AssertNode(nodes.GetArrayElementAtIndex(2), "chapter-2", "Last Platform");
+            AssertNode(nodes.GetArrayElementAtIndex(3), "chapter-3", "Perfect Day");
         }
 
         private static void AssertNode(SerializedProperty node, string id, string displayFragment)

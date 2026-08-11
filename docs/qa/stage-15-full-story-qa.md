@@ -27,6 +27,20 @@
 | S15-P1-04 | `04_StoryRoute`에 진행 어댑터와 프롤로그/1장 노드가 있고 각 노드의 도착·대화·퍼즐·기억 진입점이 모두 연결된다. | `StoryRoute_IntegratesPrologueAndFourthSeatWithAllEntryPoints` |
 | S15-P1-05 | 14단계 첫 기억 공간의 부분 저장, 미해결 탈출 잠금, 해결 후 하얀 방 복귀가 유지된다. | `Stage14FirstMemoryRegression_PartialSaveStaysLockedAndSolvedSaveReturns` |
 
+### 2장 `마지막 승강장` 수용 기준
+
+| ID | 수용 기준 | 자동 검증 |
+|---|---|---|
+| S15-C2-01 | 2장은 접속 시간 노선도 4단계 → 분실물 4개 반환 → 역재생 안내방송 3구간 → 목적지 선택 → 안전 구역 탈출 → 집 복귀 순서를 건너뛸 수 없다. 거부된 행동은 진행 플래그를 남기지 않는다. | `LastPlatform_EnforcesPuzzleAndEscapeOrder` |
+| S15-C2-02 | 노선도 조각을 잘못 잇거나 분실물을 잘못 돌려주거나 방송 구간을 순서 밖에서 뒤집으면 오답 피드백만 반환하고, 같은 단계의 정답을 다시 제출할 수 있다. | `LastPlatform_WrongAnswersDoNotAdvanceAndRemainRetryable` |
+| S15-C2-03 | 목적지는 `dohyeon-home`, `game-home`, `white-station` 중 정확히 하나만 기록된다. 각각 희생자 복원, 애정 기억, 자율/최초 AI 음성 단서를 남기며 어느 분기도 필수 탈출과 3장 진행을 막지 않는다. | `LastPlatform_DestinationBranchesPersistDistinctConsequences` |
+| S15-C2-04 | 목적지 선택과 2장 퍼즐 단계·단서·활성 장면은 `SaveDataStoryProgressStore` 저장/복원 후 동일하고, 복원한 완료 상태에서는 일회 선택이나 보상을 중복 기록할 수 없다. | `LastPlatform_SaveRoundTripPreservesChoiceAndCompletion` |
+| S15-C2-05 | 2장의 목표·대화·퍼즐·기억 공간이 모두 완료되고 집 복귀가 끝난 뒤에만 현재 장이 3장으로 바뀐다. 일부만 완료한 저장은 3장 노드를 열지 않는다. | `LastPlatform_UnlocksOnlyChapterThreeAfterReturnHome` |
+| S15-C2-06 | `04_StoryRoute`의 `chapter-2` 노드는 `Last Platform` 표시명과 도착·대화·퍼즐·기억 진입점이 모두 연결되어 있고, 인접한 1장/3장 노드 순서를 유지한다. | `StoryRoute_IntegratesLastPlatformLandmarksBetweenChaptersOneAndThree` |
+| S15-C2-07 | 프롤로그와 1장의 순서 잠금·선택·복선 및 14단계 첫 기억 공간 저장/복귀 테스트가 2장 추가 뒤에도 그대로 통과한다. | 기존 `Stage15OpeningStoryTests`, `Stage15StoryProgressContractTests`, `Stage14FirstMemoryRegression_PartialSaveStaysLockedAndSolvedSaveReturns` |
+
+2장 런타임 액션의 테스트 계약 이름은 `ConnectRoute1..4`, `ReturnEmployeeId`, `ReturnChildShoe`, `ReturnHospitalWristband`, `ReturnGameCartridge`, `ReverseAnnouncement1..3`, `ChooseDohyeonHome`, `ChooseGameHome`, `ChooseWhiteStation`, `EscapeLastPlatform`, `ReturnFromLastPlatform`이다. 오답 계약은 `ConnectWrongRoute`, `ReturnWrongLostItem`, `ReverseWrongAnnouncement`를 사용한다. 구현과 테스트는 이 이름을 함께 변경할 수 있지만 저장 키 `chapter-2-destination`과 결과 ID 세 개는 저장 호환 계약으로 유지한다.
+
 ## 장별 필수 진행 매트릭스
 
 각 장은 시작 전 집 대화 → 기억 공간 입장 → 퍼즐/조사 → 중요 선택 → 집 복귀 대화 순서로 확인한다. 모든 행에서 장 완료 플래그는 필수 관찰을 끝낸 뒤 한 번만 기록되어야 한다.
