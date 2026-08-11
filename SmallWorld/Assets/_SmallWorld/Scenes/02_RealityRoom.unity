@@ -9850,7 +9850,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &837952467
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13554,6 +13554,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1202187564}
   - component: {fileID: 1202187565}
+  - component: {fileID: 1202187566}
   m_Layer: 0
   m_Name: Door Hinge
   m_TagString: Untagged
@@ -13596,6 +13597,22 @@ MonoBehaviour:
   doorPivot: {fileID: 1202187564}
   openAngle: -95
   duration: 0.45
+--- !u!114 &1202187566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1202187563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1c33138d11ee984aa740ecca0a247ea, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::SmallWorld.Flow.StoryRouteEntryInteractable
+  prompt: "\uBB38 \uB108\uBA38\uB85C \uB098\uAC00\uAE30"
+  highlightRenderers: []
+  highlightColor: {r: 0.25, g: 0.9, b: 0.85, a: 1}
+  entryDoor: {fileID: 1202187565}
 --- !u!1 &1206216074
 GameObject:
   m_ObjectHideFlags: 0

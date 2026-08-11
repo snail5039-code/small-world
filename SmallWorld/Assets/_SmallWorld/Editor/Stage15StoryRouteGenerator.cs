@@ -254,8 +254,14 @@ namespace SmallWorld.Editor
             Scene scene = EditorSceneManager.OpenScene(RealityRoomPath, OpenSceneMode.Single);
             GameObject existing = GameObject.Find("Stage 15 Story Route Entry");
             if (existing != null) UnityEngine.Object.DestroyImmediate(existing);
-            GameObject entry = CreateBlock("Stage 15 Story Route Entry", null, new Vector3(3.25f, 1f, -7.75f), new Vector3(1.5f, 2f, 0.25f));
-            entry.AddComponent<StoryRouteEntryInteractable>().ConfigureEntry();
+
+            GameObject doorHinge = GameObject.Find("Door Hinge");
+            if (doorHinge == null) throw new InvalidOperationException("Reality Room door hinge is missing.");
+            DoorInteractable door = doorHinge.GetComponent<DoorInteractable>();
+            if (door == null) throw new InvalidOperationException("Reality Room door interaction is missing.");
+            StoryRouteEntryInteractable entry = doorHinge.GetComponent<StoryRouteEntryInteractable>();
+            if (entry == null) entry = doorHinge.AddComponent<StoryRouteEntryInteractable>();
+            entry.ConfigureDoorEntry(door);
             EditorSceneManager.MarkSceneDirty(scene);
             if (!EditorSceneManager.SaveScene(scene, RealityRoomPath)) throw new InvalidOperationException("Could not integrate the Stage 15 route entry.");
         }
