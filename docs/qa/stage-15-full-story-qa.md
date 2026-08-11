@@ -41,6 +41,14 @@
 
 2장 런타임 액션의 테스트 계약 이름은 `ConnectRoute1..4`, `ReturnEmployeeId`, `ReturnChildShoe`, `ReturnHospitalWristband`, `ReturnGameCartridge`, `ReverseAnnouncement1..3`, `ChooseDohyeonHome`, `ChooseGameHome`, `ChooseWhiteStation`, `EscapeLastPlatform`, `ReturnFromLastPlatform`이다. 오답 계약은 `ConnectWrongRoute`, `ReturnWrongLostItem`, `ReverseWrongAnnouncement`를 사용한다. 구현과 테스트는 이 이름을 함께 변경할 수 있지만 저장 키 `chapter-2-destination`과 결과 ID 세 개는 저장 호환 계약으로 유지한다.
 
+### 현실방→스토리 방 입력 회귀 기준
+
+| ID | 수용 기준 | 자동 검증 |
+|---|---|---|
+| S15-INPUT-01 | `04_StoryRoute` 진입 후 Tab으로 기록 오버레이를 열고 닫을 수 있으며 플레이어 입력과 커서가 정확히 복원된다. | `StoryRoute_TabOwnsAndRestoresPlayerInputAndCursor` |
+| S15-INPUT-02 | Esc로 일시정지를 열고 닫을 수 있으며 `Time.timeScale`, 플레이어 입력, 커서가 정확히 복원된다. | `StoryRoute_EscapePausesAndRestoresRuntimeState` |
+| S15-INPUT-03 | 저장 UI가 열려 있을 때 스토리 방 Tab/Esc 처리기가 입력 소유권을 빼앗지 않는다. | `StoryRoute_DoesNotStealInputWhileSavePanelOwnsIt` |
+
 ## 장별 필수 진행 매트릭스
 
 각 장은 시작 전 집 대화 → 기억 공간 입장 → 퍼즐/조사 → 중요 선택 → 집 복귀 대화 순서로 확인한다. 모든 행에서 장 완료 플래그는 필수 관찰을 끝낸 뒤 한 번만 기록되어야 한다.
@@ -93,10 +101,11 @@ QA 하위 작업은 커밋·푸시하지 않는다.
 
 ## 이번 QA 실행 기록
 
-- 실행 시도: Unity 6000.3.18f1, `Stage15StoryProgressContractTests` EditMode 필터.
-- 확인 결과: 스크립트 어셈블리 재로드와 `LogAssemblyErrors` 단계는 완료되었으나 테스트 결과 XML은 생성되지 않았다.
-- 차단 원인: Unity Licensing Client 채널 연결이 60초씩 반복 타임아웃되고 `com.unity.editor.headless` 라이선스를 찾지 못해 Test Runner 진입 전에 정지했다.
-- 조치: 응답 없는 배치 실행과 해당 실행에서 생성된 Unity 프로세스를 종료했다. 유효한 라이선스 세션에서 S15-A01~A06을 재실행해야 한다.
+- 근접 조사 전용 EditMode: 8/8 통과.
+- 근접 조사 변경 후 첫 전체 EditMode: 159개 중 153개 통과, 6개 실패. 실패 원인은 앞선 씬 테스트가 `02_RealityRoom`을 남겨 뒤 탐지 테스트에 실제 씬 콜라이더가 섞인 테스트 순서 오염으로 확인했다.
+- 격리 조치: `PlayerInteractionDetectorTests`, `Stage5InteractionTests` 실행 전후 빈 씬을 열도록 보강했다.
+- 재실행 및 다음 방 Tab/Esc 테스트 시도: Unity 6000.3.18f1이 `No valid Unity Editor license found` / return code 198로 Test Runner 진입 전에 종료되어 결과 XML이 생성되지 않았다.
+- 남은 관리자 검증: 전체 EditMode, Windows Development 빌드, 현실방→스토리 방 전환 후 Tab/Esc·저장 UI 런타임 스모크.
 
 ## 외부 에셋과 라이선스
 
