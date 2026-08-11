@@ -17,6 +17,16 @@
 | S15-A05 | `Stage14FirstMemoryRegression_PartialSaveStaysLockedAndSolvedSaveReturns` | 1장 부분 퍼즐 저장은 출구가 잠기고, 복원 후 해결하면 하얀 방으로 복귀한다. |
 | S15-A06 | 전체 EditMode | 14단계까지의 126개 기준 테스트와 15단계 테스트가 모두 통과하고 컴파일 오류가 없다. |
 
+### 프롤로그 + 1장 `네 번째 자리` 수용 기준
+
+| ID | 수용 기준 | 자동 검증 |
+|---|---|---|
+| S15-P1-01 | 새 게임의 현재 장은 프롤로그이며 필수 목표·대화·퍼즐·기억 중 하나라도 빠지면 1장으로 진행할 수 없다. | `PrologueAndFourthSeat_StaySequentialAndRequireEveryStoryBeat` |
+| S15-P1-02 | 프롤로그 네 요소를 모두 완료한 뒤에만 1장이 열리고, 1장도 같은 네 요소를 모두 완료한 뒤에만 2장이 열린다. | `PrologueAndFourthSeat_StaySequentialAndRequireEveryStoryBeat` |
+| S15-P1-03 | 프롤로그 완료, 1장 부분 진행, 네 번째 자리 이름 선택, `반복 109`, 첫 기억 문, 유나 관계값, 활성 장면이 저장·직렬화·복원 뒤 동일하다. | `PrologueAndFourthSeat_RoundTripPreservesSceneChoiceClueAndRelationship` |
+| S15-P1-04 | `04_StoryRoute`에 진행 어댑터와 프롤로그/1장 노드가 있고 각 노드의 도착·대화·퍼즐·기억 진입점이 모두 연결된다. | `StoryRoute_IntegratesPrologueAndFourthSeatWithAllEntryPoints` |
+| S15-P1-05 | 14단계 첫 기억 공간의 부분 저장, 미해결 탈출 잠금, 해결 후 하얀 방 복귀가 유지된다. | `Stage14FirstMemoryRegression_PartialSaveStaysLockedAndSolvedSaveReturns` |
+
 ## 장별 필수 진행 매트릭스
 
 각 장은 시작 전 집 대화 → 기억 공간 입장 → 퍼즐/조사 → 중요 선택 → 집 복귀 대화 순서로 확인한다. 모든 행에서 장 완료 플래그는 필수 관찰을 끝낸 뒤 한 번만 기록되어야 한다.

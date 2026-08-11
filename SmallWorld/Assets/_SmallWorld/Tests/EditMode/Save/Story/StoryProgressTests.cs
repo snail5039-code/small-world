@@ -32,6 +32,67 @@ namespace SmallWorld.Save.Story.Tests
         }
 
         [Test]
+        public void PrologueAndFourthSeat_StaySequentialAndRequireEveryStoryBeat()
+        {
+            var progress = new StoryProgress();
+            var flow = new StoryFlowService();
+
+            Assert.That(flow.Current(progress).Id, Is.EqualTo(StoryChapterId.Prologue));
+            Assert.That(flow.TryAdvance(progress), Is.False,
+                "A new game must not skip the prologue.");
+
+            Complete(progress.GetChapter(StoryChapterId.Prologue));
+            Assert.That(flow.TryAdvance(progress), Is.True);
+            Assert.That(flow.Current(progress).Id, Is.EqualTo(StoryChapterId.Chapter1));
+
+            StoryChapterProgress fourthSeat = progress.GetChapter(StoryChapterId.Chapter1);
+            fourthSeat.ObjectiveCompleted = true;
+            fourthSeat.DialogueCompleted = true;
+            fourthSeat.PuzzleCompleted = true;
+            Assert.That(flow.TryAdvance(progress), Is.False,
+                "Chapter 1 must remain locked until the fourth-seat memory is complete.");
+
+            fourthSeat.MemorySpaceCompleted = true;
+            Assert.That(flow.TryAdvance(progress), Is.True);
+            Assert.That(progress.CurrentChapter, Is.EqualTo(StoryChapterId.Chapter2));
+        }
+
+        [Test]
+        public void PrologueAndFourthSeat_RoundTripPreservesSceneChoiceClueAndRelationship()
+        {
+            var source = SaveData.CreateNew();
+            source.ActiveSceneId = "04_StoryRoute";
+            var progress = new StoryProgress { CurrentChapter = StoryChapterId.Chapter1 };
+            Complete(progress.GetChapter(StoryChapterId.Prologue));
+            StoryChapterProgress fourthSeat = progress.GetChapter(StoryChapterId.Chapter1);
+            fourthSeat.ObjectiveCompleted = true;
+            fourthSeat.DialogueCompleted = true;
+            fourthSeat.PuzzleCompleted = true;
+
+            var flow = new StoryFlowService();
+            flow.RecordChoice(progress, "fourth-seat-name", "seoyun");
+            flow.SetFlag(progress, "repeat-109", false);
+            flow.SetFlag(progress, "first-memory-door-open", false);
+            new StoryRelationshipService().Set(source, "girl", 7);
+            var store = new SaveDataStoryProgressStore();
+            store.Save(source, progress);
+
+            var serializer = new BinarySaveDataSerializer();
+            Assert.That(serializer.TryDeserialize(serializer.Serialize(source), out SaveData restoredSave), Is.True);
+            StoryProgress restored = store.Load(restoredSave);
+
+            Assert.That(restoredSave.ActiveSceneId, Is.EqualTo("04_StoryRoute"));
+            Assert.That(restored.CurrentChapter, Is.EqualTo(StoryChapterId.Chapter1));
+            Assert.That(restored.GetChapter(StoryChapterId.Prologue).IsComplete, Is.True);
+            Assert.That(restored.GetChapter(StoryChapterId.Chapter1).IsComplete, Is.False);
+            Assert.That(restored.ImportantChoices.Find(x => x.ChoiceId == "fourth-seat-name").OutcomeId,
+                Is.EqualTo("seoyun"));
+            Assert.That(restored.ForeshadowFlags, Does.Contain("repeat-109"));
+            Assert.That(restored.ForeshadowFlags, Does.Contain("first-memory-door-open"));
+            Assert.That(new StoryRelationshipService().Get(restoredSave, "girl"), Is.EqualTo(7));
+        }
+
+        [Test]
         public void FinalChapter_RequiresPrologueAndAllSixChapters()
         {
             var progress = new StoryProgress();
@@ -108,6 +169,14 @@ namespace SmallWorld.Save.Story.Tests
             Assert.That(relationships.Set(save, "girl", 140), Is.EqualTo(100));
             Assert.That(relationships.Set(save, "girl", -120), Is.EqualTo(-100));
             Assert.That(save.Relationships.Count, Is.EqualTo(1));
+        }
+
+        private static void Complete(StoryChapterProgress chapter)
+        {
+            chapter.ObjectiveCompleted = true;
+            chapter.DialogueCompleted = true;
+            chapter.PuzzleCompleted = true;
+            chapter.MemorySpaceCompleted = true;
         }
     }
 }
