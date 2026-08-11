@@ -10,6 +10,7 @@ namespace SmallWorld.Flow
     {
         private readonly SaveDataStoryProgressStore store = new SaveDataStoryProgressStore();
         private readonly StoryFlowService flow = new StoryFlowService();
+        private readonly Stage15OpeningStoryService openingStory = new Stage15OpeningStoryService();
         private SaveData save;
         private StoryProgress progress;
 
@@ -55,6 +56,14 @@ namespace SmallWorld.Flow
             }
             flow.TryAdvance(Progress);
             Persist();
+        }
+
+        public OpeningStoryResult PerformOpeningAction(OpeningStoryAction action)
+        {
+            EnsureLoaded();
+            OpeningStoryResult result = openingStory.TryPerform(save, progress, action);
+            if (result.Accepted) Persist();
+            return result;
         }
 
         private void EnsureLoaded()
