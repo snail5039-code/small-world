@@ -85,6 +85,12 @@ namespace SmallWorld.Flow
 
         private async void Update()
         {
+            if (Keyboard.current != null && Keyboard.current.mKey.wasPressedThisFrame)
+            {
+                if (SceneTransitionService.Instance != null)
+                    await SceneTransitionService.Instance.LoadSceneAsync(SceneId.FirstMemory);
+                return;
+            }
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
             {
                 if (photoPuzzleView != null && photoPuzzleView.IsOpen) return;

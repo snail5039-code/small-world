@@ -5,6 +5,7 @@ namespace SmallWorld.Core
     {
         Boot,
         MainMenu,
-        RealityRoom
+        RealityRoom,
+        FirstMemory
     }
 }

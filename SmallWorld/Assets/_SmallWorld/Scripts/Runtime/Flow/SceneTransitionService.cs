@@ -117,6 +117,7 @@ namespace SmallWorld.Flow
                 case SceneId.MainMenu:
                     return GameState.MainMenu;
                 case SceneId.RealityRoom:
+                case SceneId.FirstMemory:
                     return GameState.Playing;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(sceneId), sceneId, "Unknown scene id.");

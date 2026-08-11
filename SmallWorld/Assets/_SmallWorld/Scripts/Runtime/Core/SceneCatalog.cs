@@ -14,6 +14,7 @@ namespace SmallWorld.Core
                 { SceneId.Boot, "00_Boot" },
                 { SceneId.MainMenu, "01_MainMenu" },
                 { SceneId.RealityRoom, "02_RealityRoom" }
+                ,{ SceneId.FirstMemory, "03_FirstMemory" }
             };
 
         public static string GetName(SceneId sceneId)

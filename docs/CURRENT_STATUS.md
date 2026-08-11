@@ -5,10 +5,10 @@
 > 관련 문서: [`INDEX.md`](INDEX.md), [`roadmap/stage-12.md`](roadmap/stage-12.md), [`management/WORKFLOW.md`](management/WORKFLOW.md)
 
 - 기준 커밋: `898cc6f`
-- 완료 단계: 1~11
-- 현재/다음 구현 단계: **12단계 — 기억 공간과 장면 진행**
-- 현재 단계 문서: [`roadmap/stage-12.md`](roadmap/stage-12.md)
-- 이후 단계: 시작 금지. 12단계는 사용자 승인 후 가시적 하위 작업을 만들고 진행합니다.
+- 완료 단계: 1~12
+- 현재/다음 구현 단계: **13단계 — 공간별 퍼즐과 연출 확장**
+- 현재 단계 문서: [`roadmap/stage-13.md`](roadmap/stage-13.md)
+- 이후 단계: 시작 금지. 13단계는 사용자 승인 후 가시적 하위 작업을 만들고 진행합니다.
 - 커밋·푸시 권한: 관리자에게만 있으며, 하위 작업은 별도 지시 없이는 금지합니다.
 
 상태 갱신 시 이 파일과 `roadmap/README.md`의 상태 표시, `AGENTS.md`의 현재 단계 링크를 함께 변경합니다.
