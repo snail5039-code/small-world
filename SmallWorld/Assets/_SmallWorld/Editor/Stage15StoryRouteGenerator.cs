@@ -41,6 +41,11 @@ namespace SmallWorld.Editor
             AssetDatabase.SaveAssets();
         }
 
+        public static void GenerateFromBatchMode()
+        {
+            Generate();
+        }
+
         private static StoryRouteNode[] CreateRoute(Transform root, StoryRouteController route, StoryRouteProgressAdapter progress)
         {
             var nodes = new StoryRouteNode[Ids.Length];
@@ -102,6 +107,9 @@ namespace SmallWorld.Editor
             Transform[] created = CreateActionGrid(parent, progress, z, actions, prompts, PrimitiveType.Cube);
             CreateBlock("Empty Dollhouse", parent, new Vector3(11f, 1f, z - 10f), new Vector3(3f, 2f, 3f));
             CreateBlock("Placed Sofa Echo", parent, new Vector3(11f, 0.5f, z - 5f), new Vector3(3f, 1f, 1.2f));
+            CreateBlock("Reserved Email Monitor", parent, new Vector3(11f, 1.2f, z), new Vector3(1.6f, 1.2f, 0.2f));
+            CreateBlock("Loop 109 Display", parent, new Vector3(11f, 1.4f, z + 4f), new Vector3(1.8f, 0.8f, 0.2f));
+            CreatePointLight("Prologue Warm Light", parent, new Vector3(0f, 3.2f, z), new Color(1f, 0.78f, 0.58f), 2.2f, 15f);
             return new[] { created[0], created[1], created[9] };
         }
 
@@ -134,6 +142,12 @@ namespace SmallWorld.Editor
             Transform[] created = CreateActionGrid(parent, progress, z, actions, prompts, PrimitiveType.Cylinder);
             CreateBlock("Four Seat Dining Table", parent, new Vector3(11f, 0.65f, z - 10f), new Vector3(4f, 1.3f, 3f));
             CreateBlock("Repeating Corridor", parent, new Vector3(11f, 1.5f, z), new Vector3(3f, 3f, 13f));
+            CreateBlock("The Empty Fourth Chair", parent, new Vector3(11f, 0.75f, z - 7.5f), new Vector3(1.1f, 1.5f, 1.1f));
+            CreateBlock("Manipulated Family Photo", parent, new Vector3(13f, 1.8f, z - 4f), new Vector3(0.2f, 2.1f, 2.8f));
+            CreateBlock("Locked Seoyun Room", parent, new Vector3(9f, 1.5f, z + 5f), new Vector3(2.2f, 3f, 0.25f));
+            CreateBlock("Basement Key Foreshadow", parent, new Vector3(12f, 0.45f, z - 2f), new Vector3(0.25f, 0.12f, 0.7f));
+            CreateBlock("Nonexistent Room", parent, new Vector3(11f, 1.5f, z + 8f), new Vector3(2.2f, 3f, 0.25f));
+            CreatePointLight("Rainy Apartment Light", parent, new Vector3(8f, 3.1f, z), new Color(0.48f, 0.62f, 1f), 1.8f, 16f);
             return new[] { created[0], created[4], created[16] };
         }
 
@@ -234,6 +248,19 @@ namespace SmallWorld.Editor
         private static GameObject CreateBlock(string name, Transform parent, Vector3 position, Vector3 scale)
         {
             GameObject block = GameObject.CreatePrimitive(PrimitiveType.Cube); block.name = name; block.transform.SetParent(parent, true); block.transform.position = position; block.transform.localScale = scale; return block;
+        }
+
+        private static Light CreatePointLight(string name, Transform parent, Vector3 position, Color color, float intensity, float range)
+        {
+            var lightObject = new GameObject(name);
+            lightObject.transform.SetParent(parent, true);
+            lightObject.transform.position = position;
+            Light light = lightObject.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = color;
+            light.intensity = intensity;
+            light.range = range;
+            return light;
         }
 
         private static void AddBuildScene()
