@@ -1,5 +1,9 @@
 using System;
+using SmallWorld.Player;
+using SmallWorld.Save.Stage10.Integration;
+using SmallWorld.UI.Stage7;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SmallWorld.Flow
 {
@@ -26,15 +30,27 @@ namespace SmallWorld.Flow
 
     public sealed class StoryRouteController : MonoBehaviour
     {
+        private enum RuntimeOverlay { None, Records, Paused }
+
         [SerializeField] private Transform player;
         [SerializeField] private StoryRouteNode[] nodes = Array.Empty<StoryRouteNode>();
         [SerializeField] private int fallbackUnlockedIndex;
 
         private IStoryRouteProgressSource progressSource;
+        private RuntimeOverlay runtimeOverlay;
+        private FirstPersonPlayerController playerController;
+        private Stage10ManualSavePanel savePanel;
+        private bool playerWasEnabled;
+        private CursorLockMode previousCursorLockState;
+        private bool previousCursorVisible;
+        private float timeScaleBeforePause = 1f;
+        private bool inputStateCaptured;
 
         public int NodeCount => nodes?.Length ?? 0;
         public int FallbackUnlockedIndex => fallbackUnlockedIndex;
         public bool IsFinalGateUnlocked => progressSource?.IsFinalGateUnlocked ?? false;
+        public bool IsRuntimeOverlayOpen => runtimeOverlay != RuntimeOverlay.None;
+        public bool IsRuntimePaused => runtimeOverlay == RuntimeOverlay.Paused;
 
         public void Configure(Transform playerTransform, StoryRouteNode[] routeNodes)
         {
@@ -45,6 +61,127 @@ namespace SmallWorld.Flow
         public void BindProgressSource(IStoryRouteProgressSource source) => progressSource = source;
 
         public void ReportStep(string nodeId, StoryRouteStep step) => progressSource?.ReportStep(nodeId, step);
+
+        private void Awake()
+        {
+            ResolveRuntimeInputOwners();
+        }
+
+        private void Update()
+        {
+            if (Keyboard.current == null) return;
+            if (Keyboard.current.tabKey.wasPressedThisFrame)
+            {
+                HandleTabPressed();
+                return;
+            }
+
+            if (Keyboard.current.escapeKey.wasPressedThisFrame) HandleEscapePressed();
+        }
+
+        private void OnDestroy()
+        {
+            CloseRuntimeOverlay();
+        }
+
+        public bool HandleTabPressed()
+        {
+            if (IsSaveMenuOpen()) return false;
+            if (runtimeOverlay == RuntimeOverlay.Paused) return true;
+            SetRuntimeOverlay(runtimeOverlay == RuntimeOverlay.Records
+                ? RuntimeOverlay.None
+                : RuntimeOverlay.Records);
+            return true;
+        }
+
+        public bool HandleEscapePressed()
+        {
+            if (IsSaveMenuOpen()) return false;
+            SetRuntimeOverlay(runtimeOverlay == RuntimeOverlay.None
+                ? RuntimeOverlay.Paused
+                : RuntimeOverlay.None);
+            return true;
+        }
+
+        private void SetRuntimeOverlay(RuntimeOverlay overlay)
+        {
+            if (runtimeOverlay == overlay) return;
+            if (runtimeOverlay == RuntimeOverlay.None && overlay != RuntimeOverlay.None)
+                CaptureGameplayInputState();
+
+            if (runtimeOverlay == RuntimeOverlay.Paused && overlay != RuntimeOverlay.Paused)
+                RestoreTimeScale();
+
+            runtimeOverlay = overlay;
+            if (runtimeOverlay == RuntimeOverlay.Paused)
+            {
+                timeScaleBeforePause = Time.timeScale;
+                Time.timeScale = 0f;
+            }
+
+            if (runtimeOverlay == RuntimeOverlay.None) RestoreGameplayInputState();
+        }
+
+        private void CloseRuntimeOverlay()
+        {
+            if (runtimeOverlay == RuntimeOverlay.Paused) RestoreTimeScale();
+            runtimeOverlay = RuntimeOverlay.None;
+            RestoreGameplayInputState();
+        }
+
+        private void CaptureGameplayInputState()
+        {
+            if (inputStateCaptured) return;
+            ResolveRuntimeInputOwners();
+            playerWasEnabled = playerController != null && playerController.enabled;
+            previousCursorLockState = DialogueCursorMode.RequestedLockState;
+            previousCursorVisible = DialogueCursorMode.RequestedVisible;
+            inputStateCaptured = true;
+            if (playerWasEnabled) playerController.enabled = false;
+            DialogueCursorMode.RequestUi();
+        }
+
+        private void RestoreGameplayInputState()
+        {
+            if (!inputStateCaptured) return;
+            inputStateCaptured = false;
+            if (playerController != null) playerController.enabled = playerWasEnabled;
+            DialogueCursorMode.Restore(previousCursorLockState, previousCursorVisible);
+        }
+
+        private void ResolveRuntimeInputOwners()
+        {
+            if (playerController == null && player != null)
+                playerController = player.GetComponent<FirstPersonPlayerController>();
+            if (playerController == null)
+                playerController = FindFirstObjectByType<FirstPersonPlayerController>();
+            if (savePanel == null)
+                savePanel = FindFirstObjectByType<Stage10ManualSavePanel>(FindObjectsInactive.Include);
+        }
+
+        private bool IsSaveMenuOpen()
+        {
+            ResolveRuntimeInputOwners();
+            return savePanel != null && savePanel.IsOpen;
+        }
+
+        private void RestoreTimeScale()
+        {
+            if (Time.timeScale == 0f) Time.timeScale = Mathf.Max(0.0001f, timeScaleBeforePause);
+        }
+
+        private void OnGUI()
+        {
+            if (runtimeOverlay == RuntimeOverlay.None) return;
+            float width = Mathf.Min(620f, Screen.width - 40f);
+            float height = runtimeOverlay == RuntimeOverlay.Paused ? 220f : 360f;
+            Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+            GUI.Box(panel, runtimeOverlay == RuntimeOverlay.Paused ? "Paused" : "Records");
+            Rect message = new Rect(panel.x + 28f, panel.y + 62f, panel.width - 56f, panel.height - 105f);
+            GUI.Label(message, runtimeOverlay == RuntimeOverlay.Paused
+                ? "Press Esc to return to the story."
+                : "No route records have been collected yet.\n\nPress Tab or Esc to close.");
+        }
 
         public bool TryTravelTo(int index, out string feedback)
         {

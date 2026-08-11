@@ -18,6 +18,7 @@ namespace SmallWorld.Save.Stage10.Integration
         private bool playerWasEnabled;
         private CursorLockMode previousCursorLockState;
         private bool previousCursorVisible;
+        public bool IsOpen => IsVisible();
         public void Configure(CanvasGroup root, Button[] saves, Button[] loads, Button close) { panel = root; saveButtons = saves ?? Array.Empty<Button>(); loadButtons = loads ?? Array.Empty<Button>(); closeButton = close; Bind(); Close(); }
         public void Configure(RealityRoomSaveCoordinator value) => coordinator = value;
         public void Configure(FirstPersonPlayerController value) => player = value;
