@@ -51,10 +51,12 @@ namespace SmallWorld.Editor
             character.rotation = Quaternion.Euler(0f, 180f, 0f);
             GirlCharacterController controller = character.gameObject.AddComponent<GirlCharacterController>();
             GirlCharacterRuntimeBridgeComponent bridge = character.gameObject.AddComponent<GirlCharacterRuntimeBridgeComponent>();
-            CapsuleCollider capsule = character.gameObject.AddComponent<CapsuleCollider>();
-            capsule.height = 1.72f;
-            capsule.radius = 0.32f;
-            capsule.center = new Vector3(0f, 0.86f, 0f);
+            CharacterController movement = character.GetComponent<CharacterController>();
+            movement.height = 1.72f;
+            movement.radius = 0.32f;
+            movement.center = new Vector3(0f, 0.86f, 0f);
+            movement.skinWidth = 0.04f;
+            movement.stepOffset = 0.2f;
 
             Transform presentation = Group("Replaceable Visual Root", character);
             Transform head = BuildPrototype(presentation, out Renderer face);

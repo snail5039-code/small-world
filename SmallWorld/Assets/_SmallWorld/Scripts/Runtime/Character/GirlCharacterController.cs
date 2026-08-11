@@ -11,6 +11,7 @@ namespace SmallWorld.Character
         Surprised
     }
 
+    [RequireComponent(typeof(CharacterController))]
     public sealed class GirlCharacterController : MonoBehaviour, IGirlCharacterPresentation
     {
         [Header("Replaceable presentation")]
@@ -42,6 +43,7 @@ namespace SmallWorld.Character
         private float playerDistance = float.PositiveInfinity;
         private GirlBehavior behavior = GirlBehavior.Observe;
         private GirlMood mood = GirlMood.Guarded;
+        private CharacterController movementController;
 
         public GirlExpression Expression => expression;
         public bool PlayerNoticed => playerNoticed;
@@ -49,6 +51,9 @@ namespace SmallWorld.Character
         public float PlayerDistance => playerDistance;
         public GirlBehavior Behavior => behavior;
         public Transform VisualRoot => visualRoot;
+        public CharacterController CollisionController => movementController != null
+            ? movementController
+            : GetComponent<CharacterController>();
 
         public void Configure(Transform presentationRoot, Transform head, Renderer face, Transform[] patrolPoints, Transform view)
         {
@@ -62,6 +67,7 @@ namespace SmallWorld.Character
 
         private void Awake()
         {
+            movementController = GetComponent<CharacterController>();
             if (playerView == null && Camera.main != null) playerView = Camera.main.transform;
             CachePresentationState();
             SetExpression(GirlExpression.Calm);
@@ -119,7 +125,7 @@ namespace SmallWorld.Character
             }
 
             Vector3 direction = offset.normalized;
-            transform.position += direction * Mathf.Min(walkSpeed * Time.deltaTime, offset.magnitude);
+            MoveRespectingCollisions(direction * Mathf.Min(walkSpeed * Time.deltaTime, offset.magnitude));
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), turnSpeed * Time.deltaTime);
             SetMoving(true);
         }
@@ -137,10 +143,23 @@ namespace SmallWorld.Character
             if (!approach && !retreat) return behavior == GirlBehavior.ShareMemory;
 
             Vector3 direction = flat.normalized * (retreat ? -1f : 1f);
-            transform.position += direction * walkSpeed * (retreat ? 1.25f : 0.8f) * Time.deltaTime;
+            MoveRespectingCollisions(direction * walkSpeed * (retreat ? 1.25f : 0.8f) * Time.deltaTime);
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(retreat ? -direction : direction), turnSpeed * Time.deltaTime);
             SetMoving(true);
             return true;
+        }
+
+        private void MoveRespectingCollisions(Vector3 displacement)
+        {
+            if (movementController == null) movementController = GetComponent<CharacterController>();
+            if (movementController != null && movementController.enabled)
+            {
+                movementController.Move(displacement);
+                return;
+            }
+
+            Debug.LogError("Girl character movement requires an enabled CharacterController.", this);
+            enabled = false;
         }
 
         private float PreferredDistance()
