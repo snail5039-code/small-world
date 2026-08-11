@@ -4,7 +4,7 @@
 > 읽는 경우: 모든 작업 시작, 인수인계, 단계 완료 판단 시.
 > 관련 문서: [`INDEX.md`](INDEX.md), [`roadmap/stage-12.md`](roadmap/stage-12.md), [`management/WORKFLOW.md`](management/WORKFLOW.md)
 
-- 기준 커밋: `898cc6f`
+- 기준 커밋: `dd0b2cf`
 - 완료 단계: 1~13
 - 현재/다음 구현 단계: **14단계 — 장면 연결과 진행 검증**
 - 현재 단계 문서: [`roadmap/stage-14.md`](roadmap/stage-14.md)
