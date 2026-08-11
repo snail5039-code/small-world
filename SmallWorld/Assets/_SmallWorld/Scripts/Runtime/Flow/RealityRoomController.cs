@@ -164,6 +164,8 @@ namespace SmallWorld.Flow
             bool gameplay = current == UIState.Gameplay &&
                             (dialogueView == null || !dialogueView.IsDialogueActive);
             if (player != null) player.enabled = gameplay;
+            if (gameplay) DialogueCursorMode.RequestGameplay();
+            else DialogueCursorMode.RequestUi();
         }
 
         private void CloseInspection()

@@ -93,10 +93,12 @@ namespace SmallWorld.Save.Stage10.Integration
             photoPuzzle = puzzleView;
             manualPanel = panel;
             manualPanel?.Configure(this);
+            manualPanel?.Configure(player);
         }
 
         private void Start()
         {
+            manualPanel?.Configure(player);
             current = Stage10SaveRuntime.ConsumePendingLoad() ?? SaveData.CreateNew();
             if (HasProgress(current)) Restore(current);
             else MigrateLegacyPhotoPuzzle();

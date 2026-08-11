@@ -17,6 +17,11 @@ namespace SmallWorld.UI.Stage7
             Apply(CursorLockMode.Locked, false);
         }
 
+        public static void Restore(CursorLockMode lockState, bool visible)
+        {
+            Apply(lockState, visible);
+        }
+
         private static void Apply(CursorLockMode lockState, bool visible)
         {
             RequestedLockState = lockState;
