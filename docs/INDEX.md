@@ -8,7 +8,7 @@
 
 1. 이 문서
 2. [`CURRENT_STATUS.md`](CURRENT_STATUS.md)
-3. 현재 단계 문서인 [`roadmap/stage-11.md`](roadmap/stage-11.md)
+3. 현재 단계 문서인 [`roadmap/stage-12.md`](roadmap/stage-12.md)
 
 ## 목적별 문서
 

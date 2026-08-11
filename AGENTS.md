@@ -4,7 +4,7 @@
 
 1. `docs/INDEX.md`
 2. `docs/CURRENT_STATUS.md`
-3. `docs/roadmap/stage-11.md` (현재 단계 문서; 단계 변경 시 `CURRENT_STATUS.md`의 링크를 따름)
+3. `docs/roadmap/stage-12.md` (현재 단계 문서; 단계 변경 시 `CURRENT_STATUS.md`의 링크를 따름)
 
 ## 필수 운영 규칙
 
