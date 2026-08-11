@@ -252,8 +252,20 @@ namespace SmallWorld.Editor
         private static void IntegrateRealityRoom()
         {
             Scene scene = EditorSceneManager.OpenScene(RealityRoomPath, OpenSceneMode.Single);
-            GameObject existing = GameObject.Find("Stage 15 Story Route Entry");
-            if (existing != null) UnityEngine.Object.DestroyImmediate(existing);
+            StoryRouteEntryInteractable[] oldEntries = UnityEngine.Object.FindObjectsByType<StoryRouteEntryInteractable>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (StoryRouteEntryInteractable oldEntry in oldEntries)
+            {
+                if (oldEntry != null && oldEntry.gameObject.name == "Stage 15 Story Route Entry")
+                    UnityEngine.Object.DestroyImmediate(oldEntry.gameObject);
+            }
+
+            GameObject southWall = GameObject.Find("South Wall B");
+            if (southWall != null)
+            {
+                southWall.transform.position = new Vector3(2.75f, 1.45f, -5f);
+                southWall.transform.localScale = new Vector3(6.5f, 3.1f, 0.2f);
+            }
 
             GameObject doorHinge = GameObject.Find("Door Hinge");
             if (doorHinge == null) throw new InvalidOperationException("Reality Room door hinge is missing.");

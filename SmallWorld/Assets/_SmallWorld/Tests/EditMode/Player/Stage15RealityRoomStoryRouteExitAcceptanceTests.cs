@@ -35,8 +35,8 @@ namespace SmallWorld.Player.Tests
 
             Assert.That(exits, Has.Length.EqualTo(1),
                 "RealityRoom must contain exactly one StoryRoute exit; remove duplicate entry objects.");
-            Assert.That(exits[0].gameObject, Is.SameAs(door),
-                "The existing Door, rather than a separate placeholder, must own the StoryRoute interaction.");
+            Assert.That(exits[0].gameObject, Is.SameAs(GameObject.Find("Door Hinge")),
+                "The existing Door Hinge must own the exit so it can observe the door-open completion event.");
             Assert.That(GameObject.Find("Stage 15 Story Route Entry"), Is.Null,
                 "The temporary duplicate StoryRoute entry object must be removed.");
         }

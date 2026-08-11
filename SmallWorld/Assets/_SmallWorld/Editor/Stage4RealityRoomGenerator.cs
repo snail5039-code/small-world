@@ -122,7 +122,7 @@ namespace SmallWorld.Editor
             Block("East Window Header", architecture, new Vector3(6f, 2.65f, 0f), new Vector3(0.2f, 0.7f, 4f), "WarmWall");
             Block("East Window Sill", architecture, new Vector3(6f, 0.45f, 0f), new Vector3(0.28f, 0.18f, 4f), "Cream");
             Block("South Wall A", architecture, new Vector3(-3.7f, 1.45f, -5f), new Vector3(4.6f, 3.1f, 0.2f), "WarmWall");
-            Block("South Wall B", architecture, new Vector3(2.3f, 1.45f, -5f), new Vector3(7.4f, 3.1f, 0.2f), "WarmWall");
+            Block("South Wall B", architecture, new Vector3(2.75f, 1.45f, -5f), new Vector3(6.5f, 3.1f, 0.2f), "WarmWall");
             Block("Door Header", architecture, new Vector3(-1f, 2.65f, -5f), new Vector3(1f, 0.7f, 0.2f), "WarmWall");
             Block("Door", architecture, new Vector3(-1f, 1.1f, -4.92f), new Vector3(0.9f, 2.2f, 0.12f), "Wood");
             Sphere("Door Handle", architecture, new Vector3(-0.68f, 1.05f, -4.82f), new Vector3(0.08f, 0.08f, 0.08f), "Metal");

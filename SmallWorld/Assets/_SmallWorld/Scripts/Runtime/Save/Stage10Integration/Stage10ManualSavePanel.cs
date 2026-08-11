@@ -55,6 +55,7 @@ namespace SmallWorld.Save.Stage10.Integration
         }
         private void CaptureInputState()
         {
+            if (player == null) player = FindFirstObjectByType<FirstPersonPlayerController>();
             playerWasEnabled = player != null && player.enabled;
             previousCursorLockState = DialogueCursorMode.RequestedLockState;
             previousCursorVisible = DialogueCursorMode.RequestedVisible;

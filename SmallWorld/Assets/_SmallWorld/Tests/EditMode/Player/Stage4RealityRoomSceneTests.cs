@@ -62,7 +62,8 @@ namespace SmallWorld.Player.Tests
             Assert.That(System.Array.FindAll(interactables,
                 item => item.GetType().FullName == "SmallWorld.Flow.StoryRouteEntryInteractable"), Has.Length.EqualTo(1));
             GameObject doorHinge = GameObject.Find("Door Hinge");
-            Assert.That(doorHinge.GetComponent<SmallWorld.Flow.StoryRouteEntryInteractable>(), Is.Not.Null);
+            Assert.That(System.Array.Exists(doorHinge.GetComponents<Component>(),
+                item => item.GetType().FullName == "SmallWorld.Flow.StoryRouteEntryInteractable"), Is.True);
             Assert.That(GameObject.Find("Stage 15 Story Route Entry"), Is.Null);
             Assert.That(GameObject.Find("Stage 10 Save Integration"), Is.Not.Null);
             InteractionPromptView[] views = Object.FindObjectsByType<InteractionPromptView>(FindObjectsSortMode.None);
