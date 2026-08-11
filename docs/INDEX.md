@@ -15,6 +15,7 @@
 | 필요 정보 | 읽을 문서 |
 |---|---|
 | 현재 완료 범위·다음 작업·기준 커밋 | [`CURRENT_STATUS.md`](CURRENT_STATUS.md) |
+| 13단계 완료 결과·검증·14단계 인수인계 | [`management/STAGE13_HANDOFF.md`](management/STAGE13_HANDOFF.md) |
 | 가시적 하위 작업, 통합, 검증, 보고 | [`management/WORKFLOW.md`](management/WORKFLOW.md) |
 | 전체 18단계 탐색 | [`roadmap/README.md`](roadmap/README.md) |
 | 게임의 핵심 목표·루프·시스템 | [`design/GAME_DESIGN.md`](design/GAME_DESIGN.md) |

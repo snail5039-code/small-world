@@ -2,9 +2,10 @@
 
 > 목적: 지금 필요한 범위와 다음 단계를 한 화면에서 확인합니다.
 > 읽는 경우: 모든 작업 시작, 인수인계, 단계 완료 판단 시.
-> 관련 문서: [`INDEX.md`](INDEX.md), [`roadmap/stage-12.md`](roadmap/stage-12.md), [`management/WORKFLOW.md`](management/WORKFLOW.md)
+> 관련 문서: [`INDEX.md`](INDEX.md), [`roadmap/stage-14.md`](roadmap/stage-14.md), [`management/STAGE13_HANDOFF.md`](management/STAGE13_HANDOFF.md), [`management/WORKFLOW.md`](management/WORKFLOW.md)
 
-- 기준 커밋: `dd0b2cf`
+- 기능 기준 커밋: `dd0b2cf` (`feat(stage13): 공간별 퍼즐과 연출 확장`)
+- 13단계 인수인계: `955644e` ([`management/STAGE13_HANDOFF.md`](management/STAGE13_HANDOFF.md))
 - 완료 단계: 1~13
 - 현재/다음 구현 단계: **14단계 — 장면 연결과 진행 검증**
 - 현재 단계 문서: [`roadmap/stage-14.md`](roadmap/stage-14.md)

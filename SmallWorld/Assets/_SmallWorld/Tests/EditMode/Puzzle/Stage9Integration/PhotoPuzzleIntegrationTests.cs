@@ -178,7 +178,11 @@ namespace SmallWorld.Puzzle.Stage9Integration.Tests
             var serialized = new SerializedObject(root.GetComponent<PhotoPuzzleView>());
             Assert.That(serialized.FindProperty("modelHouseRoof").objectReferenceValue, Is.SameAs(roof));
             Assert.That(serialized.FindProperty("persistenceKey").stringValue, Is.EqualTo(PhotoPuzzleView.PersistenceKey));
-            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(7));
+            InteractableBase[] interactables = Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None);
+            Assert.That(System.Array.FindAll(interactables,
+                item => item.GetType().FullName != "SmallWorld.Flow.FirstMemoryEntryInteractable"), Has.Length.EqualTo(7));
+            Assert.That(System.Array.FindAll(interactables,
+                item => item.GetType().FullName == "SmallWorld.Flow.FirstMemoryEntryInteractable"), Has.Length.EqualTo(1));
             Assert.That(GameObject.Find("Stage 10 Save Integration"), Is.Not.Null);
         }
 

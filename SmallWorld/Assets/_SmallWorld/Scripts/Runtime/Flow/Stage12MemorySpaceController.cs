@@ -19,6 +19,10 @@ namespace SmallWorld.Flow
         [SerializeField] private string memorySpaceId = "first-memory";
         [SerializeField] private string progressKey = "stage12.memory.first.entered";
         public bool HasEntered { get; private set; }
+        public bool IsExitBlocked { get; private set; }
+
+        private Stage13MemoryPuzzleController puzzleController;
+        private MemoryJourneyFlow journeyFlow;
 
         private void Awake()
         {
@@ -26,6 +30,15 @@ namespace SmallWorld.Flow
             if (memoryLight == null) memoryLight = GetComponentInChildren<Light>(true);
             if (memoryMarkers == null || memoryMarkers.Length == 0)
                 memoryMarkers = GetComponentsInChildren<Renderer>(true);
+            puzzleController = GetComponent<Stage13MemoryPuzzleController>();
+            if (puzzleController == null) puzzleController = GetComponentInChildren<Stage13MemoryPuzzleController>(true);
+            if (puzzleController != null) puzzleController.ChoiceSubmitted += OnPuzzleChoiceSubmitted;
+            journeyFlow = CreateJourneyFlow();
+        }
+
+        private void OnDestroy()
+        {
+            if (puzzleController != null) puzzleController.ChoiceSubmitted -= OnPuzzleChoiceSubmitted;
         }
 
         private void Start()
@@ -35,23 +48,17 @@ namespace SmallWorld.Flow
             PlayerPrefs.Save();
             Debug.Log("[Stage12] First memory space entered; safe zone active.", this);
             ApplyPresentation(false);
-            PersistProgress();
+            SaveData data = LoadLatest();
+            journeyFlow.Enter(data);
+            if (puzzleController != null) puzzleController.Restore(journeyFlow.RestorePuzzle(data));
+            Save(data);
         }
 
-        private void PersistProgress()
+        private void OnPuzzleChoiceSubmitted(int choice)
         {
-            SaveData data = SaveData.CreateNew();
-            SaveReadResult latest = Stage10SaveRuntime.FindLatest();
-            if (latest.IsSuccess && latest.Data != null) data = latest.Data;
-            MemorySpaceProgress progress = new MemorySpaceProgress();
-            MemorySpaceState state = progress.Get(data, memorySpaceId);
-            state.SpaceId = memorySpaceId;
-            state.HasEntered = true;
-            state.Phase = MemorySpacePhase.Inside;
-            state.VisitCount = Mathf.Max(1, state.VisitCount);
-            progress.Set(data, state);
-            data.ActiveSceneId = SceneId.FirstMemory.ToString();
-            Stage10SaveRuntime.Service.AutoSave(data);
+            SaveData data = LoadLatest();
+            journeyFlow.SubmitChoice(data, choice);
+            Save(data);
         }
 
         private void UpdatePresentation()
@@ -87,22 +94,43 @@ namespace SmallWorld.Flow
 
         public async Task ReturnToWhiteRoom()
         {
+            SaveData data = LoadLatest();
+            if (journeyFlow.TryExit(data) == MemoryExitResult.BlockedByPuzzle)
+            {
+                IsExitBlocked = true;
+                Debug.Log("[Stage14] Memory exit blocked until the puzzle is solved.", this);
+                return;
+            }
+
+            IsExitBlocked = false;
             PlayerPrefs.SetInt("stage12.memory.first.exited", 1);
             PlayerPrefs.Save();
-            SaveData data = SaveData.CreateNew();
-            SaveReadResult latest = Stage10SaveRuntime.FindLatest();
-            if (latest.IsSuccess && latest.Data != null) data = latest.Data;
-            MemorySpaceProgress progress = new MemorySpaceProgress();
-            MemorySpaceState state = progress.Get(data, memorySpaceId);
-            state.Phase = MemorySpacePhase.WhiteRoom;
-            state.HasExited = true;
-            progress.Set(data, state);
-            data.ActiveSceneId = SceneId.RealityRoom.ToString();
-            Stage10SaveRuntime.Service.AutoSave(data);
+            Save(data);
             ApplyPresentation(true);
             Debug.Log("[Stage13] Memory exit presentation completed; white room return queued.", this);
             if (SceneTransitionService.Instance != null)
                 await SceneTransitionService.Instance.LoadSceneAsync(SceneId.RealityRoom);
         }
+
+        private MemoryJourneyFlow CreateJourneyFlow()
+        {
+            string puzzleId = puzzleController != null ? puzzleController.PuzzleId : "first-memory-sequence";
+            int[] solution = puzzleController != null ? puzzleController.Solution : new[] { 1, 2, 3 };
+            return new MemoryJourneyFlow(new MemorySpaceDefinition
+            {
+                Id = memorySpaceId,
+                EntrySceneId = SceneId.FirstMemory.ToString(),
+                ReturnSceneId = SceneId.RealityRoom.ToString(),
+                SafeZoneId = "first-memory-safe-zone"
+            }, puzzleId, solution);
+        }
+
+        private static SaveData LoadLatest()
+        {
+            SaveReadResult latest = Stage10SaveRuntime.FindLatest();
+            return latest.IsSuccess && latest.Data != null ? latest.Data : SaveData.CreateNew();
+        }
+
+        private static void Save(SaveData data) => Stage10SaveRuntime.Service.AutoSave(data);
     }
 }

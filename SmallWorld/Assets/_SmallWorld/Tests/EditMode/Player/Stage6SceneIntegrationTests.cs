@@ -32,7 +32,11 @@ namespace SmallWorld.Player.Tests
             GameObject root = GameObject.Find("Stage 6 Reality Room UI");
 
             Assert.That(root, Is.Not.Null);
-            Assert.That(Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None), Has.Length.EqualTo(7));
+            InteractableBase[] interactables = Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None);
+            Assert.That(System.Array.FindAll(interactables,
+                item => item.GetType().FullName != "SmallWorld.Flow.FirstMemoryEntryInteractable"), Has.Length.EqualTo(7));
+            Assert.That(System.Array.FindAll(interactables,
+                item => item.GetType().FullName == "SmallWorld.Flow.FirstMemoryEntryInteractable"), Has.Length.EqualTo(1));
             Assert.That(GameObject.Find("Stage 10 Save Integration"), Is.Not.Null);
             Assert.That(Object.FindObjectsByType<InteractionPromptView>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
             Assert.That(root.GetComponentsInChildren<InspectionView>(true), Has.Length.EqualTo(1));

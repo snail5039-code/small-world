@@ -1,3 +1,4 @@
+using System;
 using SmallWorld.Save.Stage12;
 using UnityEngine;
 
@@ -13,6 +14,9 @@ namespace SmallWorld.Flow
         private string SaveKey => "stage13.memory-puzzle." + puzzleId;
         public bool IsCompleted => state != null && state.Completed;
         public int Progress => state?.Progress ?? 0;
+        public int[] Solution => (int[])solution.Clone();
+        public string PuzzleId => puzzleId;
+        public event Action<int> ChoiceSubmitted;
 
         private void Awake()
         {
@@ -28,7 +32,30 @@ namespace SmallWorld.Flow
             PlayerPrefs.SetInt(SaveKey + ".completed", state.Completed ? 1 : 0);
             PlayerPrefs.SetInt(SaveKey + ".mistakes", state.Mistakes);
             PlayerPrefs.Save();
+            ChoiceSubmitted?.Invoke(choice);
             return accepted;
+        }
+
+        public void Restore(MemoryPuzzleState restored)
+        {
+            state = flow.Normalize(restored);
+            PersistPlayerPrefs();
+        }
+
+        public MemoryPuzzleState Snapshot() => new MemoryPuzzleState
+        {
+            PuzzleId = puzzleId,
+            Progress = state?.Progress ?? 0,
+            Completed = state != null && state.Completed,
+            Mistakes = state?.Mistakes ?? 0
+        };
+
+        private void PersistPlayerPrefs()
+        {
+            PlayerPrefs.SetInt(SaveKey + ".progress", state.Progress);
+            PlayerPrefs.SetInt(SaveKey + ".completed", state.Completed ? 1 : 0);
+            PlayerPrefs.SetInt(SaveKey + ".mistakes", state.Mistakes);
+            PlayerPrefs.Save();
         }
 
         public void ResetPuzzle()
