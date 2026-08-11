@@ -1,0 +1,13 @@
+{
+  "name": "SmallWorld.Character.Stage11.Tests",
+  "rootNamespace": "SmallWorld.Character.Stage11.Tests",
+  "references": [
+    "SmallWorld.Character.Stage11",
+    "SmallWorld.Dialogue.Stage7",
+    "SmallWorld.Save.Stage10"
+  ],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

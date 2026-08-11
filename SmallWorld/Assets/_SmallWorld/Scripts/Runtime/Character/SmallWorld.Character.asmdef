@@ -1,0 +1,19 @@
+{
+  "name": "SmallWorld.Character",
+  "rootNamespace": "SmallWorld.Character",
+  "references": [
+    "SmallWorld.Character.Stage11",
+    "SmallWorld.Dialogue.Stage7",
+    "SmallWorld.Save.Stage10",
+    "SmallWorld.UI.Stage7"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

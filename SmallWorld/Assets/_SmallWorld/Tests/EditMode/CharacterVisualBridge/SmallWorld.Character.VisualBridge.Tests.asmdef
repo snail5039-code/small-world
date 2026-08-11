@@ -1,0 +1,9 @@
+{
+  "name": "SmallWorld.Character.VisualBridge.Tests",
+  "rootNamespace": "SmallWorld.Character.VisualBridge.Tests",
+  "references": ["SmallWorld.Character", "SmallWorld.Character.Stage11", "SmallWorld.UI.Stage7", "SmallWorld.Dialogue.Stage7"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}
