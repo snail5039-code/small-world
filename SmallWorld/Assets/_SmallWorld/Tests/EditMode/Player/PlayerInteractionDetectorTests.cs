@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace SmallWorld.Player.Tests
@@ -7,17 +8,17 @@ namespace SmallWorld.Player.Tests
     {
         private GameObject detectorObject;
 
+        [SetUp]
+        public void SetUp()
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        }
+
         [TearDown]
         public void TearDown()
         {
-            foreach (GameObject gameObject in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
-            {
-                if (gameObject.scene.IsValid() &&
-                    (gameObject == detectorObject || gameObject.name.StartsWith("Interaction Detector Test")))
-                    Object.DestroyImmediate(gameObject);
-            }
-
             detectorObject = null;
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         }
 
         [Test]

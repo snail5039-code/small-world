@@ -7,6 +7,18 @@ namespace SmallWorld.Player.Tests
 {
     public sealed class Stage5InteractionTests
     {
+        [SetUp]
+        public void SetUp()
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        }
+
         [Test]
         public void Inspectable_RotatesAndReportsExactlyOncePerCall()
         {
