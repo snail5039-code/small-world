@@ -1,7 +1,7 @@
 {
   "name": "SmallWorld.Player.Tests",
   "rootNamespace": "SmallWorld.Player.Tests",
-  "references": ["SmallWorld.Player", "SmallWorld.UI.Stage6", "SmallWorld.UI.Stage7", "SmallWorld.UI.Stage8", "SmallWorld.Dialogue.Stage7", "SmallWorld.Inventory.Stage8", "SmallWorld.Puzzle.Stage9.Persistence", "Unity.InputSystem", "Unity.ugui"],
+  "references": ["SmallWorld.Player", "SmallWorld.UI.Stage6", "SmallWorld.UI.Stage7", "SmallWorld.UI.Stage8", "SmallWorld.Dialogue.Stage7", "SmallWorld.Inventory.Stage8", "SmallWorld.Puzzle.Stage9.Persistence", "SmallWorld.Save.Stage10.Integration", "Unity.InputSystem", "Unity.ugui"],
   "optionalUnityReferences": ["TestAssemblies"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
