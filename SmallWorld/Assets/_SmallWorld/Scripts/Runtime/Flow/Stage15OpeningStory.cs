@@ -43,7 +43,28 @@ namespace SmallWorld.Flow
         MoveSofa,
         TurnFrame,
         PullFrontDoor,
-        ReturnHome
+        ReturnHome,
+        HearDohyeon,
+        ReadPlatformBoard,
+        ConnectLoginTime1,
+        ConnectLoginTime2,
+        ConnectLoginTime3,
+        ConnectLoginTime4,
+        ReturnEmployeeCard,
+        ReturnChildShoe,
+        ReturnHospitalBand,
+        ReturnGameCartridge,
+        ReturnItemToWrongShadow,
+        ReverseAnnouncement1,
+        ReverseAnnouncement2,
+        ReverseAnnouncement3,
+        ChooseRealityHome,
+        ChooseGameHouse,
+        ChooseWhiteStation,
+        CrossSafeZone1,
+        CrossSafeZone2,
+        CrossSafeZone3,
+        ReturnFromPlatform
     }
 
     public readonly struct OpeningStoryResult
@@ -75,7 +96,9 @@ namespace SmallWorld.Flow
                 ? PerformPrologue(save, progress, action)
                 : progress.CurrentChapter == StoryChapterId.Chapter1
                     ? PerformChapterOne(save, progress, action)
-                    : Reject("이 기억은 지금 열 수 없다.");
+                    : progress.CurrentChapter == StoryChapterId.Chapter2
+                        ? PerformChapterTwo(save, progress, action)
+                        : Reject("이 기억은 지금 열 수 없다.");
         }
 
         private OpeningStoryResult PerformPrologue(SaveData save, StoryProgress progress, OpeningStoryAction action)
@@ -202,6 +225,92 @@ namespace SmallWorld.Flow
             }
         }
 
+        private OpeningStoryResult PerformChapterTwo(SaveData save, StoryProgress progress, OpeningStoryAction action)
+        {
+            if (!progress.GetChapter(StoryChapterId.Chapter1).IsComplete)
+                return Reject("'네 번째 자리'를 끝내기 전에는 마지막 승강장에 들어갈 수 없다.");
+
+            switch (action)
+            {
+                case OpeningStoryAction.HearDohyeon:
+                    return Accept(progress, action, "도현: \"막차는 늘 집으로 갔어. 어느 날부터 어느 집인지 달라졌을 뿐이야.\"");
+                case OpeningStoryAction.ReadPlatformBoard:
+                    if (!Has(progress, OpeningStoryAction.HearDohyeon)) return Need("사라진 승객 도현의 기억부터 들어야 한다.");
+                    storyFlow.SetFlag(progress, "deleted-victim-names-on-board", false);
+                    return Accept(progress, action, "전광판에서 존재하지 않는 노선과 삭제된 희생자들의 이름이 번갈아 나타난다.");
+                case OpeningStoryAction.ConnectLoginTime1:
+                case OpeningStoryAction.ConnectLoginTime2:
+                case OpeningStoryAction.ConnectLoginTime3:
+                case OpeningStoryAction.ConnectLoginTime4:
+                    if (!Has(progress, OpeningStoryAction.ReadPlatformBoard)) return Need("전광판의 삭제된 이름과 접속 시간을 먼저 확인해야 한다.");
+                    int expectedLine = LoginTimeCount(progress) + (int)OpeningStoryAction.ConnectLoginTime1;
+                    if ((int)action != expectedLine) return Reject("역 이름이 아니라 희생자들의 접속 시간을 순서대로 연결해야 한다.");
+                    return Accept(progress, action, action == OpeningStoryAction.ConnectLoginTime4
+                        ? "완성된 노선이 모형 집의 윤곽으로 바뀌었다."
+                        : "찢어진 노선도의 접속 시간 하나를 이었다.");
+                case OpeningStoryAction.ReturnEmployeeCard:
+                case OpeningStoryAction.ReturnChildShoe:
+                case OpeningStoryAction.ReturnHospitalBand:
+                case OpeningStoryAction.ReturnGameCartridge:
+                    if (LoginTimeCount(progress) != 4) return Need("존재하지 않는 노선도를 먼저 완성해야 한다.");
+                    return Accept(progress, action, "분실물을 올바른 얼굴 없는 승객 그림자에게 돌려주었다.");
+                case OpeningStoryAction.ReturnItemToWrongShadow:
+                    if (LoginTimeCount(progress) != 4) return Need("존재하지 않는 노선도를 먼저 완성해야 한다.");
+                    storyFlow.SetFlag(progress, "passenger-shadow-player-face", true);
+                    return new OpeningStoryResult(true, "물건을 잘못 건네자 승객 그림자가 주인공의 얼굴을 가졌다.");
+                case OpeningStoryAction.ReverseAnnouncement1:
+                case OpeningStoryAction.ReverseAnnouncement2:
+                case OpeningStoryAction.ReverseAnnouncement3:
+                    if (LostPropertyCount(progress) != 4) return Need("승객 네 명의 분실물을 모두 돌려줘야 한다.");
+                    int expectedBroadcast = AnnouncementCount(progress) + (int)OpeningStoryAction.ReverseAnnouncement1;
+                    if ((int)action != expectedBroadcast) return Reject("안내방송 구간을 역순으로 뒤집어야 한다.");
+                    return Accept(progress, action, action == OpeningStoryAction.ReverseAnnouncement3
+                        ? "안내방송: \"귀가하지 마십시오. 집이 당신을 기억하고 있습니다.\""
+                        : "역방향 안내방송의 한 구간이 제자리로 돌아왔다.");
+                case OpeningStoryAction.ChooseRealityHome:
+                case OpeningStoryAction.ChooseGameHouse:
+                case OpeningStoryAction.ChooseWhiteStation:
+                    if (AnnouncementCount(progress) != 3) return Need("막차 안내방송의 실제 문장을 먼저 복원해야 한다.");
+                    if (MadeDestinationChoice(progress)) return Reject("막차의 목적지는 이미 정해졌다.");
+                    string destination = action == OpeningStoryAction.ChooseRealityHome ? "reality-home" :
+                        action == OpeningStoryAction.ChooseGameHouse ? "game-house" : "white-station";
+                    storyFlow.RecordChoice(progress, "platform-destination", destination);
+                    if (action == OpeningStoryAction.ChooseRealityHome)
+                        storyFlow.SetFlag(progress, "victim-restoration-clue-dohyeon", false);
+                    else if (action == OpeningStoryAction.ChooseGameHouse)
+                    {
+                        relationships.Set(save, GirlId, relationships.Get(save, GirlId) + 10);
+                        storyFlow.SetFlag(progress, "yuna-affection-memory-dohyeon", false);
+                    }
+                    else
+                    {
+                        relationships.Set(save, GirlId, relationships.Get(save, GirlId) - 5);
+                        storyFlow.SetFlag(progress, "autonomy-clue-white-station", false);
+                        storyFlow.SetFlag(progress, "first-ai-voice", true);
+                    }
+                    return Accept(progress, action, "목적지를 말하자 열차 문이 열리고 얼굴 없는 승객들이 쏟아져 나왔다.");
+                case OpeningStoryAction.CrossSafeZone1:
+                case OpeningStoryAction.CrossSafeZone2:
+                case OpeningStoryAction.CrossSafeZone3:
+                    if (!MadeDestinationChoice(progress)) return Need("도현의 막차 목적지를 먼저 선택해야 한다.");
+                    int expectedZone = SafeZoneCount(progress) + (int)OpeningStoryAction.CrossSafeZone1;
+                    if ((int)action != expectedZone) return Reject("안내방송에 맞춰 조명이 켜진 안전 구역으로 이동해야 한다.");
+                    return Accept(progress, action, "안내방송과 동시에 다음 안전 구역의 조명이 켜졌다.");
+                case OpeningStoryAction.ReturnFromPlatform:
+                    if (SafeZoneCount(progress) != 3) return Need("얼굴 없는 승객들을 피해 세 안전 구역을 모두 건너야 한다.");
+                    Mark(progress, action);
+                    storyFlow.SetFlag(progress, "furniture-wall-clock", false);
+                    storyFlow.SetFlag(progress, "furniture-entry-shoe-cabinet", false);
+                    storyFlow.SetFlag(progress, "furniture-small-radio", false);
+                    storyFlow.SetFlag(progress, "house-door-platform-announcement", false);
+                    storyFlow.SetFlag(progress, "yuna-remembers-exact-quit-time", true);
+                    CompleteChapter(progress, StoryChapterId.Chapter2);
+                    return new OpeningStoryResult(true, "집으로 돌아왔다. 현관 밖에서 지하철 안내방송이 들리고 유나는 마지막 종료 시각을 정확히 말했다.");
+                default:
+                    return Reject("이 행동은 '마지막 승강장'의 현재 흐름과 맞지 않는다.");
+            }
+        }
+
         private void CompleteChapter(StoryProgress progress, StoryChapterId chapter)
         {
             StoryChapterProgress state = progress.GetChapter(chapter);
@@ -228,9 +337,14 @@ namespace SmallWorld.Flow
         private static bool HeardFamily(StoryProgress p) => Count(p, OpeningStoryAction.HearFather, OpeningStoryAction.HearMother, OpeningStoryAction.HearChild) == 3;
         private static int FoodCount(StoryProgress p) => Count(p, OpeningStoryAction.AddBurntEgg, OpeningStoryAction.AddAppleHalf, OpeningStoryAction.AddColdSoup, OpeningStoryAction.AddEmptyBowl);
         private static int PhotoCount(StoryProgress p) => Count(p, OpeningStoryAction.ArrangePhoto1, OpeningStoryAction.ArrangePhoto2, OpeningStoryAction.ArrangePhoto3, OpeningStoryAction.ArrangePhoto4, OpeningStoryAction.ArrangePhoto5, OpeningStoryAction.ArrangePhoto6);
+        private static int LoginTimeCount(StoryProgress p) => Count(p, OpeningStoryAction.ConnectLoginTime1, OpeningStoryAction.ConnectLoginTime2, OpeningStoryAction.ConnectLoginTime3, OpeningStoryAction.ConnectLoginTime4);
+        private static int LostPropertyCount(StoryProgress p) => Count(p, OpeningStoryAction.ReturnEmployeeCard, OpeningStoryAction.ReturnChildShoe, OpeningStoryAction.ReturnHospitalBand, OpeningStoryAction.ReturnGameCartridge);
+        private static int AnnouncementCount(StoryProgress p) => Count(p, OpeningStoryAction.ReverseAnnouncement1, OpeningStoryAction.ReverseAnnouncement2, OpeningStoryAction.ReverseAnnouncement3);
+        private static int SafeZoneCount(StoryProgress p) => Count(p, OpeningStoryAction.CrossSafeZone1, OpeningStoryAction.CrossSafeZone2, OpeningStoryAction.CrossSafeZone3);
         private static bool MadePrologueChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "prologue-stay");
         private static bool ChoseMemoryDoor(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "first-memory-door");
         private static bool MadeSeatChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "fourth-seat-name");
+        private static bool MadeDestinationChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "platform-destination");
         private static OpeningStoryResult Need(string message) => new OpeningStoryResult(false, message);
         private static OpeningStoryResult Reject(string message) => new OpeningStoryResult(false, message);
     }
