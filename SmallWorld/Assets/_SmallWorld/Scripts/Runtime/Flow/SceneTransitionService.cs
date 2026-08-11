@@ -43,18 +43,27 @@ namespace SmallWorld.Flow
 
         public async Task LoadSceneAsync(SceneId sceneId)
         {
+            await LoadSceneAsync(SceneCatalog.GetName(sceneId), GetGameState(sceneId));
+        }
+
+        public async Task LoadPlayingSceneAsync(string sceneName)
+        {
+            await LoadSceneAsync(sceneName, GameState.Playing);
+        }
+
+        private async Task LoadSceneAsync(string sceneName, GameState targetState)
+        {
             if (IsTransitioning)
             {
-                Debug.LogWarning($"[SmallWorld] Ignored duplicate scene transition to {sceneId}.", this);
+                Debug.LogWarning($"[SmallWorld] Ignored duplicate scene transition to {sceneName}.", this);
                 return;
             }
 
-            string sceneName = SceneCatalog.GetName(sceneId);
             if (string.IsNullOrWhiteSpace(sceneName) ||
                 !Application.CanStreamedLevelBeLoaded(sceneName))
             {
                 Debug.LogError(
-                    $"[SmallWorld] Scene {sceneId} ({sceneName}) is not available in Build Settings.",
+                    $"[SmallWorld] Scene '{sceneName}' is not available in Build Settings.",
                     this);
                 return;
             }
@@ -94,7 +103,7 @@ namespace SmallWorld.Flow
                     await Task.Yield();
                 }
 
-                GameStateService.Instance?.TryChangeState(GetGameState(sceneId));
+                GameStateService.Instance?.TryChangeState(targetState);
             }
             catch (Exception exception)
             {

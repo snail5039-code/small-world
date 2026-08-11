@@ -1,0 +1,16 @@
+{
+  "name": "SmallWorld.Save.Story.Tests",
+  "rootNamespace": "SmallWorld.Save.Story.Tests",
+  "references": ["SmallWorld.Save.Story", "SmallWorld.Save.Stage10"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "versionDefines": [],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}
+

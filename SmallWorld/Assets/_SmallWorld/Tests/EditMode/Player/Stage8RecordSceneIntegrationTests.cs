@@ -30,9 +30,12 @@ namespace SmallWorld.Player.Tests
             Assert.That(stage8.GetComponent<Stage8RecordView>(), Is.Not.Null);
             InteractableBase[] interactables = Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None);
             Assert.That(Array.FindAll(interactables,
-                item => item.GetType().FullName != "SmallWorld.Flow.FirstMemoryEntryInteractable"), Has.Length.EqualTo(7));
+                item => item.GetType().FullName != "SmallWorld.Flow.FirstMemoryEntryInteractable" &&
+                    item.GetType().FullName != "SmallWorld.Flow.StoryRouteEntryInteractable"), Has.Length.EqualTo(7));
             Assert.That(Array.FindAll(interactables,
                 item => item.GetType().FullName == "SmallWorld.Flow.FirstMemoryEntryInteractable"), Has.Length.EqualTo(1));
+            Assert.That(System.Array.FindAll(interactables,
+                item => item.GetType().FullName == "SmallWorld.Flow.StoryRouteEntryInteractable"), Has.Length.EqualTo(1));
             Assert.That(GameObject.Find("Stage 10 Save Integration"), Is.Not.Null);
 
             Component room = Object.FindFirstObjectByType(GetRealityRoomControllerType()) as Component;

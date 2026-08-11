@@ -34,9 +34,12 @@ namespace SmallWorld.Player.Tests
             Assert.That(root, Is.Not.Null);
             InteractableBase[] interactables = Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None);
             Assert.That(System.Array.FindAll(interactables,
-                item => item.GetType().FullName != "SmallWorld.Flow.FirstMemoryEntryInteractable"), Has.Length.EqualTo(7));
+                item => item.GetType().FullName != "SmallWorld.Flow.FirstMemoryEntryInteractable" &&
+                    item.GetType().FullName != "SmallWorld.Flow.StoryRouteEntryInteractable"), Has.Length.EqualTo(7));
             Assert.That(System.Array.FindAll(interactables,
                 item => item.GetType().FullName == "SmallWorld.Flow.FirstMemoryEntryInteractable"), Has.Length.EqualTo(1));
+            Assert.That(System.Array.FindAll(interactables,
+                item => item.GetType().FullName == "SmallWorld.Flow.StoryRouteEntryInteractable"), Has.Length.EqualTo(1));
             Assert.That(GameObject.Find("Stage 10 Save Integration"), Is.Not.Null);
             Assert.That(Object.FindObjectsByType<InteractionPromptView>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
             Assert.That(root.GetComponentsInChildren<InspectionView>(true), Has.Length.EqualTo(1));

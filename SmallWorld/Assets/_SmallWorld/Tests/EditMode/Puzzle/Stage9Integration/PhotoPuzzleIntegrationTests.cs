@@ -180,9 +180,12 @@ namespace SmallWorld.Puzzle.Stage9Integration.Tests
             Assert.That(serialized.FindProperty("persistenceKey").stringValue, Is.EqualTo(PhotoPuzzleView.PersistenceKey));
             InteractableBase[] interactables = Object.FindObjectsByType<InteractableBase>(FindObjectsSortMode.None);
             Assert.That(System.Array.FindAll(interactables,
-                item => item.GetType().FullName != "SmallWorld.Flow.FirstMemoryEntryInteractable"), Has.Length.EqualTo(7));
+                item => item.GetType().FullName != "SmallWorld.Flow.FirstMemoryEntryInteractable" &&
+                    item.GetType().FullName != "SmallWorld.Flow.StoryRouteEntryInteractable"), Has.Length.EqualTo(7));
             Assert.That(System.Array.FindAll(interactables,
                 item => item.GetType().FullName == "SmallWorld.Flow.FirstMemoryEntryInteractable"), Has.Length.EqualTo(1));
+            Assert.That(System.Array.FindAll(interactables,
+                item => item.GetType().FullName == "SmallWorld.Flow.StoryRouteEntryInteractable"), Has.Length.EqualTo(1));
             Assert.That(GameObject.Find("Stage 10 Save Integration"), Is.Not.Null);
         }
 

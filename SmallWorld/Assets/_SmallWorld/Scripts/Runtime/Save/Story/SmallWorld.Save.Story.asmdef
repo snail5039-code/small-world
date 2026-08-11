@@ -1,0 +1,15 @@
+{
+  "name": "SmallWorld.Save.Story",
+  "rootNamespace": "SmallWorld.Save.Story",
+  "references": ["SmallWorld.Save.Stage10"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": true
+}
+
