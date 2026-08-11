@@ -71,6 +71,11 @@ namespace SmallWorld.Editor
                     Transform[] anchors = CreateFourthSeatGameplay(hub.transform, progress, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
+                else if (i == 2)
+                {
+                    Transform[] anchors = CreateLastPlatformGameplay(hub.transform, route, z);
+                    dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
+                }
                 else
                 {
                     dialogue = CreateMarker("Dialogue Entry", hub.transform, new Vector3(-4f, 0.75f, z), route, Ids[i], StoryRouteStep.Dialogue, "Inspect dialogue entry", $"{Names[i]} dialogue completed.");
@@ -149,6 +154,60 @@ namespace SmallWorld.Editor
             CreateBlock("Nonexistent Room", parent, new Vector3(11f, 1.5f, z + 8f), new Vector3(2.2f, 3f, 0.25f));
             CreatePointLight("Rainy Apartment Light", parent, new Vector3(8f, 3.1f, z), new Color(0.48f, 0.62f, 1f), 1.8f, 16f);
             return new[] { created[0], created[4], created[16] };
+        }
+
+        private static Transform[] CreateLastPlatformGameplay(Transform parent, StoryRouteController route, float z)
+        {
+            CreateBlock("Last Platform Concourse", parent, new Vector3(0f, 0.05f, z), new Vector3(12f, 0.1f, 29f));
+            CreateBlock("Track Bed", parent, new Vector3(9.5f, -0.45f, z), new Vector3(6f, 0.5f, 29f));
+            CreateBlock("Near Rail", parent, new Vector3(7.8f, -0.05f, z), new Vector3(0.16f, 0.16f, 29f));
+            CreateBlock("Far Rail", parent, new Vector3(11.2f, -0.05f, z), new Vector3(0.16f, 0.16f, 29f));
+            CreateBlock("Platform Warning Edge", parent, new Vector3(6.2f, 0.12f, z), new Vector3(0.35f, 0.12f, 29f));
+            CreateBlock("Tunnel Wall", parent, new Vector3(14.2f, 1.8f, z), new Vector3(0.35f, 3.6f, 30f));
+
+            CreateBlock("Impossible Route Map", parent, new Vector3(-4.8f, 1.5f, z - 8.5f), new Vector3(0.25f, 2.6f, 4.8f));
+            for (int i = 0; i < 4; i++)
+                CreateBlock($"Torn Route Piece {i + 1}", parent, new Vector3(-4.55f, 0.65f + i * 0.48f, z - 10f + i), new Vector3(0.12f, 0.32f, 0.75f));
+            CreateBlock("Deleted Passenger Display", parent, new Vector3(0f, 2.5f, z - 6f), new Vector3(5.5f, 1.1f, 0.25f));
+
+            string[] lostItems = { "Employee Badge", "Child Shoe", "Hospital Wristband", "Game Cartridge" };
+            for (int i = 0; i < lostItems.Length; i++)
+            {
+                float itemZ = z - 2.5f + i * 1.7f;
+                CreateBlock(lostItems[i], parent, new Vector3(-4.4f, 0.35f, itemZ), new Vector3(0.65f, 0.25f, 0.65f));
+                GameObject shadow = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                shadow.name = $"Faceless Passenger Shadow {i + 1}";
+                shadow.transform.SetParent(parent, true);
+                shadow.transform.position = new Vector3(3.8f, 1f, itemZ);
+                shadow.transform.localScale = new Vector3(0.65f, 1f, 0.65f);
+            }
+
+            CreateBlock("Reverse Broadcast Console", parent, new Vector3(-4.5f, 1f, z + 6f), new Vector3(1.8f, 2f, 1.2f));
+            CreateBlock("Broadcast Warning Display", parent, new Vector3(-3.5f, 2.15f, z + 6f), new Vector3(0.2f, 1f, 4.5f));
+            for (int i = 0; i < 3; i++)
+            {
+                float safeZ = z + 3f + i * 3f;
+                CreateBlock($"Broadcast Safe Zone {i + 1}", parent, new Vector3(1.8f, 0.12f, safeZ), new Vector3(3.2f, 0.12f, 1.6f));
+                CreatePointLight($"Broadcast Safe Light {i + 1}", parent, new Vector3(1.8f, 2.8f, safeZ), new Color(0.48f, 0.78f, 1f), 2f, 5f);
+            }
+
+            CreateBlock("Arriving Last Train", parent, new Vector3(10f, 1.25f, z + 7f), new Vector3(4.8f, 2.5f, 12f));
+            CreateBlock("Open Train Door", parent, new Vector3(7.5f, 1.2f, z + 7f), new Vector3(0.2f, 2.1f, 2f));
+            CreateBlock("Destination Reality Home", parent, new Vector3(-3.8f, 0.55f, z + 11f), new Vector3(1.5f, 1.1f, 1.5f));
+            CreateBlock("Destination Game Home", parent, new Vector3(0f, 0.55f, z + 11f), new Vector3(1.5f, 1.1f, 1.5f));
+            CreateBlock("Destination White Station", parent, new Vector3(3.8f, 0.55f, z + 11f), new Vector3(1.5f, 1.1f, 1.5f));
+
+            CreateBlock("Reward Wall Clock", parent, new Vector3(-5f, 2f, z + 12.5f), new Vector3(0.25f, 1.1f, 1.1f));
+            CreateBlock("Reward Shoe Cabinet", parent, new Vector3(-2.2f, 0.75f, z + 13f), new Vector3(2f, 1.5f, 0.8f));
+            CreateBlock("Reward Small Radio", parent, new Vector3(0.5f, 0.45f, z + 13f), new Vector3(0.9f, 0.7f, 0.5f));
+
+            Transform dialogue = CreateMarker("Dohyeon And Route Map", parent, new Vector3(-2.5f, 0.75f, z - 8.5f), route,
+                "chapter-2", StoryRouteStep.Dialogue, "도현의 막차 기록과 접속 시간을 조사한다", "도현의 귀가 기록과 존재하지 않는 노선을 확인했다.");
+            Transform puzzle = CreateMarker("Lost Property And Reverse Broadcast", parent, new Vector3(0f, 0.75f, z + 1f), route,
+                "chapter-2", StoryRouteStep.Puzzle, "분실물을 돌려주고 역재생 안내방송을 복원한다", "귀가하지 마십시오. 집이 당신을 기억하고 있습니다.");
+            Transform memory = CreateMarker("Choose The Last Destination", parent, new Vector3(0f, 0.75f, z + 10f), route,
+                "chapter-2", StoryRouteStep.Memory, "현실 집, 게임 속 집, 하얀 역 중 목적지를 선택한다", "목적지가 기억되었다. 막차에서 안전 구역을 따라 빠져나간다.");
+            return new[] { dialogue, puzzle, memory };
         }
 
         private static Transform[] CreateActionGrid(Transform parent, StoryRouteProgressAdapter progress, float z,
