@@ -2,6 +2,7 @@
 using SmallWorld.Player;
 using SmallWorld.Inventory.Stage8;
 using SmallWorld.Puzzle.Stage9Integration;
+using SmallWorld.Save.Stage10.Integration;
 using SmallWorld.UI;
 using SmallWorld.UI.Stage7;
 using SmallWorld.UI.Stage8;
@@ -21,6 +22,7 @@ namespace SmallWorld.Flow
         [SerializeField] private Stage7DialogueView dialogueView;
         [SerializeField] private Stage8RecordView recordView;
         [SerializeField] private PhotoPuzzleView photoPuzzleView;
+        [SerializeField] private Stage10ManualSavePanel manualSavePanel;
 
         private InteractableBase[] trackedInteractables = System.Array.Empty<InteractableBase>();
 
@@ -53,10 +55,17 @@ namespace SmallWorld.Flow
             photoPuzzleView = photoPuzzle;
         }
 
+        public void ConfigureStage10(Stage10ManualSavePanel savePanel)
+        {
+            manualSavePanel = savePanel;
+        }
+
         private void Awake()
         {
             if (dialogueView == null) dialogueView = FindFirstObjectByType<Stage7DialogueView>();
             if (recordView == null) recordView = FindFirstObjectByType<Stage8RecordView>();
+            if (manualSavePanel == null)
+                manualSavePanel = FindFirstObjectByType<Stage10ManualSavePanel>(FindObjectsInactive.Include);
             if (recordView != null) recordView.NewRecordAdded += OnNewRecordAdded;
             if (stage6UI == null) return;
             stage6UI.ResumeRequested += RestoreGameplay;
@@ -93,6 +102,7 @@ namespace SmallWorld.Flow
             }
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
             {
+                if (manualSavePanel != null && manualSavePanel.IsOpen) return;
                 if (photoPuzzleView != null && photoPuzzleView.IsOpen) return;
                 recordView?.Toggle();
                 return;
@@ -115,6 +125,11 @@ namespace SmallWorld.Flow
 
         internal bool HandleEscapePressed()
         {
+            if (manualSavePanel != null && manualSavePanel.IsOpen)
+            {
+                manualSavePanel.Close();
+                return true;
+            }
             if (photoPuzzleView != null && photoPuzzleView.IsOpen) return photoPuzzleView.Close();
             if (recordView != null && recordView.IsOpen) return recordView.Close();
             if (dialogueView != null && dialogueView.HandleEscape()) return true;

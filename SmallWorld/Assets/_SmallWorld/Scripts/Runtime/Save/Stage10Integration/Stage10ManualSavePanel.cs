@@ -1,6 +1,9 @@
 using System;
 using SmallWorld.Player;
+using SmallWorld.Puzzle.Stage9Integration;
+using SmallWorld.UI;
 using SmallWorld.UI.Stage7;
+using SmallWorld.UI.Stage8;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,6 +21,7 @@ namespace SmallWorld.Save.Stage10.Integration
         private bool playerWasEnabled;
         private CursorLockMode previousCursorLockState;
         private bool previousCursorVisible;
+        private float previousTimeScale;
         public bool IsOpen => IsVisible();
         public void Configure(CanvasGroup root, Button[] saves, Button[] loads, Button close) { panel = root; saveButtons = saves ?? Array.Empty<Button>(); loadButtons = loads ?? Array.Empty<Button>(); closeButton = close; Bind(); Close(); }
         public void Configure(RealityRoomSaveCoordinator value) => coordinator = value;
@@ -26,7 +30,7 @@ namespace SmallWorld.Save.Stage10.Integration
         private void OnDestroy() { RestoreInputState(); Unbind(); }
         public void Open()
         {
-            if (IsVisible()) return;
+            if (IsVisible() || IsAnotherUiOpen()) return;
             CaptureInputState();
             SetVisible(true);
             RefreshLoads();
@@ -60,6 +64,7 @@ namespace SmallWorld.Save.Stage10.Integration
             playerWasEnabled = player != null && player.enabled;
             previousCursorLockState = DialogueCursorMode.RequestedLockState;
             previousCursorVisible = DialogueCursorMode.RequestedVisible;
+            previousTimeScale = Time.timeScale;
             inputStateCaptured = true;
             if (playerWasEnabled) player.enabled = false;
             DialogueCursorMode.RequestUi();
@@ -70,8 +75,20 @@ namespace SmallWorld.Save.Stage10.Integration
             inputStateCaptured = false;
             if (player != null) player.enabled = playerWasEnabled;
             DialogueCursorMode.Restore(previousCursorLockState, previousCursorVisible);
+            Time.timeScale = previousTimeScale;
         }
         private bool IsVisible() => panel != null && panel.alpha > 0f && panel.interactable && panel.blocksRaycasts;
+        private static bool IsAnotherUiOpen()
+        {
+            Stage7DialogueView dialogue = FindFirstObjectByType<Stage7DialogueView>(FindObjectsInactive.Include);
+            if (dialogue != null && dialogue.IsDialogueActive) return true;
+            Stage8RecordView records = FindFirstObjectByType<Stage8RecordView>(FindObjectsInactive.Include);
+            if (records != null && records.IsOpen) return true;
+            PhotoPuzzleView puzzle = FindFirstObjectByType<PhotoPuzzleView>(FindObjectsInactive.Include);
+            if (puzzle != null && puzzle.IsOpen) return true;
+            Stage6UIController ui = FindFirstObjectByType<Stage6UIController>(FindObjectsInactive.Include);
+            return ui != null && ui.StateMachine.Current != UIState.Gameplay;
+        }
         private void SetVisible(bool visible) { if (panel == null) return; panel.alpha = visible ? 1f : 0f; panel.interactable = visible; panel.blocksRaycasts = visible; }
     }
 }

@@ -1,4 +1,6 @@
 using NUnit.Framework;
+using System.Reflection;
+using SmallWorld.Flow;
 using SmallWorld.Dialogue.Stage7;
 using SmallWorld.Player;
 using SmallWorld.Save.Stage10.Integration;
@@ -61,6 +63,33 @@ namespace SmallWorld.Player.Tests
         }
 
         [Test]
+        public void EscapeWhileManualSaveIsOpen_ClosesOnlySaveAndRestoresExactRuntimeState()
+        {
+            Stage10ManualSavePanel savePanel = FindRequired<Stage10ManualSavePanel>();
+            RealityRoomController room = FindRequired<RealityRoomController>();
+            FirstPersonPlayerController player = FindRequired<FirstPersonPlayerController>();
+            Stage6UIController stage6 = FindRequired<Stage6UIController>();
+            Stage8RecordView records = FindRequired<Stage8RecordView>();
+            const float capturedTimeScale = 0.42f;
+            Time.timeScale = capturedTimeScale;
+
+            savePanel.Open();
+            MethodInfo escape = typeof(RealityRoomController).GetMethod("HandleEscapePressed",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(escape, Is.Not.Null);
+            Assert.That((bool)escape.Invoke(room, null), Is.True);
+
+            AssertPanelVisible(savePanel, false);
+            Assert.That(stage6.StateMachine.Current, Is.EqualTo(UIState.Gameplay),
+                "The same Escape must not also open the pause menu.");
+            Assert.That(records.IsOpen, Is.False);
+            Assert.That(player.enabled, Is.True);
+            Assert.That(DialogueCursorMode.RequestedLockState, Is.EqualTo(CursorLockMode.Locked));
+            Assert.That(DialogueCursorMode.RequestedVisible, Is.False);
+            Assert.That(Time.timeScale, Is.EqualTo(capturedTimeScale));
+        }
+
+        [Test]
         public void ClosingManualSave_DuringDialogue_PreservesDialogueCursorAndPlayerOwnership()
         {
             Stage10ManualSavePanel savePanel = FindRequired<Stage10ManualSavePanel>();
@@ -69,6 +98,7 @@ namespace SmallWorld.Player.Tests
             dialogue.StartDialogue(Stage7DemoDialogue.Create());
 
             savePanel.Open();
+            AssertPanelVisible(savePanel, false);
             savePanel.Close();
 
             Assert.That(dialogue.IsDialogueActive, Is.True);
@@ -88,6 +118,7 @@ namespace SmallWorld.Player.Tests
             Assert.That(recordView.Open(), Is.True);
 
             savePanel.Open();
+            AssertPanelVisible(savePanel, false);
             savePanel.Close();
 
             Assert.That(recordView.IsOpen, Is.True);
