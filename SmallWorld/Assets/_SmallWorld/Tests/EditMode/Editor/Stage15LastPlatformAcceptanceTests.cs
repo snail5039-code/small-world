@@ -94,7 +94,7 @@ namespace SmallWorld.Tests.EditMode.Flow
             Assert.That(restored.GetChapter(StoryChapterId.Chapter2).IsComplete, Is.True);
             Assert.That(restored.ImportantChoices.Find(x => x.ChoiceId == "platform-destination").OutcomeId,
                 Is.EqualTo("white-station"));
-            Assert.That(restored.ForeshadowFlags, Contains.Item("first-ai-voice"));
+            Assert.That(restored.ExternalEntityFlags, Contains.Item("first-ai-voice"));
             Assert.That(restored.ForeshadowFlags, Contains.Item("furniture-wall-clock"));
             Assert.That(restored.ForeshadowFlags, Contains.Item("furniture-entry-shoe-cabinet"));
             Assert.That(restored.ForeshadowFlags, Contains.Item("furniture-small-radio"));
