@@ -44,6 +44,35 @@ namespace SmallWorld.Player.Tests
             AssertNode(nodes.GetArrayElementAtIndex(1), "chapter-1", "Fourth Place");
             AssertNode(nodes.GetArrayElementAtIndex(2), "chapter-2", "Last Platform");
             AssertNode(nodes.GetArrayElementAtIndex(3), "chapter-3", "Perfect Day");
+            AssertNode(nodes.GetArrayElementAtIndex(4), "chapter-4", "Faceless Office");
+        }
+
+        [Test]
+        public void StoryRoute_IntegratesFacelessOfficePuzzlesChoiceChaseAndReturnHome()
+        {
+            string[] requiredObjects =
+            {
+                "Windowless Developer Office", "Same Face Employee Desk 1", "Same Face Employee 4",
+                "Girl Version Computer 1 - Prototype Girl", "Girl Version Computer 4 - Deleted Girl",
+                "Employee Badge Authority Exchange", "Original Developer Badge", "Memory Researcher Badge",
+                "System Administrator Badge", "Identity And Face Change Door", "Permission Locked Record Cabinet",
+                "Contradictory Deleted Log Fragment 1", "Contradictory Deleted Log Fragment 4",
+                "Invariant System Command", "Girl Deletion Record", "Girl Saved Into Developer Memory Record",
+                "Mirror Meeting Room", "Mirror Showing Real Faces", "Reality Employee Seat 1",
+                "Mirror Real Face Seat 4", "Composite Identity Revelation", "Trust Original Developer Record",
+                "Trust Altered Developer Record", "Check Original Server Autonomous Choice", "End Of Shift Broadcast",
+                "Erased Employee Faces Chase", "Badge Theft Chase Corridor", "Office Escape Door",
+                "Return Home Interaction", "Reward Study Desk", "Reward Development Computer",
+                "Reward Locked File Cabinet", "Investigate Faceless Office Identities",
+                "Exchange Badges Recover Logs And Match Mirror Seats", "Choose Developer Record Escape And Return Home"
+            };
+
+            foreach (string objectName in requiredObjects)
+                Assert.That(GameObject.Find(objectName), Is.Not.Null, objectName + " is missing from chapter 4.");
+
+            Assert.That(GameObject.Find("Investigate Faceless Office Identities").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Exchange Badges Recover Logs And Match Mirror Seats").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Choose Developer Record Escape And Return Home").GetComponent("StoryRouteInteractable"), Is.Not.Null);
         }
 
         [Test]

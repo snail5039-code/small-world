@@ -81,6 +81,11 @@ namespace SmallWorld.Editor
                     Transform[] anchors = CreatePerfectDayGameplay(hub.transform, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
+                else if (i == 4)
+                {
+                    Transform[] anchors = CreateFacelessOfficeGameplay(hub.transform, route, z);
+                    dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
+                }
                 else
                 {
                     dialogue = CreateMarker("Dialogue Entry", hub.transform, new Vector3(-4f, 0.75f, z), route, Ids[i], StoryRouteStep.Dialogue, "Inspect dialogue entry", $"{Names[i]} dialogue completed.");
@@ -268,6 +273,75 @@ namespace SmallWorld.Editor
             Transform memory = CreateMarker("Preserve Or Tear The Photo And Return Home", parent, new Vector3(5.5f, 0.75f, z + 11.5f), route,
                 "chapter-3", StoryRouteStep.Memory, "완벽한 사진을 보존하거나 찢고 집으로 돌아간다", "사진에 대한 선택을 기억했다. 집 복귀 상호작용이 열렸다.");
             CreatePointLight("Perfect Day Warm Sun", parent, new Vector3(0f, 5f, z), new Color(1f, 0.76f, 0.45f), 2.4f, 28f);
+            return new[] { dialogue, puzzle, memory };
+        }
+
+        private static Transform[] CreateFacelessOfficeGameplay(Transform parent, StoryRouteController route, float z)
+        {
+            CreateBlock("Windowless Developer Office", parent, new Vector3(0f, 0.05f, z), new Vector3(27f, 0.1f, 29f));
+            CreateBlock("Windowless Office Ceiling", parent, new Vector3(0f, 3.2f, z), new Vector3(27f, 0.15f, 29f));
+            CreateBlock("Windowless Office West Wall", parent, new Vector3(-13.4f, 1.6f, z), new Vector3(0.2f, 3.2f, 29f));
+            CreateBlock("Windowless Office East Wall", parent, new Vector3(13.4f, 1.6f, z), new Vector3(0.2f, 3.2f, 29f));
+            CreateBlock("Windowless Office North Wall", parent, new Vector3(0f, 1.6f, z + 14.4f), new Vector3(27f, 3.2f, 0.2f));
+            CreateBlock("Windowless Office South Wall", parent, new Vector3(0f, 1.6f, z - 14.4f), new Vector3(27f, 3.2f, 0.2f));
+
+            string[] versions = { "Prototype Girl", "Obedient Girl", "Remembering Girl", "Deleted Girl" };
+            for (int i = 0; i < versions.Length; i++)
+            {
+                float deskX = -9f + i * 6f;
+                CreateBlock($"Same Face Employee Desk {i + 1}", parent, new Vector3(deskX, 0.55f, z - 7f), new Vector3(3.8f, 1.1f, 2f));
+                GameObject employee = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                employee.name = $"Same Face Employee {i + 1}";
+                employee.transform.SetParent(parent, true);
+                employee.transform.position = new Vector3(deskX, 1f, z - 9f);
+                CreateBlock($"Girl Version Computer {i + 1} - {versions[i]}", parent,
+                    new Vector3(deskX, 1.35f, z - 6.8f), new Vector3(1.6f, 1.1f, 0.25f));
+            }
+
+            CreateBlock("Employee Badge Authority Exchange", parent, new Vector3(-9f, 0.8f, z - 1.5f), new Vector3(2.2f, 1.6f, 1.4f));
+            CreateBlock("Original Developer Badge", parent, new Vector3(-11f, 0.25f, z + 0.5f), new Vector3(0.7f, 0.12f, 1f));
+            CreateBlock("Memory Researcher Badge", parent, new Vector3(-9f, 0.25f, z + 0.5f), new Vector3(0.7f, 0.12f, 1f));
+            CreateBlock("System Administrator Badge", parent, new Vector3(-7f, 0.25f, z + 0.5f), new Vector3(0.7f, 0.12f, 1f));
+            CreateBlock("Identity And Face Change Door", parent, new Vector3(-12f, 1.5f, z + 4f), new Vector3(0.35f, 3f, 3f));
+            CreateBlock("Permission Locked Record Cabinet", parent, new Vector3(-9f, 1.2f, z + 4f), new Vector3(2.5f, 2.4f, 1f));
+
+            for (int i = 0; i < 4; i++)
+                CreateBlock($"Contradictory Deleted Log Fragment {i + 1}", parent,
+                    new Vector3(-3f + i * 2f, 0.65f, z), new Vector3(1.3f, 1.1f, 0.2f));
+            CreateBlock("Invariant System Command", parent, new Vector3(0f, 1.5f, z + 2f), new Vector3(5f, 1f, 0.25f));
+            CreateBlock("Girl Deletion Record", parent, new Vector3(-3f, 1.3f, z + 4f), new Vector3(2.6f, 1.5f, 0.25f));
+            CreateBlock("Girl Saved Into Developer Memory Record", parent, new Vector3(3f, 1.3f, z + 4f), new Vector3(2.6f, 1.5f, 0.25f));
+
+            CreateBlock("Mirror Meeting Room", parent, new Vector3(8.5f, 1.6f, z + 1f), new Vector3(7f, 3.2f, 9f));
+            CreateBlock("Mirror Showing Real Faces", parent, new Vector3(11.8f, 1.7f, z + 1f), new Vector3(0.18f, 2.7f, 7f));
+            for (int i = 0; i < 4; i++)
+            {
+                CreateBlock($"Reality Employee Seat {i + 1}", parent, new Vector3(6.3f + (i % 2) * 3f, 0.45f, z - 1f + (i / 2) * 4f), new Vector3(1.2f, 0.9f, 1.2f));
+                CreateBlock($"Mirror Real Face Seat {i + 1}", parent, new Vector3(11.55f, 0.7f + i * 0.5f, z - 1.5f + i), new Vector3(0.12f, 0.35f, 0.7f));
+            }
+            CreateBlock("Composite Identity Revelation", parent, new Vector3(8.5f, 2.3f, z + 4.6f), new Vector3(4.5f, 0.7f, 0.25f));
+
+            CreateBlock("Trust Original Developer Record", parent, new Vector3(-5f, 0.65f, z + 9f), new Vector3(2.8f, 1.3f, 1.5f));
+            CreateBlock("Trust Altered Developer Record", parent, new Vector3(0f, 0.65f, z + 9f), new Vector3(2.8f, 1.3f, 1.5f));
+            CreateBlock("Check Original Server Autonomous Choice", parent, new Vector3(5f, 0.65f, z + 9f), new Vector3(2.8f, 1.3f, 1.5f));
+
+            CreateBlock("End Of Shift Broadcast", parent, new Vector3(-9f, 2.4f, z + 11f), new Vector3(3f, 0.8f, 0.25f));
+            CreateBlock("Erased Employee Faces Chase", parent, new Vector3(-4f, 1.2f, z + 12f), new Vector3(4f, 2.4f, 1.2f));
+            CreateBlock("Badge Theft Chase Corridor", parent, new Vector3(2f, 0.12f, z + 12f), new Vector3(8f, 0.12f, 2f));
+            CreateBlock("Office Escape Door", parent, new Vector3(7f, 1.5f, z + 12f), new Vector3(2.5f, 3f, 0.35f));
+            CreateBlock("Return Home Interaction", parent, new Vector3(10.5f, 0.75f, z + 12f), new Vector3(2.2f, 1.5f, 1.5f));
+
+            CreateBlock("Reward Study Desk", parent, new Vector3(-11f, 0.7f, z + 8f), new Vector3(3f, 1.4f, 1.5f));
+            CreateBlock("Reward Development Computer", parent, new Vector3(-11f, 1.55f, z + 8f), new Vector3(1.6f, 1.1f, 0.25f));
+            CreateBlock("Reward Locked File Cabinet", parent, new Vector3(-8f, 1.1f, z + 8f), new Vector3(1.6f, 2.2f, 1.4f));
+
+            Transform dialogue = CreateMarker("Investigate Faceless Office Identities", parent, new Vector3(-6f, 0.75f, z - 4f), route,
+                "chapter-4", StoryRouteStep.Dialogue, "동일한 얼굴의 직원과 서로 다른 소녀 버전을 조사한다", "창문 없는 개발사에서 이름과 얼굴이 사원증 권한에 따라 바뀐다.");
+            Transform puzzle = CreateMarker("Exchange Badges Recover Logs And Match Mirror Seats", parent, new Vector3(0f, 0.75f, z + 5f), route,
+                "chapter-4", StoryRouteStep.Puzzle, "사원증 권한을 교체하고 삭제 로그를 복구한 뒤 거울 속 자리를 맞춘다", "변하지 않는 명령과 실제 얼굴의 자리가 합성 인격을 드러냈다.");
+            Transform memory = CreateMarker("Choose Developer Record Escape And Return Home", parent, new Vector3(5f, 0.75f, z + 11f), route,
+                "chapter-4", StoryRouteStep.Memory, "세 기록 중 하나를 선택하고 사원증 추격을 피해 집으로 돌아간다", "개발자 기록 선택을 기억했다. 사무실을 탈출해 집 복귀 상호작용이 열렸다.");
+            CreatePointLight("Faceless Office Fluorescent Light", parent, new Vector3(0f, 2.8f, z), new Color(0.7f, 0.86f, 1f), 2.1f, 28f);
             return new[] { dialogue, puzzle, memory };
         }
 
