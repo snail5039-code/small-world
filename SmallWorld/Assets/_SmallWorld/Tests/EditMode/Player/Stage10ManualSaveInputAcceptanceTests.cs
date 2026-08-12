@@ -1,6 +1,6 @@
-using NUnit.Framework;
+using System;
 using System.Reflection;
-using SmallWorld.Flow;
+using NUnit.Framework;
 using SmallWorld.Dialogue.Stage7;
 using SmallWorld.Player;
 using SmallWorld.Save.Stage10.Integration;
@@ -66,7 +66,9 @@ namespace SmallWorld.Player.Tests
         public void EscapeWhileManualSaveIsOpen_ClosesOnlySaveAndRestoresExactRuntimeState()
         {
             Stage10ManualSavePanel savePanel = FindRequired<Stage10ManualSavePanel>();
-            RealityRoomController room = FindRequired<RealityRoomController>();
+            Type roomType = GetRealityRoomControllerType();
+            Component room = Object.FindFirstObjectByType(roomType) as Component;
+            Assert.That(room, Is.Not.Null, roomType.Name + " must be wired in the Reality Room scene.");
             FirstPersonPlayerController player = FindRequired<FirstPersonPlayerController>();
             Stage6UIController stage6 = FindRequired<Stage6UIController>();
             Stage8RecordView records = FindRequired<Stage8RecordView>();
@@ -74,7 +76,7 @@ namespace SmallWorld.Player.Tests
             Time.timeScale = capturedTimeScale;
 
             savePanel.Open();
-            MethodInfo escape = typeof(RealityRoomController).GetMethod("HandleEscapePressed",
+            MethodInfo escape = roomType.GetMethod("HandleEscapePressed",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(escape, Is.Not.Null);
             Assert.That((bool)escape.Invoke(room, null), Is.True);
@@ -133,6 +135,13 @@ namespace SmallWorld.Player.Tests
             T value = Object.FindFirstObjectByType<T>(FindObjectsInactive.Include);
             Assert.That(value, Is.Not.Null, typeof(T).Name + " must be wired in the Reality Room scene.");
             return value;
+        }
+
+        private static Type GetRealityRoomControllerType()
+        {
+            Type type = Type.GetType("SmallWorld.Flow.RealityRoomController, Assembly-CSharp");
+            Assert.That(type, Is.Not.Null);
+            return type;
         }
 
         private static void AssertPanelVisible(Stage10ManualSavePanel savePanel, bool expected)
