@@ -41,6 +41,19 @@
 
 2장 런타임 액션의 테스트 계약 이름은 `HearDohyeon`, `ReadPlatformBoard`, `ConnectLoginTime1..4`, `ReturnEmployeeCard`, `ReturnChildShoe`, `ReturnHospitalBand`, `ReturnGameCartridge`, `ReturnItemToWrongShadow`, `ReverseAnnouncement1..3`, `ChooseRealityHome`, `ChooseGameHouse`, `ChooseWhiteStation`, `CrossSafeZone1..3`, `ReturnFromPlatform`이다. 오답은 별도 액션 이름을 만들지 않고 실제 순서형 액션을 앞 단계에서 시도해 거부·재시도 가능성을 검증한다. 저장 키 `platform-destination`과 결과 ID `reality-home`, `game-house`, `white-station`은 저장 호환 계약으로 유지한다.
 
+### 3장 `완벽한 하루` 수용 기준
+
+| ID | 수용 기준 | 자동 검증 |
+|---|---|---|
+| S15-C3-01 | 3장은 민아의 기억 듣기 → 메뉴 읽기/뒤집기 → 쓴 커피 주문 → 취향 질문 → 낙서 조사 → 네 번째 대답 → 공원 그림자 3단계 → 사진 선택 → 집 복귀 순서를 건너뛸 수 없다. | `PerfectDay_EnforcesCafeChoiceSunsetAndReturnOrder` |
+| S15-C3-02 | 표시된 음료, 세 개의 순응 답변, 순서 밖 그림자는 진행 플래그를 남기지 않고 오답 피드백만 반환하며 같은 단계의 정답을 다시 시도할 수 있다. | `PerfectDay_WrongAnswersDoNotAdvanceAndRemainRetryable` |
+| S15-C3-03 | `네가 뭘 좋아하는지 모르겠어.`는 낙서 조사 뒤에만 열리고, 석양은 그림자 1→2→3 순서로만 진행되어 완료 단서를 남긴다. | `PerfectDay_FourthChoiceUnlocksOnlyAfterGraffitiAndSunsetAdvancesInOrder` |
+| S15-C3-04 | 사진 보존은 결과 `preserved`, 유나 관계 +10, 반복 강화 단서를 남긴다. 사진 파기는 결과 `torn`, 유나 관계 -10, 민아 기억 복구 단서를 남긴다. 두 분기 모두 성격 학습 단서와 침실 거울·오르골 가구 복선을 보존하고 상호 배타적이다. | `PerfectDay_PhotoBranchesPersistDistinctRelationshipMemoryAndFurnitureConsequences` |
+| S15-C3-05 | 퍼즐 단계, 사진 선택, 관계값, 성격 학습/민아 기억/가구 복선, 활성 씬과 4장 해금은 `SaveDataStoryProgressStore` 및 이진 저장 왕복 후 동일하다. | `PerfectDay_SaveRoundTripPreservesPuzzleChoiceRelationshipCluesAndChapterFourUnlock` |
+| S15-C3-06 | 사진 선택 뒤 집 복귀까지 끝나야 3장이 완료되고 현재 장이 4장으로 바뀐다. 프롤로그→1장→2장 순서와 각 장 카탈로그 ID는 3장 추가 뒤에도 유지된다. | `PerfectDay_EnforcesCafeChoiceSunsetAndReturnOrder`, `PerfectDay_DoesNotRegressPrologueThroughChapterTwoSequenceContracts`, 기존 Stage 15 프롤로그~2장 수용 테스트 |
+
+3장 런타임 액션의 테스트 계약 이름은 `HearMina`, `ReadCafeMenu`, `OrderDisplayedDrink`, `FlipCafeMenu`, `OrderBitterCoffee`, `HearPreferenceQuestion`, `ChooseScriptedPreference`, `InspectGraffiti`, `ChooseUnknownPreference`, `MoveParkShadow1..3`, `PreservePerfectPhoto`, `TearPerfectPhoto`, `ReturnFromPerfectDay`이다. 오답 액션은 수락되거나 진행 플래그를 남겨서는 안 된다. 저장 키 `perfect-day-photo`와 결과 ID `preserved`, `torn`, 관계 대상 `girl`은 저장 호환 계약으로 유지한다.
+
 ### 현실방→스토리 방 입력 회귀 기준
 
 | ID | 수용 기준 | 자동 검증 |
