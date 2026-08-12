@@ -76,6 +76,11 @@ namespace SmallWorld.Editor
                     Transform[] anchors = CreateLastPlatformGameplay(hub.transform, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
+                else if (i == 3)
+                {
+                    Transform[] anchors = CreatePerfectDayGameplay(hub.transform, route, z);
+                    dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
+                }
                 else
                 {
                     dialogue = CreateMarker("Dialogue Entry", hub.transform, new Vector3(-4f, 0.75f, z), route, Ids[i], StoryRouteStep.Dialogue, "Inspect dialogue entry", $"{Names[i]} dialogue completed.");
@@ -207,6 +212,62 @@ namespace SmallWorld.Editor
                 "chapter-2", StoryRouteStep.Puzzle, "분실물을 돌려주고 역재생 안내방송을 복원한다", "귀가하지 마십시오. 집이 당신을 기억하고 있습니다.");
             Transform memory = CreateMarker("Choose The Last Destination", parent, new Vector3(0f, 0.75f, z + 10f), route,
                 "chapter-2", StoryRouteStep.Memory, "현실 집, 게임 속 집, 하얀 역 중 목적지를 선택한다", "목적지가 기억되었다. 막차에서 안전 구역을 따라 빠져나간다.");
+            return new[] { dialogue, puzzle, memory };
+        }
+
+        private static Transform[] CreatePerfectDayGameplay(Transform parent, StoryRouteController route, float z)
+        {
+            CreateBlock("Perfect Day Village Square", parent, new Vector3(0f, 0.05f, z), new Vector3(27f, 0.1f, 29f));
+
+            CreateBlock("Warm Village Cafe", parent, new Vector3(-9f, 1.7f, z - 8f), new Vector3(7f, 3.4f, 6f));
+            CreateBlock("Cafe Counter", parent, new Vector3(-6.2f, 0.65f, z - 8f), new Vector3(1.1f, 1.3f, 4.5f));
+            CreateBlock("Menu Showing Her Favorites", parent, new Vector3(-5.55f, 1.55f, z - 8f), new Vector3(0.18f, 1.5f, 2.2f));
+            CreateBlock("Flipped Menu Bitter Coffee", parent, new Vector3(-5.35f, 0.9f, z - 5.8f), new Vector3(0.12f, 0.9f, 1.4f));
+            CreateBlock("Mina Bitter Coffee Cup", parent, new Vector3(-7f, 0.85f, z - 8f), new Vector3(0.55f, 0.3f, 0.55f));
+
+            CreateBlock("Sunny Village Park", parent, new Vector3(0f, 0.15f, z - 7f), new Vector3(8f, 0.2f, 7f));
+            CreateBlock("Park Bench", parent, new Vector3(0f, 0.6f, z - 8f), new Vector3(3.4f, 0.8f, 0.8f));
+            CreateBlock("Choice Graffiti", parent, new Vector3(3.2f, 0.35f, z - 5f), new Vector3(2.2f, 0.12f, 0.8f));
+            CreateBlock("Three Identical Answers", parent, new Vector3(0f, 1.4f, z - 4.5f), new Vector3(4.2f, 1.1f, 0.25f));
+            CreateBlock("Fourth Choice I Do Not Know What You Like", parent, new Vector3(3.2f, 0.9f, z - 4.2f), new Vector3(2.5f, 0.9f, 0.25f));
+
+            CreateBlock("Perfect Day Arcade", parent, new Vector3(9f, 1.7f, z - 8f), new Vector3(7f, 3.4f, 6f));
+            for (int i = 0; i < 3; i++)
+                CreateBlock($"Repeating Arcade Cabinet {i + 1}", parent, new Vector3(7f + i * 2f, 1f, z - 7f), new Vector3(1.2f, 2f, 1.2f));
+
+            CreateBlock("Riverside Walk", parent, new Vector3(0f, 0.12f, z + 8f), new Vector3(22f, 0.18f, 5f));
+            CreateBlock("Riverside Water", parent, new Vector3(0f, -0.15f, z + 12f), new Vector3(27f, 0.15f, 3f));
+            for (int i = 0; i < 4; i++)
+            {
+                GameObject repeated = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                repeated.name = $"Repeated Person And Dialogue Mark {i + 1}";
+                repeated.transform.SetParent(parent, true);
+                repeated.transform.position = new Vector3(-9f + i * 6f, 1f, z + 7.5f);
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                float stageZ = z - 1f + i * 2.2f;
+                CreateBlock($"Movable Park Shadow Stage {i + 1}", parent, new Vector3(-3f + i * 3f, 0.14f, stageZ), new Vector3(4f, 0.08f, 0.45f));
+                CreatePointLight($"Sunset Stage Light {i + 1}", parent, new Vector3(-5f + i * 5f, 3f - i * 0.45f, stageZ),
+                    new Color(1f, 0.82f - i * 0.12f, 0.5f - i * 0.12f), 1.8f, 7f);
+                CreateBlock($"Yuna Previous Loop Appearance {i + 1}", parent, new Vector3(4.5f, 1f, stageZ), new Vector3(0.8f, 2f, 0.8f));
+            }
+            CreateBlock("Evening Unlocked", parent, new Vector3(0f, 1.4f, z + 5f), new Vector3(5f, 2.8f, 0.3f));
+
+            CreateBlock("Perfect Date Photo", parent, new Vector3(-2.2f, 1.2f, z + 10f), new Vector3(2.5f, 1.8f, 0.18f));
+            CreateBlock("Preserve Photo Choice", parent, new Vector3(-5f, 0.65f, z + 11.5f), new Vector3(2.2f, 1.3f, 1.2f));
+            CreateBlock("Tear Photo Choice", parent, new Vector3(0.6f, 0.65f, z + 11.5f), new Vector3(2.2f, 1.3f, 1.2f));
+            CreateBlock("Mina Original Memory", parent, new Vector3(4.5f, 1.2f, z + 10f), new Vector3(2.5f, 2.4f, 0.3f));
+            CreateBlock("Return Home Door", parent, new Vector3(8.5f, 1.5f, z + 10f), new Vector3(2.5f, 3f, 0.35f));
+
+            Transform dialogue = CreateMarker("Mina Perfect Day Loop", parent, new Vector3(-3f, 0.75f, z - 10.5f), route,
+                "chapter-3", StoryRouteStep.Dialogue, "반복되는 인물과 대사를 지나 민아의 완벽한 하루를 조사한다", "카페, 공원, 오락실, 강변에서 같은 하루가 반복되고 있다.");
+            Transform puzzle = CreateMarker("Break The Perfect Day Rules", parent, new Vector3(0f, 0.75f, z + 2f), route,
+                "chapter-3", StoryRouteStep.Puzzle, "메뉴를 뒤집고 낙서를 조사한 뒤 그림자를 석양까지 움직인다", "쓴 커피와 네 번째 대답이 반복을 깨뜨렸고 시간이 저녁으로 흐른다.");
+            Transform memory = CreateMarker("Preserve Or Tear The Photo And Return Home", parent, new Vector3(5.5f, 0.75f, z + 11.5f), route,
+                "chapter-3", StoryRouteStep.Memory, "완벽한 사진을 보존하거나 찢고 집으로 돌아간다", "사진에 대한 선택을 기억했다. 집 복귀 상호작용이 열렸다.");
+            CreatePointLight("Perfect Day Warm Sun", parent, new Vector3(0f, 5f, z), new Color(1f, 0.76f, 0.45f), 2.4f, 28f);
             return new[] { dialogue, puzzle, memory };
         }
 

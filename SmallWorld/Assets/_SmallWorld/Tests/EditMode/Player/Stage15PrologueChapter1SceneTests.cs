@@ -47,6 +47,29 @@ namespace SmallWorld.Player.Tests
         }
 
         [Test]
+        public void StoryRoute_IntegratesPerfectDayVillagePuzzlesAndFinalChoice()
+        {
+            string[] requiredObjects =
+            {
+                "Warm Village Cafe", "Sunny Village Park", "Perfect Day Arcade", "Riverside Walk",
+                "Repeated Person And Dialogue Mark 1", "Menu Showing Her Favorites", "Flipped Menu Bitter Coffee",
+                "Mina Bitter Coffee Cup", "Choice Graffiti", "Fourth Choice I Do Not Know What You Like",
+                "Movable Park Shadow Stage 1", "Movable Park Shadow Stage 2", "Movable Park Shadow Stage 3",
+                "Sunset Stage Light 3", "Yuna Previous Loop Appearance 3", "Evening Unlocked",
+                "Perfect Date Photo", "Preserve Photo Choice", "Tear Photo Choice", "Mina Original Memory",
+                "Return Home Door", "Mina Perfect Day Loop", "Break The Perfect Day Rules",
+                "Preserve Or Tear The Photo And Return Home"
+            };
+
+            foreach (string objectName in requiredObjects)
+                Assert.That(GameObject.Find(objectName), Is.Not.Null, objectName + " is missing from chapter 3.");
+
+            Assert.That(GameObject.Find("Mina Perfect Day Loop").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Break The Perfect Day Rules").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Preserve Or Tear The Photo And Return Home").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+        }
+
+        [Test]
         public void StoryRoute_TabOwnsAndRestoresPlayerInputAndCursor()
         {
             Component route = FindStoryRouteController();
