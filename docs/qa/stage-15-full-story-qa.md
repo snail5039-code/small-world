@@ -106,7 +106,8 @@ QA 하위 작업은 커밋·푸시하지 않는다.
 - 격리 조치: `PlayerInteractionDetectorTests`, `Stage5InteractionTests` 실행 전후 빈 씬을 열도록 보강했다.
 - 배치 재실행은 Unity Personal 좌석에 `com.unity.editor.headless` 권한이 없어 return code 198로 종료됐다. Hub에서 Personal 좌석 재활성화 후에도 배치 권한은 생성되지 않았다.
 - 일반 Editor 자동 실행으로 전환해 컴파일 오류를 확인했고, 테스트의 Assembly-CSharp 경계를 리플렉션 계약으로 수정했다.
-- 최종 전체 EditMode: 162/162 통과.
+- 세션 전달·저장 입력·2장 계약 정합화 후 전체 EditMode: 170/170 통과.
+- 전체 PlayMode: 13/13 통과. 2장 수용 테스트는 EditMode 전용으로 분류되어 PlayMode 오분류가 제거됐다.
 - Windows Development 빌드: 성공, `Builds/Windows/Development/SmallWorld.exe` 생성.
 - 런타임 스모크: 부트→메인 메뉴→현실방→메인 메뉴 흐름 `[Stage2Smoke] PASS`.
 - 남은 수동 확인: 현실방 문으로 `04_StoryRoute` 진입 후 Tab 기록 오버레이와 Esc 일시정지의 화면 표시·복원을 실제 조작으로 확인한다.
