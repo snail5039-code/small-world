@@ -67,7 +67,7 @@ namespace SmallWorld.Player.Tests
         {
             Stage10ManualSavePanel savePanel = FindRequired<Stage10ManualSavePanel>();
             Type roomType = GetRealityRoomControllerType();
-            Component room = Object.FindFirstObjectByType(roomType) as Component;
+            Component room = UnityEngine.Object.FindFirstObjectByType(roomType) as Component;
             Assert.That(room, Is.Not.Null, roomType.Name + " must be wired in the Reality Room scene.");
             FirstPersonPlayerController player = FindRequired<FirstPersonPlayerController>();
             Stage6UIController stage6 = FindRequired<Stage6UIController>();
@@ -130,9 +130,9 @@ namespace SmallWorld.Player.Tests
             Assert.That(DialogueCursorMode.RequestedVisible, Is.True);
         }
 
-        private static T FindRequired<T>() where T : Object
+        private static T FindRequired<T>() where T : UnityEngine.Object
         {
-            T value = Object.FindFirstObjectByType<T>(FindObjectsInactive.Include);
+            T value = UnityEngine.Object.FindFirstObjectByType<T>(FindObjectsInactive.Include);
             Assert.That(value, Is.Not.Null, typeof(T).Name + " must be wired in the Reality Room scene.");
             return value;
         }
