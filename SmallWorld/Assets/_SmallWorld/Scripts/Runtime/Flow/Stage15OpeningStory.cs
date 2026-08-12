@@ -79,7 +79,24 @@ namespace SmallWorld.Flow
         SetShadowStage3,
         PreservePerfectPhoto,
         TearPerfectPhoto,
-        ReturnFromPerfectDay
+        ReturnFromPerfectDay,
+        TalkWithYunaBeforeOffice,
+        EnterFacelessOffice,
+        EquipResearcherBadge,
+        EquipDeveloperBadge,
+        RecoverInvariantCommand1,
+        RecoverInvariantCommand2,
+        RecoverInvariantCommand3,
+        AlignMirrorSeat1,
+        AlignMirrorSeat2,
+        AlignMirrorSeat3,
+        ChooseOriginalDeveloperDeletion,
+        ChooseAlteredDeveloperProtection,
+        ChooseInspectOriginalServer,
+        EscapeOfficeCheckpoint1,
+        EscapeOfficeCheckpoint2,
+        EscapeOfficeCheckpoint3,
+        ReturnFromFacelessOffice
     }
 
     public readonly struct OpeningStoryResult
@@ -115,7 +132,9 @@ namespace SmallWorld.Flow
                         ? PerformChapterTwo(save, progress, action)
                         : progress.CurrentChapter == StoryChapterId.Chapter3
                             ? PerformChapterThree(save, progress, action)
-                            : Reject("이 기억은 지금 열 수 없다.");
+                            : progress.CurrentChapter == StoryChapterId.Chapter4
+                                ? PerformChapterFour(save, progress, action)
+                                : Reject("이 기억은 지금 열 수 없다.");
         }
 
         private OpeningStoryResult PerformPrologue(SaveData save, StoryProgress progress, OpeningStoryAction action)
@@ -401,6 +420,85 @@ namespace SmallWorld.Flow
             }
         }
 
+        private OpeningStoryResult PerformChapterFour(SaveData save, StoryProgress progress, OpeningStoryAction action)
+        {
+            if (!progress.GetChapter(StoryChapterId.Chapter3).IsComplete)
+                return Reject("'완벽한 하루'를 끝내기 전에는 얼굴 없는 사무실에 들어갈 수 없다.");
+
+            switch (action)
+            {
+                case OpeningStoryAction.TalkWithYunaBeforeOffice:
+                    return Accept(progress, action, "유나는 서재 책상 위 사원증이 개발자의 기억으로 연결된다고 말했다.");
+                case OpeningStoryAction.EnterFacelessOffice:
+                    if (!Has(progress, OpeningStoryAction.TalkWithYunaBeforeOffice)) return Need("집에서 유나와 사무실 기억에 대해 먼저 이야기해야 한다.");
+                    storyFlow.SetFlag(progress, "foreshadow-study-desk", false);
+                    storyFlow.SetFlag(progress, "foreshadow-developer-computer", false);
+                    storyFlow.SetFlag(progress, "foreshadow-deleted-file-cabinet", false);
+                    return Accept(progress, action, "창문 없는 사무실의 모든 직원이 서로 다른 이름으로 같은 얼굴을 불렀다.");
+                case OpeningStoryAction.EquipResearcherBadge:
+                    if (!Has(progress, OpeningStoryAction.EnterFacelessOffice)) return Need("사원증을 바꿀 사무실 기억에 먼저 진입해야 한다.");
+                    return Accept(progress, action, "연구원 사원증이 삭제 파일 캐비닛의 기록 권한을 열었다.");
+                case OpeningStoryAction.EquipDeveloperBadge:
+                    if (!Has(progress, OpeningStoryAction.EquipResearcherBadge)) return Need("연구원 인격으로 삭제 기록 권한부터 확보해야 한다.");
+                    return Accept(progress, action, "원래 개발자 사원증이 잠긴 컴퓨터의 시스템 로그를 열었다.");
+                case OpeningStoryAction.RecoverInvariantCommand1:
+                case OpeningStoryAction.RecoverInvariantCommand2:
+                case OpeningStoryAction.RecoverInvariantCommand3:
+                    if (!Has(progress, OpeningStoryAction.EquipDeveloperBadge)) return Need("개발자 사원증으로 모순된 삭제 로그를 열어야 한다.");
+                    int expectedCommand = InvariantCommandCount(progress) + (int)OpeningStoryAction.RecoverInvariantCommand1;
+                    if ((int)action != expectedCommand) return Reject("서로 모순되는 서술이 아닌, 모든 로그에서 변하지 않는 시스템 명령만 골라야 한다.");
+                    return Accept(progress, action, action == OpeningStoryAction.RecoverInvariantCommand3
+                        ? "불변 명령이 복구됐다: 기억은 삭제되지 않고 인격 사이에 분배된다."
+                        : "모순 기록 사이에서 변하지 않는 명령 한 줄을 복구했다.");
+                case OpeningStoryAction.AlignMirrorSeat1:
+                case OpeningStoryAction.AlignMirrorSeat2:
+                case OpeningStoryAction.AlignMirrorSeat3:
+                    if (InvariantCommandCount(progress) != 3) return Need("삭제 로그에서 불변 명령을 먼저 복구해야 한다.");
+                    int expectedSeat = MirrorSeatCount(progress) + (int)OpeningStoryAction.AlignMirrorSeat1;
+                    if ((int)action != expectedSeat) return Reject("거울 속 실제 얼굴과 현실의 직원 자리를 같게 맞춰야 한다.");
+                    if (action == OpeningStoryAction.AlignMirrorSeat3)
+                    {
+                        storyFlow.SetFlag(progress, "composite-protagonist-revealed", false);
+                        storyFlow.SetFlag(progress, "external-composite-admin-candidate", true);
+                    }
+                    return Accept(progress, action, action == OpeningStoryAction.AlignMirrorSeat3
+                        ? "자리가 일치하자 주인공은 한 사람이 아닌 합성 인격이며, 기억 밖에 또 다른 합성 관리자 후보가 있음이 드러났다."
+                        : "거울의 실제 얼굴 하나를 올바른 자리에 맞춰다.");
+                case OpeningStoryAction.ChooseOriginalDeveloperDeletion:
+                case OpeningStoryAction.ChooseAlteredDeveloperProtection:
+                case OpeningStoryAction.ChooseInspectOriginalServer:
+                    if (MirrorSeatCount(progress) != 3) return Need("거울 회의실의 자리부터 모두 정합해야 한다.");
+                    if (MadeOfficeRecordChoice(progress)) return Reject("믿을 개발자의 기록은 이미 선택했다.");
+                    if (action == OpeningStoryAction.ChooseInspectOriginalServer && !HasOfficeServerAutonomy(progress))
+                        return Reject("원본 서버를 확인할 자율 수치가 부족하다. 다른 기록을 고르거나 자율성의 단서를 회복한 뒤 다시 시도할 수 있다.");
+                    string record = action == OpeningStoryAction.ChooseOriginalDeveloperDeletion ? "delete-girl" :
+                        action == OpeningStoryAction.ChooseAlteredDeveloperProtection ? "protect-girl" : "original-server";
+                    storyFlow.RecordChoice(progress, "office-record", record);
+                    if (action == OpeningStoryAction.ChooseOriginalDeveloperDeletion) relationships.Set(save, GirlId, relationships.Get(save, GirlId) - 15);
+                    if (action == OpeningStoryAction.ChooseAlteredDeveloperProtection) relationships.Set(save, GirlId, relationships.Get(save, GirlId) + 15);
+                    if (action == OpeningStoryAction.ChooseInspectOriginalServer) storyFlow.SetFlag(progress, "original-server-confirmed", false);
+                    return Accept(progress, action, "최종 기록을 선택하자 퇴근 방송과 함께 직원들의 얼굴이 지워지기 시작했다.");
+                case OpeningStoryAction.EscapeOfficeCheckpoint1:
+                case OpeningStoryAction.EscapeOfficeCheckpoint2:
+                case OpeningStoryAction.EscapeOfficeCheckpoint3:
+                    if (!MadeOfficeRecordChoice(progress)) return Need("믿을 개발자의 최종 기록을 먼저 선택해야 한다.");
+                    int expectedEscape = OfficeEscapeCount(progress) + (int)OpeningStoryAction.EscapeOfficeCheckpoint1;
+                    if ((int)action != expectedEscape) return Reject("사원증을 빼앗으려는 직원들을 피해 표시된 탈출 경로를 순서대로 따라야 한다.");
+                    return Accept(progress, action, "이름을 되찾으려는 얼굴 없는 직원들을 피해 탈출 구간을 통과했다.");
+                case OpeningStoryAction.ReturnFromFacelessOffice:
+                    if (OfficeEscapeCount(progress) != 3) return Need("사원증을 지키며 세 추격 구간을 모두 통과해야 한다.");
+                    Mark(progress, action);
+                    storyFlow.SetFlag(progress, "furniture-study-desk", false);
+                    storyFlow.SetFlag(progress, "furniture-developer-computer", false);
+                    storyFlow.SetFlag(progress, "furniture-locked-file-cabinet", false);
+                    storyFlow.SetFlag(progress, "chapter-5-unlocked", false);
+                    CompleteChapter(progress, StoryChapterId.Chapter4);
+                    return new OpeningStoryResult(true, "집으로 돌아왔다. 서재 책상과 개발자 컴퓨터, 잠긴 파일 캐비닛이 배치됐고 다음 기억이 열렸다.");
+                default:
+                    return Reject("이 행동은 '얼굴 없는 사무실'의 현재 흐름과 맞지 않는다.");
+            }
+        }
+
         private void CompleteChapter(StoryProgress progress, StoryChapterId chapter)
         {
             StoryChapterProgress state = progress.GetChapter(chapter);
@@ -432,11 +530,16 @@ namespace SmallWorld.Flow
         private static int AnnouncementCount(StoryProgress p) => Count(p, OpeningStoryAction.ReverseAnnouncement1, OpeningStoryAction.ReverseAnnouncement2, OpeningStoryAction.ReverseAnnouncement3);
         private static int SafeZoneCount(StoryProgress p) => Count(p, OpeningStoryAction.CrossSafeZone1, OpeningStoryAction.CrossSafeZone2, OpeningStoryAction.CrossSafeZone3);
         private static int ShadowStageCount(StoryProgress p) => Count(p, OpeningStoryAction.SetShadowStage1, OpeningStoryAction.SetShadowStage2, OpeningStoryAction.SetShadowStage3);
+        private static int InvariantCommandCount(StoryProgress p) => Count(p, OpeningStoryAction.RecoverInvariantCommand1, OpeningStoryAction.RecoverInvariantCommand2, OpeningStoryAction.RecoverInvariantCommand3);
+        private static int MirrorSeatCount(StoryProgress p) => Count(p, OpeningStoryAction.AlignMirrorSeat1, OpeningStoryAction.AlignMirrorSeat2, OpeningStoryAction.AlignMirrorSeat3);
+        private static int OfficeEscapeCount(StoryProgress p) => Count(p, OpeningStoryAction.EscapeOfficeCheckpoint1, OpeningStoryAction.EscapeOfficeCheckpoint2, OpeningStoryAction.EscapeOfficeCheckpoint3);
         private static bool MadePrologueChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "prologue-stay");
         private static bool ChoseMemoryDoor(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "first-memory-door");
         private static bool MadeSeatChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "fourth-seat-name");
         private static bool MadeDestinationChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "platform-destination");
         private static bool MadePerfectDayChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "perfect-day-photo");
+        private static bool MadeOfficeRecordChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "office-record");
+        private static bool HasOfficeServerAutonomy(StoryProgress p) => p.ForeshadowFlags.Contains("autonomy-clue-white-station");
         private static OpeningStoryResult Need(string message) => new OpeningStoryResult(false, message);
         private static OpeningStoryResult Reject(string message) => new OpeningStoryResult(false, message);
     }
