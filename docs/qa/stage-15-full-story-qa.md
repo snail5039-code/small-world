@@ -104,8 +104,12 @@ QA 하위 작업은 커밋·푸시하지 않는다.
 - 근접 조사 전용 EditMode: 8/8 통과.
 - 근접 조사 변경 후 첫 전체 EditMode: 159개 중 153개 통과, 6개 실패. 실패 원인은 앞선 씬 테스트가 `02_RealityRoom`을 남겨 뒤 탐지 테스트에 실제 씬 콜라이더가 섞인 테스트 순서 오염으로 확인했다.
 - 격리 조치: `PlayerInteractionDetectorTests`, `Stage5InteractionTests` 실행 전후 빈 씬을 열도록 보강했다.
-- 재실행 및 다음 방 Tab/Esc 테스트 시도: Unity 6000.3.18f1이 `No valid Unity Editor license found` / return code 198로 Test Runner 진입 전에 종료되어 결과 XML이 생성되지 않았다.
-- 남은 관리자 검증: 전체 EditMode, Windows Development 빌드, 현실방→스토리 방 전환 후 Tab/Esc·저장 UI 런타임 스모크.
+- 배치 재실행은 Unity Personal 좌석에 `com.unity.editor.headless` 권한이 없어 return code 198로 종료됐다. Hub에서 Personal 좌석 재활성화 후에도 배치 권한은 생성되지 않았다.
+- 일반 Editor 자동 실행으로 전환해 컴파일 오류를 확인했고, 테스트의 Assembly-CSharp 경계를 리플렉션 계약으로 수정했다.
+- 최종 전체 EditMode: 162/162 통과.
+- Windows Development 빌드: 성공, `Builds/Windows/Development/SmallWorld.exe` 생성.
+- 런타임 스모크: 부트→메인 메뉴→현실방→메인 메뉴 흐름 `[Stage2Smoke] PASS`.
+- 남은 수동 확인: 현실방 문으로 `04_StoryRoute` 진입 후 Tab 기록 오버레이와 Esc 일시정지의 화면 표시·복원을 실제 조작으로 확인한다.
 
 ## 외부 에셋과 라이선스
 

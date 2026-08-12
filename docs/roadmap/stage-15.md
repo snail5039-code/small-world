@@ -23,10 +23,12 @@
 - [ ] 복선 배치
 - [ ] 최종장 진입 조건
 
-## 현재 검증 게이트
+## 현재 검증 결과
 
 - 근접 조사 전용 EditMode: 8/8 통과.
-- 전체 EditMode 재검증, Windows Development 빌드, 런타임 스모크: Unity Editor 라이선스 return code 198 해소 후 재실행.
-- 위 검증과 Git 정리가 끝나기 전에는 3장 구현을 시작하지 않는다.
+- 전체 EditMode: 162/162 통과.
+- Windows Development 빌드: 성공.
+- 런타임 스모크: `[Stage2Smoke] PASS`.
+- 다음 구현 범위는 3장 `완벽한 하루`다.
 
 완료 기준: 새 게임부터 최종 선택 직전까지 막힘 없이 진행할 수 있어야 한다.
