@@ -21,6 +21,7 @@ namespace SmallWorld.Player.Tests
         public void SetUp()
         {
             EditorSceneManager.OpenScene(RealityRoomScene);
+            FindRequired<Stage6UIController>().ConfigureInitialState(UIState.Gameplay);
             DialogueCursorMode.RequestGameplay();
         }
 
