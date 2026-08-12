@@ -121,6 +121,8 @@ QA 하위 작업은 커밋·푸시하지 않는다.
 - 일반 Editor 자동 실행으로 전환해 컴파일 오류를 확인했고, 테스트의 Assembly-CSharp 경계를 리플렉션 계약으로 수정했다.
 - 세션 전달·저장 입력·2장 계약 정합화 후 전체 EditMode: 170/170 통과.
 - 전체 PlayMode: 13/13 통과. 2장 수용 테스트는 EditMode 전용으로 분류되어 PlayMode 오분류가 제거됐다.
+- 3장 `완벽한 하루` 통합 후 전체 EditMode: 176/176 통과, PlayMode: 13/13 통과.
+- 3장 포함 Windows Development 빌드 성공, 런타임 스모크 `[Stage2Smoke] PASS`.
 - Windows Development 빌드: 성공, `Builds/Windows/Development/SmallWorld.exe` 생성.
 - 런타임 스모크: 부트→메인 메뉴→현실방→메인 메뉴 흐름 `[Stage2Smoke] PASS`.
 - 남은 수동 확인: 현실방 문으로 `04_StoryRoute` 진입 후 Tab 기록 오버레이와 Esc 일시정지의 화면 표시·복원을 실제 조작으로 확인한다.
