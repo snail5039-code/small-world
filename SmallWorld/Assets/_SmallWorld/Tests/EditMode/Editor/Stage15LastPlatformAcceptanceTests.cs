@@ -16,16 +16,18 @@ namespace SmallWorld.Tests.EditMode.Flow
             var progress = ReadyChapterTwo();
             var story = new Stage15OpeningStoryService();
 
-            Reject(story, save, progress, "ReturnEmployeeId");
+            Reject(story, save, progress, "ReturnEmployeeCard");
             Reject(story, save, progress, "ReverseAnnouncement1");
             Reject(story, save, progress, "ChooseWhiteStation");
-            Reject(story, save, progress, "EscapeLastPlatform");
+            Reject(story, save, progress, "ReturnFromPlatform");
 
             Perform(story, save, progress,
-                "ConnectRoute1", "ConnectRoute2", "ConnectRoute3", "ConnectRoute4",
-                "ReturnEmployeeId", "ReturnChildShoe", "ReturnHospitalWristband", "ReturnGameCartridge",
+                "HearDohyeon", "ReadPlatformBoard",
+                "ConnectLoginTime1", "ConnectLoginTime2", "ConnectLoginTime3", "ConnectLoginTime4",
+                "ReturnEmployeeCard", "ReturnChildShoe", "ReturnHospitalBand", "ReturnGameCartridge",
                 "ReverseAnnouncement1", "ReverseAnnouncement2", "ReverseAnnouncement3",
-                "ChooseWhiteStation", "EscapeLastPlatform", "ReturnFromLastPlatform");
+                "ChooseWhiteStation", "CrossSafeZone1", "CrossSafeZone2", "CrossSafeZone3",
+                "ReturnFromPlatform");
 
             Assert.That(progress.CurrentChapter, Is.EqualTo(StoryChapterId.Chapter3));
             Assert.That(progress.GetChapter(StoryChapterId.Chapter2).IsComplete, Is.True);
@@ -38,24 +40,25 @@ namespace SmallWorld.Tests.EditMode.Flow
             var progress = ReadyChapterTwo();
             var story = new Stage15OpeningStoryService();
 
-            Reject(story, save, progress, "ConnectWrongRoute");
-            Perform(story, save, progress, "ConnectRoute1");
-            Assert.That(Has(progress, "ConnectWrongRoute"), Is.False);
+            Perform(story, save, progress, "HearDohyeon", "ReadPlatformBoard");
+            Reject(story, save, progress, "ConnectLoginTime2");
+            Perform(story, save, progress, "ConnectLoginTime1");
+            Assert.That(Has(progress, "ConnectLoginTime2"), Is.False);
 
-            Perform(story, save, progress, "ConnectRoute2", "ConnectRoute3", "ConnectRoute4");
-            Reject(story, save, progress, "ReturnWrongLostItem");
-            Perform(story, save, progress, "ReturnEmployeeId");
-            Assert.That(Has(progress, "ReturnWrongLostItem"), Is.False);
+            Perform(story, save, progress, "ConnectLoginTime2", "ConnectLoginTime3", "ConnectLoginTime4");
+            Reject(story, save, progress, "ReverseAnnouncement1");
+            Perform(story, save, progress, "ReturnEmployeeCard");
+            Assert.That(Has(progress, "ReverseAnnouncement1"), Is.False);
 
-            Perform(story, save, progress, "ReturnChildShoe", "ReturnHospitalWristband", "ReturnGameCartridge");
-            Reject(story, save, progress, "ReverseWrongAnnouncement");
+            Perform(story, save, progress, "ReturnChildShoe", "ReturnHospitalBand", "ReturnGameCartridge");
+            Reject(story, save, progress, "ReverseAnnouncement2");
             Perform(story, save, progress, "ReverseAnnouncement1");
-            Assert.That(Has(progress, "ReverseWrongAnnouncement"), Is.False);
+            Assert.That(Has(progress, "ReverseAnnouncement2"), Is.False);
         }
 
-        [TestCase("ChooseDohyeonHome", "dohyeon-home", "victim-dohyeon-restoration-clue")]
-        [TestCase("ChooseGameHome", "game-home", "yuna-affection-memory")]
-        [TestCase("ChooseWhiteStation", "white-station", "first-ai-voice")]
+        [TestCase("ChooseRealityHome", "reality-home", "victim-restoration-clue-dohyeon")]
+        [TestCase("ChooseGameHouse", "game-house", "yuna-affection-memory-dohyeon")]
+        [TestCase("ChooseWhiteStation", "white-station", "autonomy-clue-white-station")]
         public void LastPlatform_DestinationBranchesPersistDistinctConsequences(
             string action, string outcome, string expectedFlag)
         {
@@ -65,12 +68,12 @@ namespace SmallWorld.Tests.EditMode.Flow
 
             Perform(story, save, progress, action);
 
-            StoryChoiceState choice = progress.ImportantChoices.Find(x => x.ChoiceId == "chapter-2-destination");
+            StoryChoiceState choice = progress.ImportantChoices.Find(x => x.ChoiceId == "platform-destination");
             Assert.That(choice, Is.Not.Null);
             Assert.That(choice.OutcomeId, Is.EqualTo(outcome));
             Assert.That(progress.ForeshadowFlags, Contains.Item(expectedFlag));
-            Reject(story, save, progress, "ChooseDohyeonHome");
-            Reject(story, save, progress, "ChooseGameHome");
+            Reject(story, save, progress, "ChooseRealityHome");
+            Reject(story, save, progress, "ChooseGameHouse");
             Reject(story, save, progress, "ChooseWhiteStation");
         }
 
@@ -80,7 +83,8 @@ namespace SmallWorld.Tests.EditMode.Flow
             var save = SaveData.CreateNew();
             var progress = ReadyForDestination();
             var story = new Stage15OpeningStoryService();
-            Perform(story, save, progress, "ChooseWhiteStation", "EscapeLastPlatform", "ReturnFromLastPlatform");
+            Perform(story, save, progress, "ChooseWhiteStation",
+                "CrossSafeZone1", "CrossSafeZone2", "CrossSafeZone3", "ReturnFromPlatform");
 
             var store = new SaveDataStoryProgressStore();
             store.Save(save, progress);
@@ -88,12 +92,12 @@ namespace SmallWorld.Tests.EditMode.Flow
 
             Assert.That(restored.CurrentChapter, Is.EqualTo(StoryChapterId.Chapter3));
             Assert.That(restored.GetChapter(StoryChapterId.Chapter2).IsComplete, Is.True);
-            Assert.That(restored.ImportantChoices.Find(x => x.ChoiceId == "chapter-2-destination").OutcomeId,
+            Assert.That(restored.ImportantChoices.Find(x => x.ChoiceId == "platform-destination").OutcomeId,
                 Is.EqualTo("white-station"));
             Assert.That(restored.ForeshadowFlags, Contains.Item("first-ai-voice"));
-            Assert.That(restored.ForeshadowFlags, Contains.Item("chapter-2-wall-clock"));
-            Assert.That(restored.ForeshadowFlags, Contains.Item("chapter-2-shoe-cabinet"));
-            Assert.That(restored.ForeshadowFlags, Contains.Item("chapter-2-small-radio"));
+            Assert.That(restored.ForeshadowFlags, Contains.Item("furniture-wall-clock"));
+            Assert.That(restored.ForeshadowFlags, Contains.Item("furniture-entry-shoe-cabinet"));
+            Assert.That(restored.ForeshadowFlags, Contains.Item("furniture-small-radio"));
         }
 
         [Test]
@@ -103,11 +107,12 @@ namespace SmallWorld.Tests.EditMode.Flow
             var progress = ReadyForDestination();
             var story = new Stage15OpeningStoryService();
 
-            Perform(story, save, progress, "ChooseDohyeonHome", "EscapeLastPlatform");
+            Perform(story, save, progress, "ChooseRealityHome",
+                "CrossSafeZone1", "CrossSafeZone2", "CrossSafeZone3");
             Assert.That(progress.CurrentChapter, Is.EqualTo(StoryChapterId.Chapter2));
             Assert.That(progress.GetChapter(StoryChapterId.Chapter2).IsComplete, Is.False);
 
-            Perform(story, save, progress, "ReturnFromLastPlatform");
+            Perform(story, save, progress, "ReturnFromPlatform");
             Assert.That(progress.CurrentChapter, Is.EqualTo(StoryChapterId.Chapter3));
             Assert.That(progress.GetChapter(StoryChapterId.Chapter3).IsComplete, Is.False);
         }
@@ -126,8 +131,9 @@ namespace SmallWorld.Tests.EditMode.Flow
             var story = new Stage15OpeningStoryService();
             var save = SaveData.CreateNew();
             Perform(story, save, progress,
-                "ConnectRoute1", "ConnectRoute2", "ConnectRoute3", "ConnectRoute4",
-                "ReturnEmployeeId", "ReturnChildShoe", "ReturnHospitalWristband", "ReturnGameCartridge",
+                "HearDohyeon", "ReadPlatformBoard",
+                "ConnectLoginTime1", "ConnectLoginTime2", "ConnectLoginTime3", "ConnectLoginTime4",
+                "ReturnEmployeeCard", "ReturnChildShoe", "ReturnHospitalBand", "ReturnGameCartridge",
                 "ReverseAnnouncement1", "ReverseAnnouncement2", "ReverseAnnouncement3");
             return progress;
         }

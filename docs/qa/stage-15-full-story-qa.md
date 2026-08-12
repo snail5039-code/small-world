@@ -39,7 +39,7 @@
 | S15-C2-06 | `04_StoryRoute`의 `chapter-2` 노드는 `Last Platform` 표시명과 도착·대화·퍼즐·기억 진입점이 모두 연결되어 있고, 인접한 1장/3장 노드 순서를 유지한다. | `StoryRoute_IntegratesLastPlatformLandmarksBetweenChaptersOneAndThree` |
 | S15-C2-07 | 프롤로그와 1장의 순서 잠금·선택·복선 및 14단계 첫 기억 공간 저장/복귀 테스트가 2장 추가 뒤에도 그대로 통과한다. | 기존 `Stage15OpeningStoryTests`, `Stage15StoryProgressContractTests`, `Stage14FirstMemoryRegression_PartialSaveStaysLockedAndSolvedSaveReturns` |
 
-2장 런타임 액션의 테스트 계약 이름은 `ConnectRoute1..4`, `ReturnEmployeeId`, `ReturnChildShoe`, `ReturnHospitalWristband`, `ReturnGameCartridge`, `ReverseAnnouncement1..3`, `ChooseDohyeonHome`, `ChooseGameHome`, `ChooseWhiteStation`, `EscapeLastPlatform`, `ReturnFromLastPlatform`이다. 오답 계약은 `ConnectWrongRoute`, `ReturnWrongLostItem`, `ReverseWrongAnnouncement`를 사용한다. 구현과 테스트는 이 이름을 함께 변경할 수 있지만 저장 키 `chapter-2-destination`과 결과 ID 세 개는 저장 호환 계약으로 유지한다.
+2장 런타임 액션의 테스트 계약 이름은 `HearDohyeon`, `ReadPlatformBoard`, `ConnectLoginTime1..4`, `ReturnEmployeeCard`, `ReturnChildShoe`, `ReturnHospitalBand`, `ReturnGameCartridge`, `ReturnItemToWrongShadow`, `ReverseAnnouncement1..3`, `ChooseRealityHome`, `ChooseGameHouse`, `ChooseWhiteStation`, `CrossSafeZone1..3`, `ReturnFromPlatform`이다. 오답은 별도 액션 이름을 만들지 않고 실제 순서형 액션을 앞 단계에서 시도해 거부·재시도 가능성을 검증한다. 저장 키 `platform-destination`과 결과 ID `reality-home`, `game-house`, `white-station`은 저장 호환 계약으로 유지한다.
 
 ### 현실방→스토리 방 입력 회귀 기준
 
