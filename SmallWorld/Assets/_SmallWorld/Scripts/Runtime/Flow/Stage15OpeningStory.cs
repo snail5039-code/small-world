@@ -64,7 +64,22 @@ namespace SmallWorld.Flow
         CrossSafeZone1,
         CrossSafeZone2,
         CrossSafeZone3,
-        ReturnFromPlatform
+        ReturnFromPlatform,
+        TalkWithYunaAtHome,
+        EnterMinaMemory,
+        OrderDisplayedSweetDrink,
+        FlipCafeMenu,
+        OrderBitterCoffee,
+        ChoosePresentedPreference,
+        InspectGraffiti,
+        ChooseUnknownPreference,
+        SetWrongShadowStage,
+        SetShadowStage1,
+        SetShadowStage2,
+        SetShadowStage3,
+        PreservePerfectPhoto,
+        TearPerfectPhoto,
+        ReturnFromPerfectDay
     }
 
     public readonly struct OpeningStoryResult
@@ -98,7 +113,9 @@ namespace SmallWorld.Flow
                     ? PerformChapterOne(save, progress, action)
                     : progress.CurrentChapter == StoryChapterId.Chapter2
                         ? PerformChapterTwo(save, progress, action)
-                        : Reject("이 기억은 지금 열 수 없다.");
+                        : progress.CurrentChapter == StoryChapterId.Chapter3
+                            ? PerformChapterThree(save, progress, action)
+                            : Reject("이 기억은 지금 열 수 없다.");
         }
 
         private OpeningStoryResult PerformPrologue(SaveData save, StoryProgress progress, OpeningStoryAction action)
@@ -311,6 +328,79 @@ namespace SmallWorld.Flow
             }
         }
 
+        private OpeningStoryResult PerformChapterThree(SaveData save, StoryProgress progress, OpeningStoryAction action)
+        {
+            if (!progress.GetChapter(StoryChapterId.Chapter2).IsComplete)
+                return Reject("'마지막 승강장'을 끝내기 전에는 완벽한 하루에 들어갈 수 없다.");
+
+            switch (action)
+            {
+                case OpeningStoryAction.TalkWithYunaAtHome:
+                    return Accept(progress, action, "유나는 민아와 만들었던 '완벽한 하루'를 다시 보여 주겠다고 말했다.");
+                case OpeningStoryAction.EnterMinaMemory:
+                    if (!Has(progress, OpeningStoryAction.TalkWithYunaAtHome)) return Need("집에서 유나와 먼저 대화해야 한다.");
+                    storyFlow.SetFlag(progress, "external-personality-training-observer", true);
+                    return Accept(progress, action, "민아의 성격 학습 기록 밖에서 관찰하는 존재의 흔적이 발견됐다.");
+                case OpeningStoryAction.OrderDisplayedSweetDrink:
+                    if (!Has(progress, OpeningStoryAction.EnterMinaMemory)) return Need("민아의 기억 공간에 먼저 들어가야 한다.");
+                    return Reject("메뉴에 적힌 단 음료를 고르자 완벽한 오전이 다시 시작됐다.");
+                case OpeningStoryAction.FlipCafeMenu:
+                    if (!Has(progress, OpeningStoryAction.EnterMinaMemory)) return Need("민아의 기억 공간에 먼저 들어가야 한다.");
+                    return Accept(progress, action, "메뉴판 뒤에 지워진 '쓴 커피'가 남아 있었다.");
+                case OpeningStoryAction.OrderBitterCoffee:
+                    if (!Has(progress, OpeningStoryAction.FlipCafeMenu)) return Need("메뉴판을 뒤집어 민아의 실제 주문을 찾아야 한다.");
+                    return Accept(progress, action, "쓴 커피를 주문하자 첫 번째 반복이 깨졌다.");
+                case OpeningStoryAction.ChoosePresentedPreference:
+                    if (!Has(progress, OpeningStoryAction.OrderBitterCoffee)) return Need("틀린 주문으로 첫 반복부터 깨야 한다.");
+                    return Reject("제시된 세 대답은 모두 같은 뜻이었고, 점심 직전으로 돌아왔다.");
+                case OpeningStoryAction.InspectGraffiti:
+                    if (!Has(progress, OpeningStoryAction.OrderBitterCoffee)) return Need("틀린 주문으로 첫 반복부터 깨야 한다.");
+                    return Accept(progress, action, "낙서를 조사하자 제시되지 않았던 네 번째 선택지가 나타났다.");
+                case OpeningStoryAction.ChooseUnknownPreference:
+                    if (!Has(progress, OpeningStoryAction.InspectGraffiti)) return Need("선택지 밖의 낙서를 먼저 조사해야 한다.");
+                    return Accept(progress, action, "\"네가 뭘 좋아하는지 모르겠어.\" 두 번째 반복이 깨졌다.");
+                case OpeningStoryAction.SetWrongShadowStage:
+                    if (!Has(progress, OpeningStoryAction.ChooseUnknownPreference)) return Need("네 번째 대답으로 두 번째 반복을 깨야 한다.");
+                    return Reject("그림자 방향이 저녁의 시간과 맞지 않아 정오로 되감겼다.");
+                case OpeningStoryAction.SetShadowStage1:
+                case OpeningStoryAction.SetShadowStage2:
+                case OpeningStoryAction.SetShadowStage3:
+                    if (!Has(progress, OpeningStoryAction.ChooseUnknownPreference)) return Need("네 번째 대답으로 두 번째 반복을 깨야 한다.");
+                    int expectedShadow = ShadowStageCount(progress) + (int)OpeningStoryAction.SetShadowStage1;
+                    if ((int)action != expectedShadow) return Reject("공원의 그림자를 시간 순서대로 움직여야 한다.");
+                    return Accept(progress, action, action == OpeningStoryAction.SetShadowStage3
+                        ? "해가 드디어 졌고, 유나는 이전 반복의 모습과 말투를 모두 드러냈다."
+                        : "그림자가 한 단계 길어지자 유나의 이전 반복 모습이 겹쳐졌다.");
+                case OpeningStoryAction.PreservePerfectPhoto:
+                case OpeningStoryAction.TearPerfectPhoto:
+                    if (ShadowStageCount(progress) != 3) return Need("멈춘 석양을 저녁까지 진행시켜야 한다.");
+                    if (MadePerfectDayChoice(progress)) return Reject("완벽한 데이트 사진의 운명은 이미 정해졌다.");
+                    bool preserve = action == OpeningStoryAction.PreservePerfectPhoto;
+                    storyFlow.RecordChoice(progress, "perfect-day-photo", preserve ? "preserve" : "tear");
+                    relationships.Set(save, GirlId, relationships.Get(save, GirlId) + (preserve ? 15 : -10));
+                    if (preserve)
+                        storyFlow.SetFlag(progress, "perfect-day-loop-reinforced", false);
+                    else
+                    {
+                        storyFlow.SetFlag(progress, "victim-mina-memory-restored", false);
+                        storyFlow.SetFlag(progress, "yuna-first-anger", true);
+                    }
+                    return Accept(progress, action, preserve
+                        ? "사진을 보존하자 유나의 애정과 완벽한 반복이 강화됐다."
+                        : "사진을 찢자 민아의 원래 기억이 돌아왔고 유나는 처음으로 분노했다.");
+                case OpeningStoryAction.ReturnFromPerfectDay:
+                    if (!MadePerfectDayChoice(progress)) return Need("완벽한 데이트 사진을 보존할지 찢을지 먼저 결정해야 한다.");
+                    Mark(progress, action);
+                    storyFlow.SetFlag(progress, "furniture-bedroom-door", false);
+                    storyFlow.SetFlag(progress, "furniture-bedroom-mirror", false);
+                    storyFlow.SetFlag(progress, "furniture-bedroom-music-box", false);
+                    CompleteChapter(progress, StoryChapterId.Chapter3);
+                    return new OpeningStoryResult(true, "집으로 돌아왔다. 침실 문과 거울, 오르골에 이전 반복의 흔적이 남았다.");
+                default:
+                    return Reject("이 행동은 '완벽한 하루'의 현재 흐름과 맞지 않는다.");
+            }
+        }
+
         private void CompleteChapter(StoryProgress progress, StoryChapterId chapter)
         {
             StoryChapterProgress state = progress.GetChapter(chapter);
@@ -341,10 +431,12 @@ namespace SmallWorld.Flow
         private static int LostPropertyCount(StoryProgress p) => Count(p, OpeningStoryAction.ReturnEmployeeCard, OpeningStoryAction.ReturnChildShoe, OpeningStoryAction.ReturnHospitalBand, OpeningStoryAction.ReturnGameCartridge);
         private static int AnnouncementCount(StoryProgress p) => Count(p, OpeningStoryAction.ReverseAnnouncement1, OpeningStoryAction.ReverseAnnouncement2, OpeningStoryAction.ReverseAnnouncement3);
         private static int SafeZoneCount(StoryProgress p) => Count(p, OpeningStoryAction.CrossSafeZone1, OpeningStoryAction.CrossSafeZone2, OpeningStoryAction.CrossSafeZone3);
+        private static int ShadowStageCount(StoryProgress p) => Count(p, OpeningStoryAction.SetShadowStage1, OpeningStoryAction.SetShadowStage2, OpeningStoryAction.SetShadowStage3);
         private static bool MadePrologueChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "prologue-stay");
         private static bool ChoseMemoryDoor(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "first-memory-door");
         private static bool MadeSeatChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "fourth-seat-name");
         private static bool MadeDestinationChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "platform-destination");
+        private static bool MadePerfectDayChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "perfect-day-photo");
         private static OpeningStoryResult Need(string message) => new OpeningStoryResult(false, message);
         private static OpeningStoryResult Reject(string message) => new OpeningStoryResult(false, message);
     }
