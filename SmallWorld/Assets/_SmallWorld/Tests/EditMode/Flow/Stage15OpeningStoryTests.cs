@@ -2,12 +2,101 @@
 using NUnit.Framework;
 using SmallWorld.Flow;
 using SmallWorld.Save.Stage10;
+using SmallWorld.Save.Stage10.Integration;
 using SmallWorld.Save.Story;
+using UnityEngine;
 
 namespace SmallWorld.Tests.EditMode.Flow
 {
     public sealed class Stage15OpeningStoryTests
     {
+        [TearDown]
+        public void ClearRuntimeHandoffs()
+        {
+            Stage10SaveRuntime.ConsumePendingLoad();
+            Stage10SaveRuntime.ConsumeSceneSession();
+        }
+
+        [Test]
+        public void StoryRouteEntrySession_PreservesUnsavedNewGameDespiteNewerOtherSlot()
+        {
+            var service = new RouteSessionSaveService();
+            SaveData newerOtherSlot = SaveData.CreateNew();
+            newerOtherSlot.SavedAtUtcTicks = 200;
+            service.Latest = SaveReadResult.Success(newerOtherSlot, "manual-2");
+            Stage10SaveRuntime.Configure(service);
+
+            SaveData unsavedNewGame = SaveData.CreateNew();
+            unsavedNewGame.SavedAtUtcTicks = 0;
+            Stage10SaveRuntime.QueueSceneSession(unsavedNewGame);
+
+            GameObject root = new GameObject("StoryRouteSessionTest");
+            try
+            {
+                StoryRouteProgressAdapter adapter = root.AddComponent<StoryRouteProgressAdapter>();
+
+                Assert.That(adapter.CurrentSave, Is.SameAs(unsavedNewGame));
+                Assert.That(adapter.CurrentSave, Is.Not.SameAs(newerOtherSlot));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void StoryRouteEntrySession_DoesNotConsumeContinuePendingLoad_AndAutoSavesSameSession()
+        {
+            var service = new RouteSessionSaveService();
+            Stage10SaveRuntime.Configure(service);
+            SaveData continuePending = SaveData.CreateNew();
+            SaveData selectedSession = SaveData.CreateNew();
+            Stage10SaveRuntime.QueueLoad(continuePending);
+            Stage10SaveRuntime.QueueSceneSession(selectedSession);
+
+            GameObject root = new GameObject("StoryRouteSessionAutoSaveTest");
+            try
+            {
+                StoryRouteProgressAdapter adapter = root.AddComponent<StoryRouteProgressAdapter>();
+                adapter.ReportNodeReached("prologue");
+
+                Assert.That(service.AutoSaved, Is.SameAs(selectedSession));
+                Assert.That(service.AutoSaved.ActiveSceneId, Is.EqualTo("04_StoryRoute"));
+                Assert.That(Stage10SaveRuntime.PendingLoad, Is.SameAs(continuePending));
+                Assert.That(Stage10SaveRuntime.PendingSceneSession, Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void StoryRouteEntrySession_PreservesOlderSelectedSaveInsteadOfLatestSlot()
+        {
+            var service = new RouteSessionSaveService();
+            SaveData latestOtherSlot = SaveData.CreateNew();
+            latestOtherSlot.SavedAtUtcTicks = 500;
+            service.Latest = SaveReadResult.Success(latestOtherSlot, "manual-1");
+            Stage10SaveRuntime.Configure(service);
+            SaveData olderSelectedSave = SaveData.CreateNew();
+            olderSelectedSave.SavedAtUtcTicks = 100;
+            Stage10SaveRuntime.QueueSceneSession(olderSelectedSave);
+
+            GameObject root = new GameObject("StoryRouteSelectedSaveTest");
+            try
+            {
+                StoryRouteProgressAdapter adapter = root.AddComponent<StoryRouteProgressAdapter>();
+
+                Assert.That(adapter.CurrentSave, Is.SameAs(olderSelectedSave));
+                Assert.That(adapter.CurrentSave.SaveId, Is.Not.EqualTo(latestOtherSlot.SaveId));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         [Test]
         public void Prologue_RequiresGameplaySequenceAndUnlocksOnlyChapterOne()
         {
@@ -166,6 +255,18 @@ namespace SmallWorld.Tests.EditMode.Flow
         {
             foreach (OpeningStoryAction action in actions)
                 Assert.That(story.TryPerform(save, progress, action).Accepted, Is.True, action.ToString());
+        }
+
+        private sealed class RouteSessionSaveService : IGameSaveService
+        {
+            public SaveReadResult Latest = SaveReadResult.Failure(SaveReadStatus.Missing);
+            public SaveData AutoSaved;
+
+            public bool AutoSave(SaveData data) { AutoSaved = data; return true; }
+            public bool SaveManual(int slotIndex, SaveData data) => true;
+            public SaveReadResult LoadLatestAutoSave() => Latest;
+            public SaveReadResult LoadManual(int slotIndex) => SaveReadResult.Failure(SaveReadStatus.Missing);
+            public SaveData StartNewGame() => SaveData.CreateNew();
         }
     }
 }

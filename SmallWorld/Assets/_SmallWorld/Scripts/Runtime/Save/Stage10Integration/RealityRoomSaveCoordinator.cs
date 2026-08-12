@@ -21,6 +21,7 @@ namespace SmallWorld.Save.Stage10.Integration
     {
         private static IGameSaveService service;
         public static SaveData PendingLoad { get; private set; }
+        public static SaveData PendingSceneSession { get; private set; }
 
         public static IGameSaveService Service => service ?? (service = CreateDefaultService());
 
@@ -28,6 +29,7 @@ namespace SmallWorld.Save.Stage10.Integration
         {
             service = value ?? throw new ArgumentNullException(nameof(value));
             PendingLoad = null;
+            PendingSceneSession = null;
         }
 
         public static void QueueLoad(SaveData data) => PendingLoad = data;
@@ -35,6 +37,16 @@ namespace SmallWorld.Save.Stage10.Integration
         {
             SaveData value = PendingLoad;
             PendingLoad = null;
+            return value;
+        }
+
+        public static void QueueSceneSession(SaveData data) =>
+            PendingSceneSession = data ?? throw new ArgumentNullException(nameof(data));
+
+        public static SaveData ConsumeSceneSession()
+        {
+            SaveData value = PendingSceneSession;
+            PendingSceneSession = null;
             return value;
         }
 

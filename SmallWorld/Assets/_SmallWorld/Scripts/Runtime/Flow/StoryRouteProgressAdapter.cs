@@ -14,6 +14,8 @@ namespace SmallWorld.Flow
         private SaveData save;
         private StoryProgress progress;
 
+        public SaveData CurrentSave => save;
+
         public bool IsFinalGateUnlocked => flow.CanEnterFinalChapter(Progress);
 
         private StoryProgress Progress
@@ -69,8 +71,12 @@ namespace SmallWorld.Flow
         private void EnsureLoaded()
         {
             if (progress != null) return;
-            SaveReadResult latest = Stage10SaveRuntime.FindLatest();
-            save = latest.IsSuccess && latest.Data != null ? latest.Data : SaveData.CreateNew();
+            save = Stage10SaveRuntime.ConsumeSceneSession();
+            if (save == null)
+            {
+                SaveReadResult latest = Stage10SaveRuntime.FindLatest();
+                save = latest.IsSuccess && latest.Data != null ? latest.Data : SaveData.CreateNew();
+            }
             progress = store.Load(save);
         }
 

@@ -1,4 +1,5 @@
 using SmallWorld.Player;
+using SmallWorld.Save.Stage10.Integration;
 using UnityEngine;
 
 namespace SmallWorld.Flow
@@ -57,6 +58,9 @@ namespace SmallWorld.Flow
 
             transitionStarted = true;
             context.ShowFeedback("Opening the chapter route.");
+            RealityRoomSaveCoordinator coordinator = FindFirstObjectByType<RealityRoomSaveCoordinator>();
+            if (coordinator != null)
+                Stage10SaveRuntime.QueueSceneSession(coordinator.Capture("story-route.entry"));
             await SceneTransitionService.Instance.LoadPlayingSceneAsync(StorySceneName);
         }
     }
