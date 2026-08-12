@@ -54,21 +54,6 @@
 
 3장 런타임 액션의 테스트 계약 이름은 `HearMina`, `ReadCafeMenu`, `OrderDisplayedDrink`, `FlipCafeMenu`, `OrderBitterCoffee`, `HearPreferenceQuestion`, `ChooseScriptedPreference`, `InspectGraffiti`, `ChooseUnknownPreference`, `MoveParkShadow1..3`, `PreservePerfectPhoto`, `TearPerfectPhoto`, `ReturnFromPerfectDay`이다. 오답 액션은 수락되거나 진행 플래그를 남겨서는 안 된다. 저장 키 `perfect-day-photo`와 결과 ID `preserved`, `torn`, 관계 대상 `girl`은 저장 호환 계약으로 유지한다.
 
-### 4장 `얼굴 없는 사무실` 수용 기준
-
-| ID | 수용 기준 | 자동 검증 |
-|---|---|---|
-| S15-C4-01 | 4장은 개발자 기록 청취 → 사무실 진입 → 원래 개발자/기억 연구원 사원증별 파일·문 조사 → 모순 로그 3개 조사 → 불변 삭제 명령 선택 → 거울 자리 1→2→3 정합 → 기록 선택 → 퇴근 방송 추격 3단계 → 집 복귀 순서를 건너뛸 수 없다. | `FacelessOffice_EnforcesIdentityLogMirrorChoiceChaseAndReturnOrder` |
-| S15-C4-02 | 원래 개발자 사원증은 원래 개발자 파일·문만, 기억 연구원 사원증은 연구원 파일·문만 허용한다. 다른 권한의 파일과 문은 보이지 않거나 접근이 거부되며 진행 플래그를 남기지 않는다. | `FacelessOffice_BadgesExposeOnlyTheirFilesAndDoors` |
-| S15-C4-03 | 변하는 로그 명령이나 잘못된 거울 자리를 고르면 오답 피드백만 반환하고 진행하지 않는다. 같은 단계에서 불변 삭제 명령과 올바른 거울 자리 순서를 다시 시도할 수 있다. | `FacelessOffice_WrongLogAndMirrorAttemptsDoNotAdvanceAndRemainRetryable` |
-| S15-C4-04 | 최초 개발자의 삭제 기록은 결과 `delete`와 삭제 확인 단서, 조작 이후 개발자의 보호 기록은 결과 `protect`와 기억 보호 단서를 남긴다. 선택은 상호 배타적이고 어느 쪽도 추격·복귀·5장 진행을 막지 않는다. | `FacelessOffice_VisibleRecordChoicesAreExclusiveAndPersistDistinctConsequences` |
-| S15-C4-05 | 원본 서버 직접 확인은 자율 조건이 부족하면 선택할 수 없고 선택 기록도 남지 않는다. 2장의 `autonomy-clue-white-station`을 포함해 구현이 정한 자율 기준을 충족하면 결과 `original-server`와 외부 존재 단서 `original-server-verified`를 남긴다. | `FacelessOffice_OriginalServerChoiceRequiresAutonomyClue` |
-| S15-C4-06 | 추격은 기록 선택 뒤 퇴근 방송으로 시작하며 사원증 탈취 회피 1→2→3 뒤에만 집으로 복귀한다. 복귀 시 합성 관리자 후보, 서재 책상·개발용 컴퓨터·잠긴 파일 캐비닛 복선과 관계·외부 단서가 보존되고 5장만 열린다. | `FacelessOffice_EnforcesIdentityLogMirrorChoiceChaseAndReturnOrder`, `FacelessOffice_ChaseReturnPersistsRelationshipExternalCluesFurnitureAndChapterFiveUnlock` |
-| S15-C4-07 | 4장 퍼즐 단계, 세 기록 중 선택, 관계·외부 단서·가구 복선, 활성 장면, 4장 완료와 5장 해금은 `SaveDataStoryProgressStore` 및 이진 저장 왕복 뒤 동일하며 일회 선택·보상은 중복되지 않는다. | `FacelessOffice_ChaseReturnPersistsRelationshipExternalCluesFurnitureAndChapterFiveUnlock` |
-| S15-C4-08 | 프롤로그→1장→2장→3장이 모두 완료되기 전에는 4장 첫 행동이 거부된다. 기존 장 카탈로그 ID와 프롤로그~3장 수용 테스트는 4장 추가 뒤에도 그대로 통과한다. | `FacelessOffice_DoesNotRegressPrologueThroughChapterThreeSequenceContracts`, 기존 Stage 15 프롤로그~3장 수용 테스트 |
-
-4장 런타임 액션의 테스트 계약 이름은 `HearDeveloperRecord`, `EnterFacelessOffice`, `EquipOriginalDeveloperBadge`, `ReadOriginalDeveloperFile`, `OpenOriginalDeveloperDoor`, `EquipMemoryResearcherBadge`, `ReadMemoryResearcherFile`, `OpenMemoryResearcherDoor`, `InspectDeletionLog1..3`, `ChooseMutableLogCommand`, `ChooseImmutableDeleteCommand`, `AlignWrongMirrorSeat`, `AlignMirrorSeat1..3`, `ChooseDeleteRecord`, `ChooseProtectRecord`, `ChooseOriginalServerRecord`, `StartFacelessChase`, `EvadeBadgeThief1..3`, `ReturnFromFacelessOffice`이다. 저장 키 `faceless-office-record`과 결과 ID `delete`, `protect`, `original-server`는 저장 호환 계약으로 유지한다. 이 계약은 EditMode 순수 서비스 테스트이며 Runtime 코드·씬 로딩·`UnityEngine` 오브젝트를 사용하지 않는다.
-
 ### 현실방→스토리 방 입력 회귀 기준
 
 | ID | 수용 기준 | 자동 검증 |
