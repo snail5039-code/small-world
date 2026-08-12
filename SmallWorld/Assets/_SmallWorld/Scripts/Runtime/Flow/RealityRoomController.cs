@@ -64,8 +64,7 @@ namespace SmallWorld.Flow
         {
             if (dialogueView == null) dialogueView = FindFirstObjectByType<Stage7DialogueView>();
             if (recordView == null) recordView = FindFirstObjectByType<Stage8RecordView>();
-            if (manualSavePanel == null)
-                manualSavePanel = FindFirstObjectByType<Stage10ManualSavePanel>(FindObjectsInactive.Include);
+            ResolveManualSavePanel();
             if (recordView != null) recordView.NewRecordAdded += OnNewRecordAdded;
             if (stage6UI == null) return;
             stage6UI.ResumeRequested += RestoreGameplay;
@@ -102,6 +101,7 @@ namespace SmallWorld.Flow
             }
             if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
             {
+                ResolveManualSavePanel();
                 if (manualSavePanel != null && manualSavePanel.IsOpen) return;
                 if (photoPuzzleView != null && photoPuzzleView.IsOpen) return;
                 recordView?.Toggle();
@@ -125,6 +125,7 @@ namespace SmallWorld.Flow
 
         internal bool HandleEscapePressed()
         {
+            ResolveManualSavePanel();
             if (manualSavePanel != null && manualSavePanel.IsOpen)
             {
                 manualSavePanel.Close();
@@ -140,6 +141,12 @@ namespace SmallWorld.Flow
             else if (stage6UI.StateMachine.Current == UIState.Settings ||
                      stage6UI.StateMachine.Current == UIState.Inspection) stage6UI.CloseOverlay();
             return true;
+        }
+
+        private void ResolveManualSavePanel()
+        {
+            if (manualSavePanel == null)
+                manualSavePanel = FindFirstObjectByType<Stage10ManualSavePanel>(FindObjectsInactive.Include);
         }
 
         private void OnInteractionCompleted(InteractableBase current)
