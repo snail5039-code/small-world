@@ -46,6 +46,41 @@ namespace SmallWorld.Player.Tests
             AssertNode(nodes.GetArrayElementAtIndex(3), "chapter-3", "Perfect Day");
             AssertNode(nodes.GetArrayElementAtIndex(4), "chapter-4", "Faceless Office");
             AssertNode(nodes.GetArrayElementAtIndex(5), "chapter-5", "Cemetery Without a Funeral");
+            AssertNode(nodes.GetArrayElementAtIndex(6), "chapter-6", "City in the Window");
+        }
+
+        [Test]
+        public void StoryRoute_IntegratesCityWindowPuzzlesRealityBranchesChaseRewardsAndFinalChapterConnection()
+        {
+            string[] requiredObjects =
+            {
+                "Almost Complete Dollhouse Final Room", "Scaled Reality City Basin",
+                "Miniature City Building 1", "Miniature City Building 12",
+                "Thousands Of Running Program Windows 1-1", "Thousands Of Running Program Windows 12-4",
+                "Repeated Time Clue", "Furniture Layout Clue", "Reverse Rain Direction Clue",
+                "Reality Developer Room Candidate 1", "Reality Developer Room Candidate 2",
+                "Reality Developer Room Correct", "Developer Monitor Sequence 1", "Developer Monitor Sequence 4",
+                "Live Player Back View On Final Monitor", "Player Back Silhouette",
+                "Management AI Voice Waveform", "Girl Previous Dialogue Waveform",
+                "Perfectly Matching Future Girl Segment", "Future Girl Management AI Revelation",
+                "Reality Link Maintain Developer Body", "Reality Link Cut Some Cables",
+                "Reality Link Cut Entire City Power", "All City Windows Open Simultaneously",
+                "All Miniature People Stare At Player", "Folding Buildings Form Giant House",
+                "Carry Collapsing City Chase", "Return To Original House Door",
+                "Reward Completed Miniature City", "Reward Reality Developer Stopped Wristwatch",
+                "Reward Final Room Front Door", "Final Chapter Living House Connection",
+                "Final Chapter Management AI Core Connection",
+                "Find Reality Developer Room Among Thousands Of Windows",
+                "Arrange Monitors And Match AI Girl Waveforms",
+                "Choose Reality Link Carry City And Return Home"
+            };
+
+            foreach (string objectName in requiredObjects)
+                Assert.That(GameObject.Find(objectName), Is.Not.Null, objectName + " is missing from chapter 6.");
+
+            Assert.That(GameObject.Find("Find Reality Developer Room Among Thousands Of Windows").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Arrange Monitors And Match AI Girl Waveforms").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Choose Reality Link Carry City And Return Home").GetComponent("StoryRouteInteractable"), Is.Not.Null);
         }
 
         [Test]

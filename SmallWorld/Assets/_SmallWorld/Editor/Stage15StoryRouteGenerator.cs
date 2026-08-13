@@ -93,9 +93,8 @@ namespace SmallWorld.Editor
                 }
                 else
                 {
-                    dialogue = CreateMarker("Dialogue Entry", hub.transform, new Vector3(-4f, 0.75f, z), route, Ids[i], StoryRouteStep.Dialogue, "Inspect dialogue entry", $"{Names[i]} dialogue completed.");
-                    puzzle = CreateMarker("Puzzle Entry", hub.transform, new Vector3(0f, 0.75f, z + 2f), route, Ids[i], StoryRouteStep.Puzzle, "Inspect puzzle entry", $"{Names[i]} puzzle completed.");
-                    memory = CreateMarker("Memory Space Entry", hub.transform, new Vector3(4f, 0.75f, z), route, Ids[i], StoryRouteStep.Memory, "Inspect memory-space entry", $"{Names[i]} memory-space completed.");
+                    Transform[] anchors = CreateCityInTheWindowGameplay(hub.transform, route, z);
+                    dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
                 nodes[i] = new StoryRouteNode { Id = Ids[i], DisplayName = Names[i], Arrival = arrival, DialogueEntry = dialogue, PuzzleEntry = puzzle, MemoryEntry = memory };
                 if (i < nodes.Length - 1)
@@ -409,6 +408,74 @@ namespace SmallWorld.Editor
             Transform memory = CreateMarker("Choose Developer Record Escape And Return Home", parent, new Vector3(5f, 0.75f, z + 11f), route,
                 "chapter-4", StoryRouteStep.Memory, "세 기록 중 하나를 선택하고 사원증 추격을 피해 집으로 돌아간다", "개발자 기록 선택을 기억했다. 사무실을 탈출해 집 복귀 상호작용이 열렸다.");
             CreatePointLight("Faceless Office Fluorescent Light", parent, new Vector3(0f, 2.8f, z), new Color(0.7f, 0.86f, 1f), 2.1f, 28f);
+            return new[] { dialogue, puzzle, memory };
+        }
+
+        private static Transform[] CreateCityInTheWindowGameplay(Transform parent, StoryRouteController route, float z)
+        {
+            CreateBlock("Almost Complete Dollhouse Final Room", parent, new Vector3(0f, 1.8f, z), new Vector3(27f, 3.6f, 29f));
+            CreateBlock("Scaled Reality City Basin", parent, new Vector3(0f, 0.15f, z), new Vector3(25f, 0.2f, 27f));
+
+            for (int i = 0; i < 12; i++)
+            {
+                float x = -10f + (i % 4) * 6.6f;
+                float cityZ = z - 10f + (i / 4) * 7.2f;
+                float height = 1.8f + (i % 3) * 0.7f;
+                CreateBlock($"Miniature City Building {i + 1}", parent, new Vector3(x, height * 0.5f, cityZ), new Vector3(4.2f, height, 3.8f));
+                for (int window = 0; window < 4; window++)
+                    CreateBlock($"Thousands Of Running Program Windows {i + 1}-{window + 1}", parent,
+                        new Vector3(x - 1.35f + window * 0.9f, 0.9f + (window % 2) * 0.75f, cityZ - 1.95f),
+                        new Vector3(0.5f, 0.45f, 0.08f));
+            }
+
+            CreateBlock("Repeated Time Clue", parent, new Vector3(-10f, 0.7f, z - 12f), new Vector3(2.2f, 1.4f, 0.3f));
+            CreateBlock("Furniture Layout Clue", parent, new Vector3(-6.5f, 0.7f, z - 12f), new Vector3(2.2f, 1.4f, 0.3f));
+            CreateBlock("Reverse Rain Direction Clue", parent, new Vector3(-3f, 0.7f, z - 12f), new Vector3(2.2f, 1.4f, 0.3f));
+            CreateBlock("Reality Developer Room Candidate 1", parent, new Vector3(3f, 0.8f, z - 11f), new Vector3(3f, 1.6f, 2.4f));
+            CreateBlock("Reality Developer Room Candidate 2", parent, new Vector3(7f, 0.8f, z - 11f), new Vector3(3f, 1.6f, 2.4f));
+            CreateBlock("Reality Developer Room Correct", parent, new Vector3(11f, 0.8f, z - 11f), new Vector3(3f, 1.6f, 2.4f));
+
+            for (int i = 0; i < 4; i++)
+                CreateBlock($"Developer Monitor Sequence {i + 1}", parent,
+                    new Vector3(-5.4f + i * 3.6f, 1.35f, z - 3f), new Vector3(2.6f, 1.6f, 0.25f));
+            CreateBlock("Live Player Back View On Final Monitor", parent, new Vector3(5.4f, 1.35f, z - 2.7f), new Vector3(1.1f, 1.3f, 0.12f));
+            GameObject playerBack = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            playerBack.name = "Player Back Silhouette";
+            playerBack.transform.SetParent(parent, true);
+            playerBack.transform.position = new Vector3(5.4f, 0.9f, z - 1.8f);
+            playerBack.transform.localScale = new Vector3(0.5f, 0.9f, 0.35f);
+
+            CreateBlock("Management AI Voice Waveform", parent, new Vector3(-4f, 1.5f, z + 2f), new Vector3(6f, 1f, 0.2f));
+            CreateBlock("Girl Previous Dialogue Waveform", parent, new Vector3(4f, 1.5f, z + 2f), new Vector3(6f, 1f, 0.2f));
+            CreateBlock("Perfectly Matching Future Girl Segment", parent, new Vector3(0f, 2.25f, z + 2f), new Vector3(4f, 0.45f, 0.25f));
+            CreateBlock("Future Girl Management AI Revelation", parent, new Vector3(0f, 1f, z + 4f), new Vector3(6f, 1.4f, 0.3f));
+
+            CreateBlock("Reality Link Maintain Developer Body", parent, new Vector3(-6f, 0.65f, z + 7f), new Vector3(4f, 1.3f, 1.8f));
+            CreateBlock("Reality Link Cut Some Cables", parent, new Vector3(0f, 0.65f, z + 7f), new Vector3(4f, 1.3f, 1.8f));
+            CreateBlock("Reality Link Cut Entire City Power", parent, new Vector3(6f, 0.65f, z + 7f), new Vector3(4f, 1.3f, 1.8f));
+
+            CreateBlock("All City Windows Open Simultaneously", parent, new Vector3(-9f, 1.6f, z + 10f), new Vector3(4f, 3.2f, 0.3f));
+            CreateBlock("All Miniature People Stare At Player", parent, new Vector3(-4f, 1.2f, z + 10f), new Vector3(4f, 2.4f, 1.2f));
+            CreateBlock("Folding Buildings Form Giant House", parent, new Vector3(1f, 2f, z + 10f), new Vector3(5f, 4f, 3f));
+            CreateBlock("Carry Collapsing City Chase", parent, new Vector3(6f, 0.2f, z + 10f), new Vector3(5f, 0.2f, 3f));
+            CreateBlock("Return To Original House Door", parent, new Vector3(10.5f, 1.5f, z + 11f), new Vector3(2.5f, 3f, 0.35f));
+
+            CreateBlock("Reward Completed Miniature City", parent, new Vector3(-8f, 0.55f, z + 13f), new Vector3(3f, 1.1f, 2.2f));
+            CreateBlock("Reward Reality Developer Stopped Wristwatch", parent, new Vector3(-3f, 0.35f, z + 13f), new Vector3(1.2f, 0.2f, 1.2f));
+            CreateBlock("Reward Final Room Front Door", parent, new Vector3(1f, 1.4f, z + 13f), new Vector3(2.2f, 2.8f, 0.35f));
+            CreateBlock("Final Chapter Living House Connection", parent, new Vector3(4.5f, 1.2f, z + 13f), new Vector3(2.2f, 2.4f, 0.35f));
+            CreateBlock("Final Chapter Management AI Core Connection", parent, new Vector3(7.5f, 1.2f, z + 13f), new Vector3(2.2f, 2.4f, 0.35f));
+
+            Transform dialogue = CreateMarker("Find Reality Developer Room Among Thousands Of Windows", parent,
+                new Vector3(-7f, 0.75f, z - 8f), route, "chapter-6", StoryRouteStep.Dialogue,
+                "반복 시간, 가구 배치, 비의 방향으로 현실 개발자의 방을 찾는다", "수천 창문 중 현실 개발자의 방을 특정했다.");
+            Transform puzzle = CreateMarker("Arrange Monitors And Match AI Girl Waveforms", parent,
+                new Vector3(0f, 0.75f, z + 1f), route, "chapter-6", StoryRouteStep.Puzzle,
+                "모니터를 반복 순서로 배열하고 관리 AI와 소녀의 파형을 겹친다", "마지막 모니터의 뒷모습과 일치 파형이 미래의 소녀를 드러냈다.");
+            Transform memory = CreateMarker("Choose Reality Link Carry City And Return Home", parent,
+                new Vector3(5f, 0.75f, z + 8.5f), route, "chapter-6", StoryRouteStep.Memory,
+                "현실 연결을 선택하고 접히는 건물에서 무너지는 도시를 들고 귀환한다", "현실 연결 선택과 세 가구가 최종장으로 이어진다.");
+            CreatePointLight("City In The Window Night Light", parent, new Vector3(0f, 4f, z), new Color(0.42f, 0.62f, 1f), 2.2f, 30f);
             return new[] { dialogue, puzzle, memory };
         }
 
