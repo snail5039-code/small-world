@@ -455,6 +455,103 @@ namespace SmallWorld.Tests.EditMode.Flow
             Assert.That(restored.ForeshadowFlags, Contains.Item("final-chapter-unlocked"));
         }
 
+        [Test]
+        public void FinalChapter_RejectsEntryUnlessChapterSixCompleteAndUnlockFlagExists()
+        {
+            var story = new Stage15OpeningStoryService();
+            var save = SaveData.CreateNew();
+            StoryProgress incomplete = ReadyFinalChapter();
+            incomplete.GetChapter(StoryChapterId.Chapter6).MemorySpaceCompleted = false;
+            Assert.That(story.TryPerform(save, incomplete, OpeningStoryAction.EnterLivingHouse).Accepted, Is.False);
+
+            StoryProgress locked = ReadyFinalChapter();
+            locked.ForeshadowFlags.Remove("final-chapter-unlocked");
+            Assert.That(story.TryPerform(save, locked, OpeningStoryAction.EnterLivingHouse).Accepted, Is.False);
+            Assert.That(locked.ForeshadowFlags, Does.Not.Contain("s15-opening:EnterLivingHouse"));
+        }
+
+        [Test]
+        public void FinalChapter_RejectsOutOfOrderFurnitureCoreAndWhiteRoomActions()
+        {
+            var story = new Stage15OpeningStoryService();
+            var save = SaveData.CreateNew();
+            StoryProgress progress = ReadyFinalChapter();
+            Perform(story, save, progress, OpeningStoryAction.EnterLivingHouse);
+
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.PreserveChapter2Furniture).Accepted, Is.False);
+            Perform(story, save, progress, OpeningStoryAction.DestroyChapter1Furniture);
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.PreserveChapter1Furniture).Accepted, Is.False);
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.DestroyManagementCore1).Accepted, Is.False);
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.EnterWhiteRoom).Accepted, Is.False);
+        }
+
+        [Test]
+        public void FinalChapter_AllPreservedVictimsCalculatesSixChoicesAndTrueEndingWithoutExecutingEnding()
+        {
+            var story = new Stage15OpeningStoryService();
+            var save = SaveData.CreateNew();
+            StoryProgress progress = ReadyFinalChapter(true);
+
+            PerformFinalUntilReady(story, save, progress,
+                OpeningStoryAction.PreserveChapter1Furniture, OpeningStoryAction.PreserveChapter2Furniture,
+                OpeningStoryAction.PreserveChapter3Furniture, OpeningStoryAction.PreserveChapter4Furniture,
+                OpeningStoryAction.PreserveChapter5Furniture, OpeningStoryAction.PreserveChapter6Furniture);
+
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-choice-ready"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-choice-available-program-termination"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-choice-available-connect-model-house"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-choice-unavailable-stay-with-girl"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-choice-available-become-new-manager"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-choice-unavailable-send-girl-to-reality"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-choice-available-restore-victims-distribute-memories"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("true-ending-available"));
+            Assert.That(progress.GetChapter(StoryChapterId.FinalChapter).IsComplete, Is.False);
+            Assert.That(progress.ImportantChoices.Exists(x => x.ChoiceId.StartsWith("final-ending", System.StringComparison.Ordinal)), Is.False);
+        }
+
+        [Test]
+        public void FinalChapter_DestroyedMemoriesProduceGirlCompositeAndLimitedAvailability()
+        {
+            var story = new Stage15OpeningStoryService();
+            var save = SaveData.CreateNew();
+            StoryProgress progress = ReadyFinalChapter(false);
+
+            PerformFinalUntilReady(story, save, progress,
+                OpeningStoryAction.DestroyChapter1Furniture, OpeningStoryAction.DestroyChapter2Furniture,
+                OpeningStoryAction.DestroyChapter3Furniture, OpeningStoryAction.DestroyChapter4Furniture,
+                OpeningStoryAction.DestroyChapter5Furniture, OpeningStoryAction.DestroyChapter6Furniture);
+
+            Assert.That(progress.ForeshadowFlags, Contains.Item("reality-body-personality-composite"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-choice-available-stay-with-girl"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-choice-unavailable-connect-model-house"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-choice-unavailable-send-girl-to-reality"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("true-ending-unavailable"));
+        }
+
+        [Test]
+        public void FinalChapter_SaveRoundTripPreservesPreparedStateAndDoesNotRepeatActions()
+        {
+            var story = new Stage15OpeningStoryService();
+            var save = SaveData.CreateNew();
+            StoryProgress progress = ReadyFinalChapter(true);
+            PerformFinalUntilReady(story, save, progress,
+                OpeningStoryAction.PreserveChapter1Furniture, OpeningStoryAction.PreserveChapter2Furniture,
+                OpeningStoryAction.PreserveChapter3Furniture, OpeningStoryAction.PreserveChapter4Furniture,
+                OpeningStoryAction.PreserveChapter5Furniture, OpeningStoryAction.PreserveChapter6Furniture);
+
+            var store = new SaveDataStoryProgressStore();
+            store.Save(save, progress);
+            var serializer = new BinarySaveDataSerializer();
+            Assert.That(serializer.TryDeserialize(serializer.Serialize(save), out SaveData restoredSave), Is.True);
+            StoryProgress restored = store.Load(restoredSave);
+
+            Assert.That(restored.ForeshadowFlags, Contains.Item("final-choice-ready"));
+            Assert.That(restored.ImportantChoices.Find(x => x.ChoiceId == "reality-body-remaining-personality").OutcomeId,
+                Is.EqualTo("developer"));
+            Assert.That(story.TryPerform(restoredSave, restored, OpeningStoryAction.PrepareFinalChoice).Accepted, Is.False);
+            Assert.That(restored.GetChapter(StoryChapterId.FinalChapter).IsComplete, Is.False);
+        }
+
         private static StoryProgress ReadyChapterOne()
         {
             var progress = new StoryProgress { CurrentChapter = StoryChapterId.Chapter1 };
@@ -546,6 +643,38 @@ namespace SmallWorld.Tests.EditMode.Flow
                 OpeningStoryAction.OverlayAdminGirlWaveform1, OpeningStoryAction.OverlayAdminGirlWaveform2,
                 OpeningStoryAction.OverlayAdminGirlWaveform3);
             return progress;
+        }
+
+        private static StoryProgress ReadyFinalChapter(bool idealVictimSources = false)
+        {
+            StoryProgress progress = ReadyChapterSix();
+            StoryChapterProgress chapterSix = progress.GetChapter(StoryChapterId.Chapter6);
+            chapterSix.ObjectiveCompleted = chapterSix.DialogueCompleted = chapterSix.PuzzleCompleted = chapterSix.MemorySpaceCompleted = true;
+            progress.CurrentChapter = StoryChapterId.FinalChapter;
+            progress.ForeshadowFlags.Add("final-chapter-unlocked");
+            progress.ImportantChoices.Add(new StoryChoiceState { ChoiceId = "fourth-seat-name", OutcomeId = idealVictimSources ? "seoyun" : "yuna" });
+            progress.ImportantChoices.Add(new StoryChoiceState { ChoiceId = "platform-destination", OutcomeId = idealVictimSources ? "reality-home" : "game-house" });
+            progress.ImportantChoices.Add(new StoryChoiceState { ChoiceId = "perfect-day-photo", OutcomeId = idealVictimSources ? "tear" : "preserve" });
+            progress.ImportantChoices.Add(new StoryChoiceState { ChoiceId = "office-record", OutcomeId = idealVictimSources ? "original-server" : "protect-girl" });
+            progress.ImportantChoices.Add(new StoryChoiceState { ChoiceId = "dead-person-name", OutcomeId = idealVictimSources ? "blank" : "invented-name" });
+            progress.ImportantChoices.Add(new StoryChoiceState { ChoiceId = "reality-link", OutcomeId = idealVictimSources ? "body-connected" : "partial-cut" });
+            if (idealVictimSources) progress.ForeshadowFlags.Add("autonomy-clue-white-station");
+            return progress;
+        }
+
+        private static void PerformFinalUntilReady(Stage15OpeningStoryService story, SaveData save, StoryProgress progress,
+            params OpeningStoryAction[] furnitureActions)
+        {
+            Perform(story, save, progress, OpeningStoryAction.EnterLivingHouse);
+            Perform(story, save, progress, furnitureActions);
+            Perform(story, save, progress,
+                OpeningStoryAction.DestroyManagementCore1, OpeningStoryAction.DestroyManagementCore2,
+                OpeningStoryAction.DestroyManagementCore3, OpeningStoryAction.DestroyManagementCore4,
+                OpeningStoryAction.DestroyManagementCore5, OpeningStoryAction.DestroyManagementCore6,
+                OpeningStoryAction.EnterWhiteRoom, OpeningStoryAction.SitInFirstChair,
+                OpeningStoryAction.SitInSecondChair, OpeningStoryAction.ActivateOldComputer,
+                OpeningStoryAction.HearGirlAsDeveloper1, OpeningStoryAction.HearGirlAsDeveloper2,
+                OpeningStoryAction.HearGirlAsDeveloper3, OpeningStoryAction.PrepareFinalChoice);
         }
 
         private static void PerformUntilDestination(Stage15OpeningStoryService story, SaveData save, StoryProgress progress)

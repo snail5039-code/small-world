@@ -129,7 +129,34 @@ namespace SmallWorld.Flow
         CarryCollapsingCity1,
         CarryCollapsingCity2,
         CarryCollapsingCity3,
-        ReturnFromWindowCity
+        ReturnFromWindowCity,
+        EnterLivingHouse,
+        PreserveChapter1Furniture,
+        DestroyChapter1Furniture,
+        PreserveChapter2Furniture,
+        DestroyChapter2Furniture,
+        PreserveChapter3Furniture,
+        DestroyChapter3Furniture,
+        PreserveChapter4Furniture,
+        DestroyChapter4Furniture,
+        PreserveChapter5Furniture,
+        DestroyChapter5Furniture,
+        PreserveChapter6Furniture,
+        DestroyChapter6Furniture,
+        DestroyManagementCore1,
+        DestroyManagementCore2,
+        DestroyManagementCore3,
+        DestroyManagementCore4,
+        DestroyManagementCore5,
+        DestroyManagementCore6,
+        EnterWhiteRoom,
+        SitInFirstChair,
+        SitInSecondChair,
+        ActivateOldComputer,
+        HearGirlAsDeveloper1,
+        HearGirlAsDeveloper2,
+        HearGirlAsDeveloper3,
+        PrepareFinalChoice
     }
 
     public readonly struct OpeningStoryResult
@@ -171,7 +198,9 @@ namespace SmallWorld.Flow
                                     ? PerformChapterFive(save, progress, action)
                                     : progress.CurrentChapter == StoryChapterId.Chapter6
                                         ? PerformChapterSix(save, progress, action)
-                                        : Reject("이 기억은 지금 열 수 없다.");
+                                        : progress.CurrentChapter == StoryChapterId.FinalChapter
+                                            ? PerformFinalChapter(save, progress, action)
+                                            : Reject("이 기억은 지금 열 수 없다.");
         }
 
         private OpeningStoryResult PerformPrologue(SaveData save, StoryProgress progress, OpeningStoryAction action)
@@ -697,6 +726,161 @@ namespace SmallWorld.Flow
             storyFlow.SetFlag(progress, "final-difficulty-" + difficulty, false);
             storyFlow.SetFlag(progress, "rescuable-victims-" + victims, false);
             storyFlow.SetFlag(progress, "developer-state-" + developer, false);
+        }
+
+        private OpeningStoryResult PerformFinalChapter(SaveData save, StoryProgress progress, OpeningStoryAction action)
+        {
+            if (!progress.GetChapter(StoryChapterId.Chapter6).IsComplete ||
+                !progress.ForeshadowFlags.Contains("final-chapter-unlocked"))
+                return Reject("6장을 완료하고 최종장 잠금을 해제해야 살아 있는 집에 들어갈 수 있다.");
+
+            if (IsFurnitureDecision(action)) return DecideFinalFurniture(progress, action);
+            if (IsCoreAction(action)) return ResolveManagementCore(progress, action);
+
+            switch (action)
+            {
+                case OpeningStoryAction.EnterLivingHouse:
+                    return Accept(progress, action, "가구와 벽에서 여섯 기억이 깨어나 집 전체가 하나의 생명체가 됐다.");
+                case OpeningStoryAction.EnterWhiteRoom:
+                    if (CoreCount(progress) != 6) return Need("여섯 기억 공간의 관리 핵심을 순서대로 모두 처리해야 한다.");
+                    ApplyRealityBodyCondition(progress);
+                    return Accept(progress, action, "살아 있는 집의 탈출로 끝에서 두 의자와 낡은 컴퓨터가 있는 최초의 하얀 방으로 돌아왔다.");
+                case OpeningStoryAction.SitInFirstChair:
+                    if (!Has(progress, OpeningStoryAction.EnterWhiteRoom)) return Need("먼저 최초의 하얀 방에 들어가야 한다.");
+                    return Accept(progress, action, "주인공이 첫 번째 의자에 앉자 현실 개발자의 생체 신호가 컴퓨터에 나타났다.");
+                case OpeningStoryAction.SitInSecondChair:
+                    if (!Has(progress, OpeningStoryAction.SitInFirstChair)) return Need("주인공이 첫 번째 의자에 먼저 앉아야 한다.");
+                    return Accept(progress, action, "유나가 맞은편 두 번째 의자에 앉았다.");
+                case OpeningStoryAction.ActivateOldComputer:
+                    if (!Has(progress, OpeningStoryAction.SitInSecondChair)) return Need("두 의자에 주인공과 유나가 모두 앉아야 한다.");
+                    return Accept(progress, action, "낡은 컴퓨터가 보존 기억과 이름표, 자율 단서, 현실 연결 상태를 읽기 시작했다.");
+                case OpeningStoryAction.HearGirlAsDeveloper1:
+                case OpeningStoryAction.HearGirlAsDeveloper2:
+                case OpeningStoryAction.HearGirlAsDeveloper3:
+                    return AdvanceFinalDialogue(progress, action);
+                case OpeningStoryAction.PrepareFinalChoice:
+                    if (FinalDialogueCount(progress) != 3) return Need("유나가 현실 개발자의 모습으로 변하는 대화를 끝까지 들어야 한다.");
+                    CalculateFinalChoiceAvailability(progress);
+                    return Accept(progress, action, "최종 선택 6개의 가용 조건을 계산했다. 아직 어떤 선택도 실행하지 않았다.");
+                default:
+                    return Reject("이 행동은 최종 선택 직전까지의 흐름과 맞지 않는다.");
+            }
+        }
+
+        private OpeningStoryResult DecideFinalFurniture(StoryProgress progress, OpeningStoryAction action)
+        {
+            if (!Has(progress, OpeningStoryAction.EnterLivingHouse)) return Need("살아 있는 집에 먼저 들어가야 한다.");
+            int chapter = FurnitureChapter(action);
+            if (chapter != FurnitureDecisionCount(progress) + 1) return Reject("기억 가구는 첫 장부터 순서대로 보존하거나 파괴해야 한다.");
+            string choiceId = "final-memory-furniture-" + chapter;
+            if (progress.ImportantChoices.Exists(x => x.ChoiceId == choiceId)) return Reject("이 기억 가구의 운명은 이미 정해졌다.");
+            bool preserve = action.ToString().StartsWith("Preserve", StringComparison.Ordinal);
+            storyFlow.RecordChoice(progress, choiceId, preserve ? "preserve" : "destroy");
+            Mark(progress, action);
+            return new OpeningStoryResult(true, preserve
+                ? "장별 선택과 이름 기록을 품은 기억 가구를 보존해 좁은 탈출로를 준비했다."
+                : "기억 가구를 파괴해 빠른 탈출로를 열었지만 그 기억은 복원 후보에서 제외됐다.");
+        }
+
+        private OpeningStoryResult ResolveManagementCore(StoryProgress progress, OpeningStoryAction action)
+        {
+            if (FurnitureDecisionCount(progress) != 6) return Need("여섯 장의 기억 가구를 모두 보존하거나 파괴해 탈출로를 먼저 준비해야 한다.");
+            int core = (int)action - (int)OpeningStoryAction.DestroyManagementCore1 + 1;
+            if (core != CoreCount(progress) + 1) return Reject("관리 핵심은 기억 공간의 장 순서대로 처리해야 한다.");
+            bool victimRetained = ChoiceOutcome(progress, "final-memory-furniture-" + core) == "preserve" && HasVictimSource(progress, core);
+            storyFlow.RecordChoice(progress, "final-core-result-" + core, victimRetained ? "victim-retained" : "girl-assimilated");
+            storyFlow.SetFlag(progress, victimRetained ? "final-victim-retained-" + core : "final-girl-assimilated-" + core, false);
+            return Accept(progress, action, victimRetained
+                ? "관리 핵심을 끄자 희생자의 기억이 독립된 인격으로 보존됐다."
+                : "관리 핵심을 끄자 분리되지 못한 기억이 유나의 합성 인격에 합쳐졌다.");
+        }
+
+        private OpeningStoryResult AdvanceFinalDialogue(StoryProgress progress, OpeningStoryAction action)
+        {
+            if (!Has(progress, OpeningStoryAction.ActivateOldComputer)) return Need("두 의자 사이의 낡은 컴퓨터를 먼저 켜야 한다.");
+            int expected = FinalDialogueCount(progress) + (int)OpeningStoryAction.HearGirlAsDeveloper1;
+            if ((int)action != expected) return Reject("하얀 방의 대화는 모습이 변하는 순서대로 들어야 한다.");
+            string message = action == OpeningStoryAction.HearGirlAsDeveloper1
+                ? "유나의 목소리에 현실 개발자의 음성이 겹치기 시작했다."
+                : action == OpeningStoryAction.HearGirlAsDeveloper2
+                    ? "유나의 얼굴과 사원증이 현실 개발자의 모습으로 절반쯤 바뀌었다."
+                    : "맞은편에는 현실 개발자의 모습이 남았지만 유나의 말투와 기억도 함께 들렸다.";
+            return Accept(progress, action, message);
+        }
+
+        private void ApplyRealityBodyCondition(StoryProgress progress)
+        {
+            string link = ChoiceOutcome(progress, "reality-link");
+            string personality = link == "body-connected" ? "developer" :
+                link == "partial-cut" ? "composite" : "protagonist";
+            storyFlow.RecordChoice(progress, "reality-body-remaining-personality", personality);
+            storyFlow.SetFlag(progress, "reality-body-personality-" + personality, false);
+        }
+
+        private void CalculateFinalChoiceAvailability(StoryProgress progress)
+        {
+            int preserved = ChoiceCount(progress, "final-memory-furniture-", "preserve");
+            int victims = FlagCount(progress, "final-victim-retained-");
+            int girlMemories = FlagCount(progress, "final-girl-assimilated-");
+            bool autonomy = progress.ForeshadowFlags.Contains("autonomy-clue-white-station") ||
+                ChoiceOutcome(progress, "office-record") == "original-server";
+            bool namesRecovered = ChoiceOutcome(progress, "fourth-seat-name") == "seoyun" &&
+                ChoiceOutcome(progress, "dead-person-name") == "blank";
+            bool bodyConnected = ChoiceOutcome(progress, "reality-link") == "body-connected";
+
+            SetAvailability(progress, "program-termination", true);
+            SetAvailability(progress, "connect-model-house", preserved > 0);
+            SetAvailability(progress, "stay-with-girl", girlMemories > 0);
+            SetAvailability(progress, "become-new-manager", autonomy);
+            SetAvailability(progress, "send-girl-to-reality", bodyConnected && girlMemories > 0);
+            SetAvailability(progress, "restore-victims-distribute-memories", victims >= 3 && namesRecovered && autonomy);
+            bool trueEnding = preserved == 6 && victims == 6 && namesRecovered && autonomy && bodyConnected;
+            storyFlow.SetFlag(progress, trueEnding ? "true-ending-available" : "true-ending-unavailable", false);
+            storyFlow.SetFlag(progress, "final-choice-ready", false);
+        }
+
+        private void SetAvailability(StoryProgress progress, string id, bool available) =>
+            storyFlow.SetFlag(progress, "final-choice-" + (available ? "available-" : "unavailable-") + id, false);
+
+        private static bool IsFurnitureDecision(OpeningStoryAction action) =>
+            action >= OpeningStoryAction.PreserveChapter1Furniture && action <= OpeningStoryAction.DestroyChapter6Furniture;
+        private static bool IsCoreAction(OpeningStoryAction action) =>
+            action >= OpeningStoryAction.DestroyManagementCore1 && action <= OpeningStoryAction.DestroyManagementCore6;
+        private static int FurnitureChapter(OpeningStoryAction action) =>
+            ((int)action - (int)OpeningStoryAction.PreserveChapter1Furniture) / 2 + 1;
+        private static int FurnitureDecisionCount(StoryProgress p) => ChoiceCount(p, "final-memory-furniture-", null);
+        private static int CoreCount(StoryProgress p) => ChoiceCount(p, "final-core-result-", null);
+        private static int FinalDialogueCount(StoryProgress p) => Count(p, OpeningStoryAction.HearGirlAsDeveloper1, OpeningStoryAction.HearGirlAsDeveloper2, OpeningStoryAction.HearGirlAsDeveloper3);
+        private static int ChoiceCount(StoryProgress p, string prefix, string outcome)
+        {
+            int count = 0;
+            foreach (StoryChoiceState choice in p.ImportantChoices)
+                if (choice.ChoiceId.StartsWith(prefix, StringComparison.Ordinal) && (outcome == null || choice.OutcomeId == outcome)) count++;
+            return count;
+        }
+        private static int FlagCount(StoryProgress p, string prefix)
+        {
+            int count = 0;
+            foreach (string flag in p.ForeshadowFlags) if (flag.StartsWith(prefix, StringComparison.Ordinal)) count++;
+            return count;
+        }
+        private static string ChoiceOutcome(StoryProgress p, string id)
+        {
+            StoryChoiceState choice = p.ImportantChoices.Find(x => x.ChoiceId == id);
+            return choice == null ? string.Empty : choice.OutcomeId;
+        }
+        private static bool HasVictimSource(StoryProgress p, int chapter)
+        {
+            switch (chapter)
+            {
+                case 1: return ChoiceOutcome(p, "fourth-seat-name") == "seoyun";
+                case 2: return ChoiceOutcome(p, "platform-destination") == "reality-home";
+                case 3: return ChoiceOutcome(p, "perfect-day-photo") == "tear";
+                case 4: return ChoiceOutcome(p, "office-record") == "original-server";
+                case 5: return ChoiceOutcome(p, "dead-person-name") == "blank";
+                case 6: return ChoiceOutcome(p, "reality-link") == "body-connected";
+                default: return false;
+            }
         }
 
         private void CompleteChapter(StoryProgress progress, StoryChapterId chapter)
