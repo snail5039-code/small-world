@@ -15,6 +15,7 @@ namespace SmallWorld.Flow
         private StoryProgress progress;
 
         public SaveData CurrentSave => save;
+        public StoryChapterId CurrentChapter => Progress.CurrentChapter;
 
         public bool IsFinalGateUnlocked => flow.CanEnterFinalChapter(Progress);
 
@@ -33,6 +34,7 @@ namespace SmallWorld.Flow
             StoryRouteController route = GetComponent<StoryRouteController>();
             route.BindProgressSource(this);
             route.RestoreToNodeOrPrologue(CurrentChapterNodeIndex(progress.CurrentChapter));
+            PresentArrival(progress.CurrentChapter);
         }
 
         public bool IsNodeUnlocked(string nodeId)
@@ -67,7 +69,23 @@ namespace SmallWorld.Flow
             EnsureLoaded();
             OpeningStoryResult result = openingStory.TryPerform(save, progress, action);
             if (result.Accepted) Persist();
-            return result;
+            string objective = StoryRouteGuidance.NextObjective(progress.CurrentChapter, action, result.Accepted);
+            StoryRouteController route = GetComponent<StoryRouteController>();
+            if (route != null) route.UpdateObjective(objective);
+            string status = result.Accepted ? "완료" : "잠김";
+            return new OpeningStoryResult(result.Accepted,
+                $"{status}: {result.Message}\n다음: {objective}");
+        }
+
+        public void PresentArrival(StoryChapterId chapter)
+        {
+            EnsureLoaded();
+            StoryRouteController route = GetComponent<StoryRouteController>();
+            if (route == null) return;
+            route.UpdateGuidance(StoryRouteGuidance.Location(chapter),
+                StoryRouteGuidance.ArrivalObjective(chapter),
+                StoryRouteGuidance.ArrivalDialogue(progress,
+                    new StoryRelationshipService().Get(save, "girl")));
         }
 
         private void EnsureLoaded()

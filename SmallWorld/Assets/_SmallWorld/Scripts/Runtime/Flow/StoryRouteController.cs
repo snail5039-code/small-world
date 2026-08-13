@@ -1,6 +1,7 @@
 using System;
 using SmallWorld.Player;
 using SmallWorld.Save.Stage10.Integration;
+using SmallWorld.Save.Story;
 using SmallWorld.UI.Stage7;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -45,12 +46,31 @@ namespace SmallWorld.Flow
         private bool previousCursorVisible;
         private float timeScaleBeforePause = 1f;
         private bool inputStateCaptured;
+        private string currentLocation = string.Empty;
+        private string currentObjective = string.Empty;
+        private string arrivalDialogue = string.Empty;
+        private float arrivalNoticeUntil;
 
         public int NodeCount => nodes?.Length ?? 0;
         public int FallbackUnlockedIndex => fallbackUnlockedIndex;
         public bool IsFinalGateUnlocked => progressSource?.IsFinalGateUnlocked ?? false;
         public bool IsRuntimeOverlayOpen => runtimeOverlay != RuntimeOverlay.None;
         public bool IsRuntimePaused => runtimeOverlay == RuntimeOverlay.Paused;
+        public string CurrentLocation => currentLocation;
+        public string CurrentObjective => currentObjective;
+
+        public void UpdateGuidance(string location, string objective, string dialogue)
+        {
+            currentLocation = location ?? string.Empty;
+            currentObjective = objective ?? string.Empty;
+            arrivalDialogue = dialogue ?? string.Empty;
+            arrivalNoticeUntil = Time.unscaledTime + 8f;
+        }
+
+        public void UpdateObjective(string objective)
+        {
+            currentObjective = objective ?? string.Empty;
+        }
 
         public void Configure(Transform playerTransform, StoryRouteNode[] routeNodes)
         {
@@ -188,6 +208,7 @@ namespace SmallWorld.Flow
 
         private void OnGUI()
         {
+            DrawGuidance();
             if (runtimeOverlay == RuntimeOverlay.None) return;
             float width = Mathf.Min(620f, Screen.width - 40f);
             float height = runtimeOverlay == RuntimeOverlay.Paused ? 220f : 360f;
@@ -197,6 +218,18 @@ namespace SmallWorld.Flow
             GUI.Label(message, runtimeOverlay == RuntimeOverlay.Paused
                 ? "Press Esc to return to the story."
                 : "No route records have been collected yet.\n\nPress Tab or Esc to close.");
+        }
+
+        private void DrawGuidance()
+        {
+            if (string.IsNullOrWhiteSpace(currentLocation)) return;
+            Rect panel = new Rect(20f, 20f, Mathf.Min(680f, Screen.width - 40f),
+                Time.unscaledTime < arrivalNoticeUntil ? 104f : 70f);
+            GUI.Box(panel, currentLocation);
+            GUI.Label(new Rect(panel.x + 18f, panel.y + 28f, panel.width - 36f, 36f),
+                $"현재 목표: {currentObjective}");
+            if (Time.unscaledTime < arrivalNoticeUntil)
+                GUI.Label(new Rect(panel.x + 18f, panel.y + 64f, panel.width - 36f, 32f), arrivalDialogue);
         }
 
         public bool TryTravelTo(int index, out string feedback)
@@ -228,6 +261,8 @@ namespace SmallWorld.Flow
             player.SetPositionAndRotation(node.Arrival.position, node.Arrival.rotation);
             if (character != null) character.enabled = true;
             progressSource?.ReportNodeReached(node.Id);
+            if (progressSource is StoryRouteProgressAdapter adapter)
+                adapter.PresentArrival((StoryChapterId)index);
             fallbackUnlockedIndex = Mathf.Max(fallbackUnlockedIndex, Mathf.Min(index + 1, nodes.Length - 1));
             feedback = $"Entered {node.DisplayName}.";
             return true;

@@ -12,7 +12,7 @@ namespace SmallWorld.Flow
         {
             progress = adapter;
             action = storyAction;
-            Configure(prompt, GetComponentsInChildren<Renderer>(true));
+            Configure($"조사: {prompt}", GetComponentsInChildren<Renderer>(true));
         }
 
         protected override void BeginInteraction(InteractionContext context)
