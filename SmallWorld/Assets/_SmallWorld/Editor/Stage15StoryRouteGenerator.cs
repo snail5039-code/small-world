@@ -86,6 +86,11 @@ namespace SmallWorld.Editor
                     Transform[] anchors = CreateFacelessOfficeGameplay(hub.transform, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
+                else if (i == 5)
+                {
+                    Transform[] anchors = CreateCemeteryWithoutFuneralGameplay(hub.transform, route, z);
+                    dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
+                }
                 else
                 {
                     dialogue = CreateMarker("Dialogue Entry", hub.transform, new Vector3(-4f, 0.75f, z), route, Ids[i], StoryRouteStep.Dialogue, "Inspect dialogue entry", $"{Names[i]} dialogue completed.");
@@ -217,6 +222,68 @@ namespace SmallWorld.Editor
                 "chapter-2", StoryRouteStep.Puzzle, "분실물을 돌려주고 역재생 안내방송을 복원한다", "귀가하지 마십시오. 집이 당신을 기억하고 있습니다.");
             Transform memory = CreateMarker("Choose The Last Destination", parent, new Vector3(0f, 0.75f, z + 10f), route,
                 "chapter-2", StoryRouteStep.Memory, "현실 집, 게임 속 집, 하얀 역 중 목적지를 선택한다", "목적지가 기억되었다. 막차에서 안전 구역을 따라 빠져나간다.");
+            return new[] { dialogue, puzzle, memory };
+        }
+
+        private static Transform[] CreateCemeteryWithoutFuneralGameplay(Transform parent, StoryRouteController route, float z)
+        {
+            CreateBlock("Fog Cemetery Ground", parent, new Vector3(0f, 0.05f, z), new Vector3(27f, 0.1f, 29f));
+            for (int i = 0; i < 8; i++)
+            {
+                float x = -10f + (i % 4) * 4.2f;
+                float graveZ = z - 10f + (i / 4) * 5f;
+                CreateBlock($"Nameless Grave {i + 1}", parent, new Vector3(x, 0.8f, graveZ), new Vector3(1.5f, 1.6f, 0.35f));
+            }
+            CreatePointLight("Dense Fog Cemetery Light", parent, new Vector3(0f, 3f, z - 5f), new Color(0.48f, 0.58f, 0.62f), 1.2f, 25f);
+
+            CreateBlock("Small Funeral Hall", parent, new Vector3(8.5f, 1.8f, z - 7f), new Vector3(8f, 3.6f, 8f));
+            string[] causes = { "Traffic Accident", "Hospital Experiment", "Suicide", "Program Deletion" };
+            for (int i = 0; i < causes.Length; i++)
+            {
+                float roomZ = z - 11f + i * 3f;
+                CreateBlock($"Changing Cause Room {i + 1} - {causes[i]}", parent, new Vector3(8.5f, 1f, roomZ), new Vector3(5.5f, 2f, 2.4f));
+                CreateBlock($"Funeral Photo {i + 1}", parent, new Vector3(11.35f, 1.45f, roomZ), new Vector3(0.15f, 1.4f, 1.1f));
+                GameObject witness = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                witness.name = $"Distant Faceless Figure {i + 1}";
+                witness.transform.SetParent(parent, true);
+                witness.transform.position = new Vector3(6.4f, 1f, roomZ);
+                witness.transform.localScale = new Vector3(0.5f, 1f, 0.5f);
+            }
+
+            for (int i = 0; i < 4; i++)
+                CreateBlock($"Death Certificate {i + 1}", parent, new Vector3(-9f + i * 2.2f, 0.85f, z + 1f), new Vector3(1.5f, 0.12f, 2f));
+            CreateBlock("Matching Letter Spacing And Print Error", parent, new Vector3(-5.7f, 1.5f, z + 3.2f), new Vector3(7.2f, 1.1f, 0.2f));
+            CreateBlock("RESTORE HER Overlay Command", parent, new Vector3(-5.7f, 2.5f, z + 3.2f), new Vector3(5f, 0.8f, 0.25f));
+
+            CreateBlock("Funeral Guestbook", parent, new Vector3(0f, 0.8f, z + 3f), new Vector3(2.8f, 0.2f, 2f));
+            for (int i = 0; i < 4; i++)
+            {
+                CreateBlock($"Guestbook Signature {i + 1}", parent, new Vector3(-1.8f + i * 1.2f, 1.1f, z + 3f), new Vector3(0.8f, 0.08f, 0.25f));
+                CreateBlock($"Cemetery Shadow Match {i + 1}", parent, new Vector3(-4.5f + i * 3f, 0.08f, z + 7f), new Vector3(1.1f, 0.05f, 2.8f));
+            }
+            CreateBlock("Same Hand Movement Proof", parent, new Vector3(0f, 1.5f, z + 6f), new Vector3(4.8f, 1f, 0.2f));
+
+            CreateBlock("Empty Gravestone Front", parent, new Vector3(8f, 1.5f, z + 6f), new Vector3(3.2f, 3f, 0.45f));
+            CreateBlock("Carve A Name Instruction", parent, new Vector3(8f, 2f, z + 5.7f), new Vector3(2.3f, 0.6f, 0.12f));
+            CreateBlock("Empty Gravestone Back", parent, new Vector3(8f, 1.5f, z + 6.6f), new Vector3(3.2f, 3f, 0.2f));
+            CreateBlock("Memory Installation Date", parent, new Vector3(8f, 1.5f, z + 6.8f), new Vector3(2.4f, 0.8f, 0.12f));
+
+            CreateBlock("Final Empty Name Input", parent, new Vector3(4f, 1.2f, z + 11f), new Vector3(3.5f, 2f, 0.35f));
+            CreateBlock("Confirm Blank Name Truth Branch", parent, new Vector3(1f, 0.7f, z + 12.5f), new Vector3(2.2f, 1.4f, 1.2f));
+            CreateBlock("Entered Name Creates New Girl Loop Branch", parent, new Vector3(7f, 0.7f, z + 12.5f), new Vector3(2.2f, 1.4f, 1.2f));
+            CreateBlock("Return Home From Cemetery", parent, new Vector3(10.5f, 1.4f, z + 12f), new Vector3(2.5f, 2.8f, 0.35f));
+            CreateBlock("Chapter 6 City In The Window Connection", parent, new Vector3(12f, 1.2f, z + 9f), new Vector3(2f, 2.4f, 0.35f));
+
+            CreateBlock("Reward Empty Picture Frame", parent, new Vector3(-11f, 1.4f, z + 12f), new Vector3(0.2f, 2f, 2.5f));
+            CreateBlock("Reward Nameless Gravestone Fragment", parent, new Vector3(-8f, 0.45f, z + 12f), new Vector3(1.8f, 0.9f, 0.5f));
+            CreateBlock("Reward White Flower Vase", parent, new Vector3(-5f, 0.65f, z + 12f), new Vector3(0.8f, 1.3f, 0.8f));
+
+            Transform dialogue = CreateMarker("Investigate Changing Death Causes And Faceless Mourner", parent, new Vector3(4f, 0.75f, z - 8f), route,
+                "chapter-5", StoryRouteStep.Dialogue, "안개 묘지와 장례식장에서 바뀌는 사인과 얼굴 없는 조문객을 조사한다", "사망 원인을 확정할수록 모순이 늘어난다.");
+            Transform puzzle = CreateMarker("Prove All Funeral Memories False", parent, new Vector3(0f, 0.75f, z + 5f), route,
+                "chapter-5", StoryRouteStep.Puzzle, "네 진단서의 오류를 겹치고 방명록 서명과 그림자를 연결한 뒤 묘비 뒷면을 조사한다", "RESTORE HER와 기억 설치 날짜가 모든 장례 기억이 거짓임을 증명했다.");
+            Transform memory = CreateMarker("Confirm Blank Name Or Create Another Girl And Return Home", parent, new Vector3(4f, 0.75f, z + 10f), route,
+                "chapter-5", StoryRouteStep.Memory, "이름을 비워 진실을 확인하거나 이름을 입력해 반복 분기로 간 뒤 집으로 돌아간다", "이름 선택이 기억되었다. 귀환 후 창문 안의 도시로 이어진다.");
             return new[] { dialogue, puzzle, memory };
         }
 

@@ -45,6 +45,35 @@ namespace SmallWorld.Player.Tests
             AssertNode(nodes.GetArrayElementAtIndex(2), "chapter-2", "Last Platform");
             AssertNode(nodes.GetArrayElementAtIndex(3), "chapter-3", "Perfect Day");
             AssertNode(nodes.GetArrayElementAtIndex(4), "chapter-4", "Faceless Office");
+            AssertNode(nodes.GetArrayElementAtIndex(5), "chapter-5", "Cemetery Without a Funeral");
+        }
+
+        [Test]
+        public void StoryRoute_IntegratesCemeteryContradictionsBlankNameBranchesAndChapterSixConnection()
+        {
+            string[] requiredObjects =
+            {
+                "Fog Cemetery Ground", "Small Funeral Hall", "Changing Cause Room 1 - Traffic Accident",
+                "Changing Cause Room 2 - Hospital Experiment", "Changing Cause Room 3 - Suicide",
+                "Changing Cause Room 4 - Program Deletion", "Funeral Photo 1", "Distant Faceless Figure 4",
+                "Death Certificate 1", "Death Certificate 4", "Matching Letter Spacing And Print Error",
+                "RESTORE HER Overlay Command", "Funeral Guestbook", "Guestbook Signature 1",
+                "Cemetery Shadow Match 4", "Same Hand Movement Proof", "Empty Gravestone Front",
+                "Carve A Name Instruction", "Empty Gravestone Back", "Memory Installation Date",
+                "Final Empty Name Input", "Confirm Blank Name Truth Branch",
+                "Entered Name Creates New Girl Loop Branch", "Return Home From Cemetery",
+                "Chapter 6 City In The Window Connection", "Reward Empty Picture Frame",
+                "Reward Nameless Gravestone Fragment", "Reward White Flower Vase",
+                "Investigate Changing Death Causes And Faceless Mourner", "Prove All Funeral Memories False",
+                "Confirm Blank Name Or Create Another Girl And Return Home"
+            };
+
+            foreach (string objectName in requiredObjects)
+                Assert.That(GameObject.Find(objectName), Is.Not.Null, objectName + " is missing from chapter 5.");
+
+            Assert.That(GameObject.Find("Investigate Changing Death Causes And Faceless Mourner").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Prove All Funeral Memories False").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Confirm Blank Name Or Create Another Girl And Return Home").GetComponent("StoryRouteInteractable"), Is.Not.Null);
         }
 
         [Test]
