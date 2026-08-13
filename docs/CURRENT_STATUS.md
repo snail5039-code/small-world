@@ -11,7 +11,7 @@
 - 현재 단계 문서: [`roadmap/stage-15.md`](roadmap/stage-15.md)
 - 15단계 구현 현황: 프롤로그부터 4장 `얼굴 없는 사무실`까지의 진행과 `04_StoryRoute` 장면 연결이 구현되었습니다.
 - 최근 안정화: 현실방 출구, 저장 UI 커서/입력 복원, 소녀 충돌, 근접 조사, 다음 방 Tab 기록/Esc 일시정지 입력을 보강했습니다. 현실방→스토리 방 전환은 현재 메모리 세션을 1회성으로 전달하며, 저장 패널은 RealityRoom Esc/Tab 입력 소유권에 통합되었습니다.
-- 다음 구현 범위: 5장 `당신이 없는 무대`.
+- 다음 구현 범위: 5장 `장례식 없는 묘지`.
 - 최신 검증: Unity 6000.3.18f1 일반 Editor Test Runner에서 EditMode 177/177, PlayMode 16/16 통과, Windows Development 빌드 성공, 런타임 스모크 PASS.
 - 라이선스 참고: 이 환경의 Personal 좌석은 배치 전용 `com.unity.editor.headless` 권한이 없어 `-batchmode` Editor 실행이 return code 198로 종료된다. 관리자 검증은 일반 Editor 자동 실행으로 수행한다.
 - 이후 단계: 시작 금지. 15단계는 가시적 하위 작업을 만들고 진행합니다.
