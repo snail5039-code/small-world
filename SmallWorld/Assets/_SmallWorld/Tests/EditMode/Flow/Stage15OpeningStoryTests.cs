@@ -367,6 +367,94 @@ namespace SmallWorld.Tests.EditMode.Flow
             Assert.That(new StoryRelationshipService().Get(restoredSave, "girl"), Is.EqualTo(-10));
         }
 
+        [Test]
+        public void WindowCity_RequiresOrderedContractAndUnlocksFinalChapterAfterReturn()
+        {
+            var save = SaveData.CreateNew();
+            StoryProgress progress = ReadyChapterSix();
+            var story = new Stage15OpeningStoryService();
+
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.MatchDeveloperRoomTime).Accepted, Is.False);
+            Perform(story, save, progress,
+                OpeningStoryAction.EnterWindowCityLastRoom,
+                OpeningStoryAction.MatchDeveloperRoomTime, OpeningStoryAction.MatchDeveloperRoomFurniture,
+                OpeningStoryAction.MatchDeveloperRoomRainDirection,
+                OpeningStoryAction.ArrangeMonitorLoop1, OpeningStoryAction.ArrangeMonitorLoop2,
+                OpeningStoryAction.ArrangeMonitorLoop3, OpeningStoryAction.ObserveRealtimeBackView,
+                OpeningStoryAction.OverlayAdminGirlWaveform1, OpeningStoryAction.OverlayAdminGirlWaveform2,
+                OpeningStoryAction.OverlayAdminGirlWaveform3, OpeningStoryAction.CutSomeRealityCables,
+                OpeningStoryAction.WitnessCityWindowsStare,
+                OpeningStoryAction.CarryCollapsingCity1, OpeningStoryAction.CarryCollapsingCity2,
+                OpeningStoryAction.CarryCollapsingCity3, OpeningStoryAction.ReturnFromWindowCity);
+
+            Assert.That(progress.CurrentChapter, Is.EqualTo(StoryChapterId.FinalChapter));
+            Assert.That(progress.GetChapter(StoryChapterId.Chapter6).IsComplete, Is.True);
+            Assert.That(progress.ImportantChoices.Find(x => x.ChoiceId == "reality-link").OutcomeId, Is.EqualTo("partial-cut"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("realtime-player-back-view"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("admin-girl-waveform-perfect-match"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("future-girl-is-admin-ai"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-difficulty-normal"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("rescuable-victims-some"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("developer-state-survival-uncertain"));
+            Assert.That(progress.ExternalEntityFlags, Contains.Item("city-windows-stare-together"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("furniture-completed-model-city"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("furniture-developer-stopped-wristwatch"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("furniture-last-room-front-door"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("future-girl-prepared-more-perfect-escape"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("final-chapter-unlocked"));
+        }
+
+        [TestCase(OpeningStoryAction.KeepDeveloperBodyConnected, "body-connected", "final-difficulty-hard", "rescuable-victims-many", "developer-state-alive-connected")]
+        [TestCase(OpeningStoryAction.CutSomeRealityCables, "partial-cut", "final-difficulty-normal", "rescuable-victims-some", "developer-state-survival-uncertain")]
+        [TestCase(OpeningStoryAction.CutCityPower, "city-power-cut", "final-difficulty-severe", "rescuable-victims-few", "developer-state-cannot-survive")]
+        public void WindowCity_RealityLinkBranchesAreMutuallyExclusiveAndPersistConsequences(
+            OpeningStoryAction choice, string outcome, string difficulty, string victims, string developer)
+        {
+            var save = SaveData.CreateNew();
+            StoryProgress progress = ReadyChapterSixAtRealityLink();
+            var story = new Stage15OpeningStoryService();
+
+            Perform(story, save, progress, choice);
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.CutCityPower).Accepted, Is.False);
+
+            var store = new SaveDataStoryProgressStore();
+            store.Save(save, progress);
+            var serializer = new BinarySaveDataSerializer();
+            Assert.That(serializer.TryDeserialize(serializer.Serialize(save), out SaveData restoredSave), Is.True);
+            StoryProgress restored = store.Load(restoredSave);
+
+            Assert.That(restored.ImportantChoices.Find(x => x.ChoiceId == "reality-link").OutcomeId, Is.EqualTo(outcome));
+            Assert.That(restored.ForeshadowFlags, Contains.Item(difficulty));
+            Assert.That(restored.ForeshadowFlags, Contains.Item(victims));
+            Assert.That(restored.ForeshadowFlags, Contains.Item(developer));
+        }
+
+        [Test]
+        public void WindowCity_SaveRoundTripPreservesReturnFurnitureTwistAndFinalUnlock()
+        {
+            var save = SaveData.CreateNew();
+            StoryProgress progress = ReadyChapterSixAtRealityLink();
+            var story = new Stage15OpeningStoryService();
+            Perform(story, save, progress, OpeningStoryAction.KeepDeveloperBodyConnected,
+                OpeningStoryAction.WitnessCityWindowsStare,
+                OpeningStoryAction.CarryCollapsingCity1, OpeningStoryAction.CarryCollapsingCity2,
+                OpeningStoryAction.CarryCollapsingCity3, OpeningStoryAction.ReturnFromWindowCity);
+
+            var store = new SaveDataStoryProgressStore();
+            store.Save(save, progress);
+            var serializer = new BinarySaveDataSerializer();
+            Assert.That(serializer.TryDeserialize(serializer.Serialize(save), out SaveData restoredSave), Is.True);
+            StoryProgress restored = store.Load(restoredSave);
+
+            Assert.That(restored.CurrentChapter, Is.EqualTo(StoryChapterId.FinalChapter));
+            Assert.That(restored.GetChapter(StoryChapterId.Chapter6).IsComplete, Is.True);
+            Assert.That(restored.ForeshadowFlags, Contains.Item("furniture-completed-model-city"));
+            Assert.That(restored.ForeshadowFlags, Contains.Item("furniture-developer-stopped-wristwatch"));
+            Assert.That(restored.ForeshadowFlags, Contains.Item("furniture-last-room-front-door"));
+            Assert.That(restored.ForeshadowFlags, Contains.Item("future-girl-prepared-more-perfect-escape"));
+            Assert.That(restored.ForeshadowFlags, Contains.Item("final-chapter-unlocked"));
+        }
+
         private static StoryProgress ReadyChapterOne()
         {
             var progress = new StoryProgress { CurrentChapter = StoryChapterId.Chapter1 };
@@ -432,6 +520,31 @@ namespace SmallWorld.Tests.EditMode.Flow
                 OpeningStoryAction.MatchGuestbookGesture1, OpeningStoryAction.MatchGuestbookGesture2,
                 OpeningStoryAction.MatchGuestbookGesture3, OpeningStoryAction.RefuseCarveGravestoneName,
                 OpeningStoryAction.InspectGravestoneBack);
+            return progress;
+        }
+
+        private static StoryProgress ReadyChapterSix()
+        {
+            StoryProgress progress = ReadyChapterFive();
+            StoryChapterProgress chapterFive = progress.GetChapter(StoryChapterId.Chapter5);
+            chapterFive.ObjectiveCompleted = chapterFive.DialogueCompleted = chapterFive.PuzzleCompleted = chapterFive.MemorySpaceCompleted = true;
+            progress.CurrentChapter = StoryChapterId.Chapter6;
+            return progress;
+        }
+
+        private static StoryProgress ReadyChapterSixAtRealityLink()
+        {
+            StoryProgress progress = ReadyChapterSix();
+            var story = new Stage15OpeningStoryService();
+            var save = SaveData.CreateNew();
+            Perform(story, save, progress,
+                OpeningStoryAction.EnterWindowCityLastRoom,
+                OpeningStoryAction.MatchDeveloperRoomTime, OpeningStoryAction.MatchDeveloperRoomFurniture,
+                OpeningStoryAction.MatchDeveloperRoomRainDirection,
+                OpeningStoryAction.ArrangeMonitorLoop1, OpeningStoryAction.ArrangeMonitorLoop2,
+                OpeningStoryAction.ArrangeMonitorLoop3, OpeningStoryAction.ObserveRealtimeBackView,
+                OpeningStoryAction.OverlayAdminGirlWaveform1, OpeningStoryAction.OverlayAdminGirlWaveform2,
+                OpeningStoryAction.OverlayAdminGirlWaveform3);
             return progress;
         }
 

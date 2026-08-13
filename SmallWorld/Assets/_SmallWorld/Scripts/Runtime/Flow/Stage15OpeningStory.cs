@@ -110,7 +110,26 @@ namespace SmallWorld.Flow
         InspectGravestoneBack,
         EnterInventedDeadName,
         ConfirmBlankDeadName,
-        ReturnFromGravelessFuneral
+        ReturnFromGravelessFuneral,
+        EnterWindowCityLastRoom,
+        MatchDeveloperRoomTime,
+        MatchDeveloperRoomFurniture,
+        MatchDeveloperRoomRainDirection,
+        ArrangeMonitorLoop1,
+        ArrangeMonitorLoop2,
+        ArrangeMonitorLoop3,
+        ObserveRealtimeBackView,
+        OverlayAdminGirlWaveform1,
+        OverlayAdminGirlWaveform2,
+        OverlayAdminGirlWaveform3,
+        KeepDeveloperBodyConnected,
+        CutSomeRealityCables,
+        CutCityPower,
+        WitnessCityWindowsStare,
+        CarryCollapsingCity1,
+        CarryCollapsingCity2,
+        CarryCollapsingCity3,
+        ReturnFromWindowCity
     }
 
     public readonly struct OpeningStoryResult
@@ -150,7 +169,9 @@ namespace SmallWorld.Flow
                                 ? PerformChapterFour(save, progress, action)
                                 : progress.CurrentChapter == StoryChapterId.Chapter5
                                     ? PerformChapterFive(save, progress, action)
-                                : Reject("이 기억은 지금 열 수 없다.");
+                                    : progress.CurrentChapter == StoryChapterId.Chapter6
+                                        ? PerformChapterSix(save, progress, action)
+                                        : Reject("이 기억은 지금 열 수 없다.");
         }
 
         private OpeningStoryResult PerformPrologue(SaveData save, StoryProgress progress, OpeningStoryAction action)
@@ -585,6 +606,99 @@ namespace SmallWorld.Flow
             }
         }
 
+        private OpeningStoryResult PerformChapterSix(SaveData save, StoryProgress progress, OpeningStoryAction action)
+        {
+            if (!progress.GetChapter(StoryChapterId.Chapter5).IsComplete)
+                return Reject("'장례식 없는 묘지'를 끝내기 전에는 모형 집의 마지막 방에 들어갈 수 없다.");
+
+            switch (action)
+            {
+                case OpeningStoryAction.EnterWindowCityLastRoom:
+                    return Accept(progress, action, "거의 완성된 모형 집의 마지막 방에 들어갔다. 축소된 현실 도시의 모든 창문에서 같은 프로그램이 실행 중이다.");
+                case OpeningStoryAction.MatchDeveloperRoomTime:
+                case OpeningStoryAction.MatchDeveloperRoomFurniture:
+                case OpeningStoryAction.MatchDeveloperRoomRainDirection:
+                    if (!Has(progress, OpeningStoryAction.EnterWindowCityLastRoom)) return Need("모형 집의 마지막 방에 먼저 들어가야 한다.");
+                    int expectedRoomClue = DeveloperRoomClueCount(progress) + (int)OpeningStoryAction.MatchDeveloperRoomTime;
+                    if ((int)action != expectedRoomClue) return Reject("반복에서 본 시간, 가구 배치, 비의 방향 순서로 현실 개발자의 창문을 좁혀야 한다.");
+                    return Accept(progress, action, action == OpeningStoryAction.MatchDeveloperRoomRainDirection
+                        ? "세 단서가 모두 일치하는 유일한 창문에서 의식 없이 연결된 현실 개발자를 찾았다."
+                        : "수천 개 창문에서 현실 개발자의 방 후보를 좁혔다.");
+                case OpeningStoryAction.ArrangeMonitorLoop1:
+                case OpeningStoryAction.ArrangeMonitorLoop2:
+                case OpeningStoryAction.ArrangeMonitorLoop3:
+                    if (DeveloperRoomClueCount(progress) != 3) return Need("시간, 가구, 비 방향 단서로 현실 개발자의 방부터 찾아야 한다.");
+                    int expectedMonitor = MonitorLoopCount(progress) + (int)OpeningStoryAction.ArrangeMonitorLoop1;
+                    if ((int)action != expectedMonitor) return Reject("모니터를 반복이 발생한 순서대로 배치해야 한다.");
+                    return Accept(progress, action, "모니터 하나를 올바른 반복 순서에 놓았다.");
+                case OpeningStoryAction.ObserveRealtimeBackView:
+                    if (MonitorLoopCount(progress) != 3) return Need("개발자의 모니터를 반복 순서대로 모두 배치해야 한다.");
+                    storyFlow.SetFlag(progress, "realtime-player-back-view", false);
+                    return Accept(progress, action, "마지막 모니터에 지금 화면을 보고 있는 주인공의 뒷모습이 실시간으로 나타났다.");
+                case OpeningStoryAction.OverlayAdminGirlWaveform1:
+                case OpeningStoryAction.OverlayAdminGirlWaveform2:
+                case OpeningStoryAction.OverlayAdminGirlWaveform3:
+                    if (!Has(progress, OpeningStoryAction.ObserveRealtimeBackView)) return Need("마지막 모니터의 실시간 화면부터 확인해야 한다.");
+                    int expectedWaveform = WaveformMatchCount(progress) + (int)OpeningStoryAction.OverlayAdminGirlWaveform1;
+                    if ((int)action != expectedWaveform) return Reject("관리 AI 음성과 소녀의 이전 대사를 시간 순서대로 겹쳐야 한다.");
+                    if (action == OpeningStoryAction.OverlayAdminGirlWaveform3)
+                    {
+                        storyFlow.SetFlag(progress, "admin-girl-waveform-perfect-match", false);
+                        storyFlow.SetFlag(progress, "future-girl-is-admin-ai", false);
+                    }
+                    return Accept(progress, action, action == OpeningStoryAction.OverlayAdminGirlWaveform3
+                        ? "두 파형이 완전히 일치했다. 관리 AI는 육체를 얻지 못한 미래의 소녀였다."
+                        : "관리 AI와 소녀의 파형에서 일치 구간을 하나 맞췄다.");
+                case OpeningStoryAction.KeepDeveloperBodyConnected:
+                case OpeningStoryAction.CutSomeRealityCables:
+                case OpeningStoryAction.CutCityPower:
+                    if (WaveformMatchCount(progress) != 3) return Need("관리 AI와 소녀의 파형이 완전히 일치함을 먼저 확인해야 한다.");
+                    if (MadeRealityLinkChoice(progress)) return Reject("현실 연결 상태는 이미 확정됐다.");
+                    string outcome = action == OpeningStoryAction.KeepDeveloperBodyConnected ? "body-connected" :
+                        action == OpeningStoryAction.CutSomeRealityCables ? "partial-cut" : "city-power-cut";
+                    storyFlow.RecordChoice(progress, "reality-link", outcome);
+                    SetRealityLinkConsequences(progress, action);
+                    Mark(progress, action);
+                    return new OpeningStoryResult(true, "현실 연결을 확정했다. 최종장의 난이도, 구출 가능한 희생자, 개발자의 생존 상태가 기록됐다.");
+                case OpeningStoryAction.WitnessCityWindowsStare:
+                    if (!MadeRealityLinkChoice(progress)) return Need("개발자의 육체 연결을 어떻게 처리할지 먼저 결정해야 한다.");
+                    storyFlow.SetFlag(progress, "city-windows-stare-together", true);
+                    return Accept(progress, action, "도시의 모든 사람이 동시에 창문을 열고 바라봤다. 건물들이 거대한 집으로 접히기 시작했다.");
+                case OpeningStoryAction.CarryCollapsingCity1:
+                case OpeningStoryAction.CarryCollapsingCity2:
+                case OpeningStoryAction.CarryCollapsingCity3:
+                    if (!Has(progress, OpeningStoryAction.WitnessCityWindowsStare)) return Need("창문들의 응시와 접히는 도시를 먼저 목격해야 한다.");
+                    int expectedCarry = CityCarryCount(progress) + (int)OpeningStoryAction.CarryCollapsingCity1;
+                    if ((int)action != expectedCarry) return Reject("무너지는 도시를 든 채 표시된 귀환 경로를 순서대로 통과해야 한다.");
+                    return Accept(progress, action, "무너지는 모형 도시를 운반하며 귀환 추격 구간을 통과했다.");
+                case OpeningStoryAction.ReturnFromWindowCity:
+                    if (CityCarryCount(progress) != 3) return Need("무너지는 도시를 들고 세 귀환 구간을 모두 통과해야 한다.");
+                    Mark(progress, action);
+                    storyFlow.SetFlag(progress, "furniture-completed-model-city", false);
+                    storyFlow.SetFlag(progress, "furniture-developer-stopped-wristwatch", false);
+                    storyFlow.SetFlag(progress, "furniture-last-room-front-door", false);
+                    storyFlow.SetFlag(progress, "future-girl-prepared-more-perfect-escape", false);
+                    storyFlow.SetFlag(progress, "final-chapter-unlocked", false);
+                    CompleteChapter(progress, StoryChapterId.Chapter6);
+                    return new OpeningStoryResult(true, "집으로 돌아왔다. 완성된 모형 도시, 멈춘 손목시계, 마지막 방의 현관문이 놓였고 최종장이 열렸다.");
+                default:
+                    return Reject("이 행동은 '창문 안의 도시'의 현재 흐름과 맞지 않는다.");
+            }
+        }
+
+        private void SetRealityLinkConsequences(StoryProgress progress, OpeningStoryAction action)
+        {
+            string difficulty = action == OpeningStoryAction.KeepDeveloperBodyConnected ? "hard" :
+                action == OpeningStoryAction.CutSomeRealityCables ? "normal" : "severe";
+            string victims = action == OpeningStoryAction.KeepDeveloperBodyConnected ? "many" :
+                action == OpeningStoryAction.CutSomeRealityCables ? "some" : "few";
+            string developer = action == OpeningStoryAction.KeepDeveloperBodyConnected ? "alive-connected" :
+                action == OpeningStoryAction.CutSomeRealityCables ? "survival-uncertain" : "cannot-survive";
+            storyFlow.SetFlag(progress, "final-difficulty-" + difficulty, false);
+            storyFlow.SetFlag(progress, "rescuable-victims-" + victims, false);
+            storyFlow.SetFlag(progress, "developer-state-" + developer, false);
+        }
+
         private void CompleteChapter(StoryProgress progress, StoryChapterId chapter)
         {
             StoryChapterProgress state = progress.GetChapter(chapter);
@@ -621,6 +735,10 @@ namespace SmallWorld.Flow
         private static int OfficeEscapeCount(StoryProgress p) => Count(p, OpeningStoryAction.EscapeOfficeCheckpoint1, OpeningStoryAction.EscapeOfficeCheckpoint2, OpeningStoryAction.EscapeOfficeCheckpoint3);
         private static int DeathCertificateCount(StoryProgress p) => Count(p, OpeningStoryAction.OverlayDeathCertificate1, OpeningStoryAction.OverlayDeathCertificate2, OpeningStoryAction.OverlayDeathCertificate3, OpeningStoryAction.OverlayDeathCertificate4);
         private static int GuestbookGestureCount(StoryProgress p) => Count(p, OpeningStoryAction.MatchGuestbookGesture1, OpeningStoryAction.MatchGuestbookGesture2, OpeningStoryAction.MatchGuestbookGesture3);
+        private static int DeveloperRoomClueCount(StoryProgress p) => Count(p, OpeningStoryAction.MatchDeveloperRoomTime, OpeningStoryAction.MatchDeveloperRoomFurniture, OpeningStoryAction.MatchDeveloperRoomRainDirection);
+        private static int MonitorLoopCount(StoryProgress p) => Count(p, OpeningStoryAction.ArrangeMonitorLoop1, OpeningStoryAction.ArrangeMonitorLoop2, OpeningStoryAction.ArrangeMonitorLoop3);
+        private static int WaveformMatchCount(StoryProgress p) => Count(p, OpeningStoryAction.OverlayAdminGirlWaveform1, OpeningStoryAction.OverlayAdminGirlWaveform2, OpeningStoryAction.OverlayAdminGirlWaveform3);
+        private static int CityCarryCount(StoryProgress p) => Count(p, OpeningStoryAction.CarryCollapsingCity1, OpeningStoryAction.CarryCollapsingCity2, OpeningStoryAction.CarryCollapsingCity3);
         private static bool MadePrologueChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "prologue-stay");
         private static bool ChoseMemoryDoor(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "first-memory-door");
         private static bool MadeSeatChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "fourth-seat-name");
@@ -628,6 +746,7 @@ namespace SmallWorld.Flow
         private static bool MadePerfectDayChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "perfect-day-photo");
         private static bool MadeOfficeRecordChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "office-record");
         private static bool MadeDeadPersonNameChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "dead-person-name");
+        private static bool MadeRealityLinkChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "reality-link");
         private static bool HasOfficeServerAutonomy(StoryProgress p) => p.ForeshadowFlags.Contains("autonomy-clue-white-station");
         private static OpeningStoryResult Need(string message) => new OpeningStoryResult(false, message);
         private static OpeningStoryResult Reject(string message) => new OpeningStoryResult(false, message);
