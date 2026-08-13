@@ -111,7 +111,7 @@ namespace SmallWorld.Tests.EditMode.Flow
             Assert.That(progress.CurrentChapter, Is.EqualTo(StoryChapterId.FinalChapter));
             Assert.That(progress.GetChapter(StoryChapterId.Chapter6).IsComplete, Is.True);
             Assert.That(progress.GetChapter(StoryChapterId.FinalChapter).IsComplete, Is.False);
-            Assert.That(progress.ForeshadowFlags, Contains.Item("city-windows-stare-together"));
+            Assert.That(progress.ExternalEntityFlags, Contains.Item("city-windows-stare-together"));
             Assert.That(progress.ForeshadowFlags, Contains.Item("furniture-completed-model-city"));
             Assert.That(progress.ForeshadowFlags, Contains.Item("furniture-developer-stopped-wristwatch"));
             Assert.That(progress.ForeshadowFlags, Contains.Item("furniture-last-room-front-door"));
