@@ -18,6 +18,27 @@ namespace SmallWorld.Editor
         private const string InputPath = "Assets/InputSystem_Actions.inputactions";
         private static readonly string[] Ids = { "prologue", "chapter-1", "chapter-2", "chapter-3", "chapter-4", "chapter-5", "chapter-6", "final-chapter" };
         private static readonly string[] Names = { "Prologue - The White Room", "Chapter 1 - The Fourth Place", "Chapter 2 - Last Platform", "Chapter 3 - A Perfect Day", "Chapter 4 - Faceless Office", "Chapter 5 - Cemetery Without a Funeral", "Chapter 6 - City in the Window", "Final Chapter - The White Room With Nothing Left" };
+        private static readonly Color[] FloorColors =
+        {
+            new Color(0.72f, 0.68f, 0.61f), new Color(0.24f, 0.29f, 0.38f),
+            new Color(0.12f, 0.24f, 0.32f), new Color(0.54f, 0.36f, 0.24f),
+            new Color(0.18f, 0.22f, 0.27f), new Color(0.19f, 0.25f, 0.22f),
+            new Color(0.12f, 0.19f, 0.31f), new Color(0.68f, 0.69f, 0.72f)
+        };
+        private static readonly Color[] WallColors =
+        {
+            new Color(0.91f, 0.86f, 0.76f), new Color(0.35f, 0.4f, 0.51f),
+            new Color(0.2f, 0.34f, 0.42f), new Color(0.75f, 0.58f, 0.4f),
+            new Color(0.31f, 0.34f, 0.39f), new Color(0.31f, 0.38f, 0.33f),
+            new Color(0.22f, 0.3f, 0.48f), new Color(0.9f, 0.9f, 0.92f)
+        };
+        private static readonly Color[] AccentColors =
+        {
+            new Color(1f, 0.55f, 0.25f), new Color(0.35f, 0.75f, 1f),
+            new Color(0.15f, 0.85f, 1f), new Color(1f, 0.72f, 0.25f),
+            new Color(0.25f, 0.95f, 0.8f), new Color(0.58f, 0.85f, 0.5f),
+            new Color(0.62f, 0.48f, 1f), new Color(0.95f, 0.78f, 0.35f)
+        };
 
         [MenuItem("Small World/Stage 15/Generate Story Route Skeleton")]
         public static void Generate()
@@ -52,7 +73,8 @@ namespace SmallWorld.Editor
                 float z = i * 36f;
                 var hub = new GameObject($"{i:00} {Names[i]}");
                 hub.transform.SetParent(root, false);
-                CreateBlock("Hub Floor", hub.transform, new Vector3(0f, -0.1f, z), new Vector3(30f, 0.2f, 32f));
+                GameObject floor = CreateBlock("Hub Floor", hub.transform, new Vector3(0f, -0.1f, z), new Vector3(30f, 0.2f, 32f));
+                ApplyMaterial(floor, CreateMaterial($"Route Room {i} Floor Material", FloorColors[i]));
                 CreateRouteRoomEnvelope(hub.transform, i, z);
                 Transform arrival = new GameObject("Arrival").transform;
                 arrival.SetParent(hub.transform, false);
@@ -101,6 +123,7 @@ namespace SmallWorld.Editor
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
                 nodes[i] = new StoryRouteNode { Id = Ids[i], DisplayName = Names[i], Arrival = arrival, DialogueEntry = dialogue, PuzzleEntry = puzzle, MemoryEntry = memory };
+                CreateRoomWayfinding(hub.transform, i, z, arrival, dialogue, puzzle, memory);
                 if (i < nodes.Length - 1)
                 {
                     GameObject gate = CreateBlock("Next Chapter Gate", hub.transform, new Vector3(0f, 1.25f, z + 15f), new Vector3(3f, 2.5f, 0.35f));
@@ -617,18 +640,113 @@ namespace SmallWorld.Editor
 
         private static void CreateRouteRoomEnvelope(Transform parent, int index, float z)
         {
-            CreateBlock($"Route Room {index} Left Sight Wall", parent,
-                new Vector3(-15f, 2.5f, z), new Vector3(0.4f, 5f, 32f));
-            CreateBlock($"Route Room {index} Right Sight Wall", parent,
-                new Vector3(15f, 2.5f, z), new Vector3(0.4f, 5f, 32f));
-            CreateBlock($"Route Room {index} Arrival Back Wall", parent,
-                new Vector3(0f, 2.5f, z - 16f), new Vector3(30f, 5f, 0.4f));
-            CreateBlock($"Route Room {index} Forward Occlusion Wall", parent,
-                new Vector3(0f, 2.5f, z + 16f), new Vector3(30f, 5f, 0.4f));
-            CreateBlock($"Route Room {index} Ceiling", parent,
-                new Vector3(0f, 5f, z), new Vector3(30f, 0.3f, 32f));
+            Material wallMaterial = CreateMaterial($"Route Room {index} Wall Material", WallColors[index]);
+            ApplyMaterial(CreateBlock($"Route Room {index} Left Sight Wall", parent,
+                new Vector3(-15f, 2.5f, z), new Vector3(0.4f, 5f, 32f)), wallMaterial);
+            ApplyMaterial(CreateBlock($"Route Room {index} Right Sight Wall", parent,
+                new Vector3(15f, 2.5f, z), new Vector3(0.4f, 5f, 32f)), wallMaterial);
+            ApplyMaterial(CreateBlock($"Route Room {index} Arrival Back Wall", parent,
+                new Vector3(0f, 2.5f, z - 16f), new Vector3(30f, 5f, 0.4f)), wallMaterial);
+            ApplyMaterial(CreateBlock($"Route Room {index} Forward Occlusion Wall", parent,
+                new Vector3(0f, 2.5f, z + 16f), new Vector3(30f, 5f, 0.4f)), wallMaterial);
+            ApplyMaterial(CreateBlock($"Route Room {index} Ceiling", parent,
+                new Vector3(0f, 5f, z), new Vector3(30f, 0.3f, 32f)), wallMaterial);
             CreatePointLight($"Route Room {index} Entry Light", parent,
-                new Vector3(0f, 3.5f, z - 11f), new Color(0.86f, 0.9f, 1f), 1.4f, 12f);
+                new Vector3(0f, 3.5f, z - 11f), AccentColors[index], 1.6f, 12f);
+        }
+
+        private static void CreateRoomWayfinding(Transform parent, int index, float z, Transform arrival,
+            Transform dialogue, Transform puzzle, Transform memory)
+        {
+            Color accent = AccentColors[index];
+            Material accentMaterial = CreateMaterial($"Route Room {index} Accent Material", accent, accent * 1.8f);
+            Material pathMaterial = CreateMaterial($"Route Room {index} Path Material", Color.Lerp(FloorColors[index], accent, 0.55f), accent * 0.55f);
+
+            CreateWorldLabel($"Route Room {index} Entrance Sign", parent, Names[index],
+                new Vector3(0f, 2.65f, z - 14.8f), accent);
+            CreateHighlightFrame($"Route Room {index} Dialogue Highlight", parent, dialogue.position, accentMaterial);
+            CreateHighlightFrame($"Route Room {index} Puzzle Highlight", parent, puzzle.position, accentMaterial);
+            CreateHighlightFrame($"Route Room {index} Memory Highlight", parent, memory.position, accentMaterial);
+
+            Transform[] route = { arrival, dialogue, puzzle, memory };
+            for (int segment = 0; segment < route.Length - 1; segment++)
+            {
+                Vector3 from = route[segment].position;
+                Vector3 to = route[segment + 1].position;
+                for (int step = 1; step <= 3; step++)
+                {
+                    Vector3 position = Vector3.Lerp(from, to, step / 4f);
+                    position.y = 0.025f;
+                    GameObject marker = CreateBlock($"Route Room {index} Path {segment + 1}-{step}", parent,
+                        position, new Vector3(0.5f, 0.05f, 0.9f));
+                    marker.transform.rotation = Quaternion.LookRotation((to - from).normalized, Vector3.up);
+                    ApplyMaterial(marker, pathMaterial);
+                    Collider collider = marker.GetComponent<Collider>();
+                    if (collider != null) collider.enabled = false;
+                }
+            }
+
+            Vector3 objectivePosition = dialogue.position + Vector3.up * 2.4f;
+            CreatePointLight($"Route Room {index} Objective Light", parent, objectivePosition, accent, 2.4f, 7f);
+        }
+
+        private static void CreateHighlightFrame(string name, Transform parent, Vector3 target, Material material)
+        {
+            var frame = new GameObject(name);
+            frame.transform.SetParent(parent, true);
+            frame.transform.position = target;
+            Vector3[] positions =
+            {
+                new Vector3(-1.25f, 1.1f, 0f), new Vector3(1.25f, 1.1f, 0f),
+                new Vector3(0f, 2.15f, 0f), new Vector3(0f, 0.05f, 0f)
+            };
+            Vector3[] scales =
+            {
+                new Vector3(0.08f, 2.2f, 0.08f), new Vector3(0.08f, 2.2f, 0.08f),
+                new Vector3(2.6f, 0.08f, 0.08f), new Vector3(2.6f, 0.08f, 0.08f)
+            };
+            for (int i = 0; i < positions.Length; i++)
+            {
+                GameObject edge = CreateBlock($"{name} Edge {i + 1}", frame.transform, target + positions[i], scales[i]);
+                ApplyMaterial(edge, material);
+                Collider collider = edge.GetComponent<Collider>();
+                if (collider != null) collider.enabled = false;
+            }
+        }
+
+        private static void CreateWorldLabel(string name, Transform parent, string value, Vector3 position, Color color)
+        {
+            var label = new GameObject(name);
+            label.transform.SetParent(parent, true);
+            label.transform.position = position;
+            label.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            TextMesh text = label.AddComponent<TextMesh>();
+            text.text = value;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = 48;
+            text.characterSize = 0.08f;
+            text.anchor = TextAnchor.MiddleCenter;
+            text.alignment = TextAlignment.Center;
+            text.color = color;
+        }
+
+        private static Material CreateMaterial(string name, Color color, Color? emission = null)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            var material = new Material(shader) { name = name, color = color };
+            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
+            if (emission.HasValue)
+            {
+                material.EnableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", emission.Value);
+            }
+            return material;
+        }
+
+        private static void ApplyMaterial(GameObject target, Material material)
+        {
+            Renderer renderer = target.GetComponent<Renderer>();
+            if (renderer != null) renderer.sharedMaterial = material;
         }
 
         private static void CreateFinalGate(Transform root, StoryRouteController route, int nodeCount)

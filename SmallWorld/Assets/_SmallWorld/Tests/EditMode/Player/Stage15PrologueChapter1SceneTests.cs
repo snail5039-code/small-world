@@ -136,6 +136,56 @@ namespace SmallWorld.Player.Tests
         }
 
         [Test]
+        public void StoryRoute_AllRoomsProvideDistinctWayfindingAndNonBlockingPathMarkers()
+        {
+            var floorColors = new System.Collections.Generic.HashSet<Color>();
+            for (int i = 0; i < 8; i++)
+            {
+                GameObject hub = GameObject.Find($"{i:00} " + new[]
+                {
+                    "Prologue - The White Room", "Chapter 1 - The Fourth Place", "Chapter 2 - Last Platform",
+                    "Chapter 3 - A Perfect Day", "Chapter 4 - Faceless Office", "Chapter 5 - Cemetery Without a Funeral",
+                    "Chapter 6 - City in the Window", "Final Chapter - The White Room With Nothing Left"
+                }[i]);
+                Assert.That(hub, Is.Not.Null);
+                Renderer floor = hub.transform.Find("Hub Floor").GetComponent<Renderer>();
+                Renderer wall = hub.transform.Find($"Route Room {i} Left Sight Wall").GetComponent<Renderer>();
+                Assert.That(floor.sharedMaterial.color, Is.Not.EqualTo(wall.sharedMaterial.color));
+                floorColors.Add(floor.sharedMaterial.color);
+
+                Assert.That(GameObject.Find($"Route Room {i} Entrance Sign").GetComponent<TextMesh>(), Is.Not.Null);
+                Assert.That(GameObject.Find($"Route Room {i} Objective Light").GetComponent<Light>(), Is.Not.Null);
+                Assert.That(GameObject.Find($"Route Room {i} Dialogue Highlight"), Is.Not.Null);
+                Assert.That(GameObject.Find($"Route Room {i} Puzzle Highlight"), Is.Not.Null);
+                Assert.That(GameObject.Find($"Route Room {i} Memory Highlight"), Is.Not.Null);
+
+                for (int segment = 1; segment <= 3; segment++)
+                for (int step = 1; step <= 3; step++)
+                {
+                    GameObject marker = GameObject.Find($"Route Room {i} Path {segment}-{step}");
+                    Assert.That(marker, Is.Not.Null);
+                    Assert.That(marker.GetComponent<Collider>().enabled, Is.False,
+                        marker.name + " must never obstruct the player route.");
+                }
+            }
+            Assert.That(floorColors.Count, Is.EqualTo(8));
+        }
+
+        [Test]
+        public void StoryRoute_PrologueArrivalShowsFirstObjectiveAndExitAsDifferentSignals()
+        {
+            GameObject objective = GameObject.Find("Route Room 0 Dialogue Highlight");
+            GameObject exit = GameObject.Find("Next Chapter Gate");
+            GameObject arrival = GameObject.Find("00 Prologue - The White Room").transform.Find("Arrival").gameObject;
+
+            Assert.That(objective, Is.Not.Null);
+            Assert.That(exit, Is.Not.Null);
+            Assert.That(Vector3.Dot((objective.transform.position - arrival.transform.position).normalized, Vector3.forward), Is.GreaterThan(0.25f));
+            Assert.That(Vector3.Distance(objective.transform.position, exit.transform.position), Is.GreaterThan(4f));
+            Assert.That(GameObject.Find("Route Room 0 Objective Light").transform.position.z, Is.LessThan(exit.transform.position.z));
+        }
+
+        [Test]
         public void StoryRoute_RestoresEveryCurrentChapterAndFallsBackSafely()
         {
             GameObject routeObject = GameObject.Find("Stage 15 Story Route");
