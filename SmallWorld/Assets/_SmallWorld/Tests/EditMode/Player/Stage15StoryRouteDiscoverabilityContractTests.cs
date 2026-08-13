@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
-using SmallWorld.Save.Story;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -35,10 +34,11 @@ namespace SmallWorld.Tests.EditMode.Flow
             Type guidance = RequireType("SmallWorld.Flow.StoryRouteGuidance");
             MethodInfo location = RequireStaticMethod(guidance, "Location");
             MethodInfo objective = RequireStaticMethod(guidance, "ArrivalObjective");
+            Type chapterType = RequireType("SmallWorld.Save.Story.StoryChapterId");
 
             for (int i = 0; i < CanonicalSpaces.Length; i++)
             {
-                object chapter = Enum.ToObject(typeof(StoryChapterId), i);
+                object chapter = Enum.ToObject(chapterType, i);
                 Assert.That((string)location.Invoke(null, new[] { chapter }), Does.Contain(CanonicalSpaces[i]));
                 Assert.That((string)objective.Invoke(null, new[] { chapter }), Is.Not.Empty);
             }
@@ -51,7 +51,9 @@ namespace SmallWorld.Tests.EditMode.Flow
             MethodInfo arrivalDialogue = RequireStaticMethod(guidance, "ArrivalDialogue");
             MethodInfo nextObjective = RequireStaticMethod(guidance, "NextObjective");
             Type actionType = RequireType("SmallWorld.Flow.OpeningStoryAction");
-            var progress = new StoryProgress();
+            Type progressType = RequireType("SmallWorld.Save.Story.StoryProgress");
+            Type chapterType = RequireType("SmallWorld.Save.Story.StoryChapterId");
+            object progress = Activator.CreateInstance(progressType);
 
             string warm = (string)arrivalDialogue.Invoke(null, new object[] { progress, 10 });
             string neutral = (string)arrivalDialogue.Invoke(null, new object[] { progress, 0 });
@@ -62,9 +64,9 @@ namespace SmallWorld.Tests.EditMode.Flow
 
             object completedStep = Enum.Parse(actionType, "ReverseAnnouncement3");
             string success = (string)nextObjective.Invoke(null,
-                new[] { (object)StoryChapterId.Chapter2, completedStep, true });
+                new[] { Enum.ToObject(chapterType, 2), completedStep, true });
             string locked = (string)nextObjective.Invoke(null,
-                new[] { (object)StoryChapterId.Chapter2, completedStep, false });
+                new[] { Enum.ToObject(chapterType, 2), completedStep, false });
             Assert.That(success, Does.Contain("목적지"));
             Assert.That(success, Does.Contain("안전 구역"));
             Assert.That(locked, Does.Contain("잠김 사유"));
@@ -76,8 +78,9 @@ namespace SmallWorld.Tests.EditMode.Flow
         {
             Type guidance = RequireType("SmallWorld.Flow.StoryRouteGuidance");
             Type actionType = RequireType("SmallWorld.Flow.OpeningStoryAction");
+            Type chapterType = RequireType("SmallWorld.Save.Story.StoryChapterId");
             string result = (string)RequireStaticMethod(guidance, "NextObjective").Invoke(null,
-                new[] { (object)StoryChapterId.FinalChapter, Enum.Parse(actionType, "PrepareFinalChoice"), true });
+                new[] { Enum.ToObject(chapterType, 7), Enum.Parse(actionType, "PrepareFinalChoice"), true });
             Assert.That(result, Does.Contain("준비 완료"));
             Assert.That(result, Does.Contain("여기서 멈춘다"));
             Assert.That(result, Does.Contain("실행하지 않는다"));
@@ -100,17 +103,18 @@ namespace SmallWorld.Tests.EditMode.Flow
             Assert.That(map, Is.Not.Null);
             Assert.That(restore, Is.Not.Null);
             GameObject player = GameObject.Find("First Person Player");
+            Type chapterType = RequireType("SmallWorld.Save.Story.StoryChapterId");
 
             for (int i = 0; i < 8; i++)
             {
-                int mapped = (int)map.Invoke(null, new[] { Enum.ToObject(typeof(StoryChapterId), i) });
+                int mapped = (int)map.Invoke(null, new[] { Enum.ToObject(chapterType, i) });
                 int restored = (int)restore.Invoke(controller, new object[] { mapped });
                 Assert.That(mapped, Is.EqualTo(i));
                 Assert.That(restored, Is.EqualTo(i));
                 Assert.That(player.transform.position.z, Is.EqualTo(i * 36f - 13f).Within(0.001f));
             }
 
-            int fallback = (int)map.Invoke(null, new[] { Enum.ToObject(typeof(StoryChapterId), 999) });
+            int fallback = (int)map.Invoke(null, new[] { Enum.ToObject(chapterType, 999) });
             Assert.That(fallback, Is.Zero);
             Assert.That((int)restore.Invoke(controller, new object[] { fallback }), Is.Zero);
             Assert.That(player.transform.position.z, Is.EqualTo(-13f).Within(0.001f));
@@ -157,6 +161,18 @@ namespace SmallWorld.Tests.EditMode.Flow
         private static Type RequireType(string fullName)
         {
             Type type = Type.GetType(fullName + ", Assembly-CSharp");
+            if (type == null)
+            {
+                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    type = assembly.GetType(fullName);
+                    if (type != null)
+                    {
+                        break;
+                    }
+                }
+            }
+
             Assert.That(type, Is.Not.Null, fullName + " public contract is not integrated.");
             return type;
         }
