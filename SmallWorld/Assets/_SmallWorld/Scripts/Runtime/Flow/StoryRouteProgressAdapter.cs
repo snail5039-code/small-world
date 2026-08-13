@@ -30,7 +30,9 @@ namespace SmallWorld.Flow
         private void Awake()
         {
             EnsureLoaded();
-            GetComponent<StoryRouteController>().BindProgressSource(this);
+            StoryRouteController route = GetComponent<StoryRouteController>();
+            route.BindProgressSource(this);
+            route.RestoreToNodeOrPrologue(CurrentChapterNodeIndex(progress.CurrentChapter));
         }
 
         public bool IsNodeUnlocked(string nodeId)
@@ -90,6 +92,7 @@ namespace SmallWorld.Flow
         private static bool TryGetChapter(string nodeId, out StoryChapterId chapter)
         {
             if (nodeId == "prologue") { chapter = StoryChapterId.Prologue; return true; }
+            if (nodeId == "final-chapter") { chapter = StoryChapterId.FinalChapter; return true; }
             if (nodeId != null && nodeId.StartsWith("chapter-") &&
                 int.TryParse(nodeId.Substring(8), out int number) && number >= 1 && number <= 6)
             {
@@ -98,6 +101,14 @@ namespace SmallWorld.Flow
             }
             chapter = StoryChapterId.Prologue;
             return false;
+        }
+
+        internal static int CurrentChapterNodeIndex(StoryChapterId chapter)
+        {
+            int index = (int)chapter;
+            return index >= (int)StoryChapterId.Prologue && index <= (int)StoryChapterId.FinalChapter
+                ? index
+                : 0;
         }
     }
 }

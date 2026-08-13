@@ -60,6 +60,22 @@ namespace SmallWorld.Flow
 
         public void BindProgressSource(IStoryRouteProgressSource source) => progressSource = source;
 
+        public int RestoreToNodeOrPrologue(int requestedIndex)
+        {
+            int safeIndex = nodes != null && requestedIndex >= 0 && requestedIndex < nodes.Length
+                ? requestedIndex
+                : 0;
+            if (nodes == null || nodes.Length == 0 || nodes[safeIndex]?.Arrival == null || player == null)
+                return -1;
+
+            CharacterController character = player.GetComponent<CharacterController>();
+            if (character != null) character.enabled = false;
+            player.SetPositionAndRotation(nodes[safeIndex].Arrival.position, nodes[safeIndex].Arrival.rotation);
+            if (character != null) character.enabled = true;
+            fallbackUnlockedIndex = Mathf.Max(fallbackUnlockedIndex, safeIndex);
+            return safeIndex;
+        }
+
         public void ReportStep(string nodeId, StoryRouteStep step) => progressSource?.ReportStep(nodeId, step);
 
         private void Awake()

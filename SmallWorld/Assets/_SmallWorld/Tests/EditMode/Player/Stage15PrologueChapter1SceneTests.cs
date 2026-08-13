@@ -47,6 +47,125 @@ namespace SmallWorld.Player.Tests
             AssertNode(nodes.GetArrayElementAtIndex(4), "chapter-4", "Faceless Office");
             AssertNode(nodes.GetArrayElementAtIndex(5), "chapter-5", "Cemetery Without a Funeral");
             AssertNode(nodes.GetArrayElementAtIndex(6), "chapter-6", "City in the Window");
+            AssertNode(nodes.GetArrayElementAtIndex(7), "final-chapter", "White Room With Nothing Left");
+        }
+
+        [Test]
+        public void StoryRoute_FinalChapterStopsAtChoicePreparationBoundary()
+        {
+            string[] requiredObjects =
+            {
+                "Living House Floor", "Living House Wall Of Faces", "Living House Victim Face 1",
+                "Living House Victim Face 6", "Living House Reaching Hand 1", "Living House Reaching Hand 6",
+                "Living Memory Furniture", "Memory Furniture Preserve Marker", "Memory Furniture Destroy Marker",
+                "Management AI Core - Fourth Place", "Management AI Core - Last Platform",
+                "Management AI Core - Perfect Day", "Management AI Core - Faceless Office",
+                "Management AI Core - Cemetery Without A Funeral", "Management AI Core - City In The Window",
+                "Reality Developer Body Silhouette", "Reality Connection Cable 1", "Reality Connection Cable 3",
+                "Cable State Maintained", "Cable State Partially Cut", "Cable State City Power Cut",
+                "Original White Room Floor", "First White Room Chair - Player",
+                "First White Room Chair - Opposite", "Old Computer",
+                "Dialogue Transformation Stage 1 - Girl Form",
+                "Dialogue Transformation Stage 2 - Girl Developer Overlap",
+                "Dialogue Transformation Stage 3 - Reality Developer Form",
+                "Final Choice Readiness Conditions UI", "Final Choice Preparation Gate - Locked",
+                "Final Choice Readiness Inspector", "No Ending Execution Boundary", "Survive Living House And Review Memory Preservation",
+                "Review Management Cores And Reality Cable State", "Complete White Room Transformation Dialogue"
+            };
+
+            foreach (string objectName in requiredObjects)
+                Assert.That(GameObject.Find(objectName), Is.Not.Null, objectName + " is missing from the final chapter.");
+
+            Assert.That(GameObject.Find("Final Choice Readiness Conditions UI").GetComponent<Canvas>(), Is.Not.Null);
+            Assert.That(GameObject.Find("Final Choice Preparation Gate - Locked").GetComponent("StoryRouteInteractable"), Is.Null);
+            Assert.That(GameObject.Find("No Ending Execution Boundary").GetComponent("StoryRouteInteractable"), Is.Null);
+
+            string[] forbiddenExecutableChoices =
+            {
+                "Program Exit Choice", "Connect Dollhouse Choice", "Remain With Girl Choice",
+                "Become New Administrator Choice", "Send Girl To Reality Choice",
+                "Restore Victims And Distribute Memories Choice"
+            };
+            foreach (string choiceName in forbiddenExecutableChoices)
+                Assert.That(GameObject.Find(choiceName), Is.Null, choiceName + " must not exist before ending implementation.");
+        }
+
+        [Test]
+        public void StoryRoute_NewGameSpawnFacesPrologueInsideOccludedRoom()
+        {
+            GameObject player = GameObject.Find("First Person Player");
+            GameObject cameraObject = GameObject.Find("Player Camera");
+            Assert.That(player, Is.Not.Null);
+            Assert.That(cameraObject, Is.Not.Null);
+            Assert.That(player.transform.position.x, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(player.transform.position.y, Is.EqualTo(0.05f).Within(0.001f));
+            Assert.That(player.transform.position.z, Is.EqualTo(-13f).Within(0.001f));
+            Assert.That(Quaternion.Angle(player.transform.rotation, Quaternion.identity), Is.LessThan(0.01f));
+            Assert.That(cameraObject.transform.forward.z, Is.GreaterThan(0.99f));
+            Camera camera = cameraObject.GetComponent<Camera>();
+            Assert.That(camera.clearFlags, Is.EqualTo(CameraClearFlags.SolidColor));
+
+            string[] occlusionObjects =
+            {
+                "Route Room 0 Left Sight Wall", "Route Room 0 Right Sight Wall",
+                "Route Room 0 Arrival Back Wall", "Route Room 0 Forward Occlusion Wall",
+                "Route Room 0 Ceiling", "Route Room 0 Entry Light",
+                "Route Room 7 Left Sight Wall", "Route Room 7 Right Sight Wall",
+                "Route Room 7 Arrival Back Wall", "Route Room 7 Forward Occlusion Wall",
+                "Route Room 7 Ceiling", "Route Room 7 Entry Light"
+            };
+            foreach (string objectName in occlusionObjects)
+                Assert.That(GameObject.Find(objectName), Is.Not.Null, objectName + " is required to hide adjacent chapter skeletons.");
+        }
+
+        [Test]
+        public void StoryRoute_AllChapterArrivalsRemainInsideTheirOwnOccludedRooms()
+        {
+            Component controller = GameObject.Find("Stage 15 Story Route").GetComponent("StoryRouteController");
+            SerializedProperty nodes = new SerializedObject(controller).FindProperty("nodes");
+            Assert.That(nodes.arraySize, Is.EqualTo(8));
+            for (int i = 0; i < nodes.arraySize; i++)
+            {
+                Transform arrival = nodes.GetArrayElementAtIndex(i).FindPropertyRelative("Arrival").objectReferenceValue as Transform;
+                Assert.That(arrival, Is.Not.Null);
+                Assert.That(arrival.position.x, Is.EqualTo(0f).Within(0.001f));
+                Assert.That(arrival.position.y, Is.EqualTo(0.05f).Within(0.001f));
+                Assert.That(arrival.position.z, Is.EqualTo(i * 36f - 13f).Within(0.001f));
+                Assert.That(GameObject.Find($"Route Room {i} Ceiling"), Is.Not.Null);
+            }
+        }
+
+        [Test]
+        public void StoryRoute_RestoresEveryCurrentChapterAndFallsBackSafely()
+        {
+            GameObject routeObject = GameObject.Find("Stage 15 Story Route");
+            Component controller = routeObject.GetComponent("StoryRouteController");
+            Component adapter = routeObject.GetComponent("StoryRouteProgressAdapter");
+            MethodInfo map = adapter.GetType().GetMethod("CurrentChapterNodeIndex",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            MethodInfo restore = controller.GetType().GetMethod("RestoreToNodeOrPrologue",
+                BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(map, Is.Not.Null);
+            Assert.That(restore, Is.Not.Null);
+
+            System.Type chapterType = map.GetParameters()[0].ParameterType;
+            GameObject player = GameObject.Find("First Person Player");
+            for (int chapterValue = 0; chapterValue <= 7; chapterValue++)
+            {
+                object chapter = System.Enum.ToObject(chapterType, chapterValue);
+                int mappedIndex = (int)map.Invoke(null, new[] { chapter });
+                int restoredIndex = (int)restore.Invoke(controller, new object[] { mappedIndex });
+                Assert.That(mappedIndex, Is.EqualTo(chapterValue));
+                Assert.That(restoredIndex, Is.EqualTo(chapterValue));
+                Assert.That(player.transform.position.z, Is.EqualTo(chapterValue * 36f - 13f).Within(0.001f));
+            }
+
+            object invalidChapter = System.Enum.ToObject(chapterType, 999);
+            int fallbackIndex = (int)map.Invoke(null, new[] { invalidChapter });
+            int restoredFallback = (int)restore.Invoke(controller, new object[] { fallbackIndex });
+            Assert.That(fallbackIndex, Is.Zero);
+            Assert.That(restoredFallback, Is.Zero);
+            Assert.That(player.transform.position.z, Is.EqualTo(-13f).Within(0.001f));
         }
 
         [Test]

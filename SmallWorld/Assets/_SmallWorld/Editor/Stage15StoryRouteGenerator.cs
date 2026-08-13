@@ -15,10 +15,9 @@ namespace SmallWorld.Editor
     public static class Stage15StoryRouteGenerator
     {
         private const string ScenePath = "Assets/_SmallWorld/Scenes/04_StoryRoute.unity";
-        private const string RealityRoomPath = "Assets/_SmallWorld/Scenes/02_RealityRoom.unity";
         private const string InputPath = "Assets/InputSystem_Actions.inputactions";
-        private static readonly string[] Ids = { "prologue", "chapter-1", "chapter-2", "chapter-3", "chapter-4", "chapter-5", "chapter-6" };
-        private static readonly string[] Names = { "Prologue - The White Room", "Chapter 1 - The Fourth Place", "Chapter 2 - Last Platform", "Chapter 3 - A Perfect Day", "Chapter 4 - Faceless Office", "Chapter 5 - Cemetery Without a Funeral", "Chapter 6 - City in the Window" };
+        private static readonly string[] Ids = { "prologue", "chapter-1", "chapter-2", "chapter-3", "chapter-4", "chapter-5", "chapter-6", "final-chapter" };
+        private static readonly string[] Names = { "Prologue - The White Room", "Chapter 1 - The Fourth Place", "Chapter 2 - Last Platform", "Chapter 3 - A Perfect Day", "Chapter 4 - Faceless Office", "Chapter 5 - Cemetery Without a Funeral", "Chapter 6 - City in the Window", "Final Chapter - The White Room With Nothing Left" };
 
         [MenuItem("Small World/Stage 15/Generate Story Route Skeleton")]
         public static void Generate()
@@ -36,7 +35,6 @@ namespace SmallWorld.Editor
             CreateLighting(routeRoot.transform);
             CreateFinalGate(routeRoot.transform, route, nodes.Length);
             if (!EditorSceneManager.SaveScene(scene, ScenePath)) throw new InvalidOperationException("Could not save Stage 15 story route.");
-            IntegrateRealityRoom();
             AddBuildScene();
             AssetDatabase.SaveAssets();
         }
@@ -55,6 +53,7 @@ namespace SmallWorld.Editor
                 var hub = new GameObject($"{i:00} {Names[i]}");
                 hub.transform.SetParent(root, false);
                 CreateBlock("Hub Floor", hub.transform, new Vector3(0f, -0.1f, z), new Vector3(30f, 0.2f, 32f));
+                CreateRouteRoomEnvelope(hub.transform, i, z);
                 Transform arrival = new GameObject("Arrival").transform;
                 arrival.SetParent(hub.transform, false);
                 arrival.position = new Vector3(0f, 0.05f, z - 13f);
@@ -91,9 +90,14 @@ namespace SmallWorld.Editor
                     Transform[] anchors = CreateCemeteryWithoutFuneralGameplay(hub.transform, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
-                else
+                else if (i == 6)
                 {
                     Transform[] anchors = CreateCityInTheWindowGameplay(hub.transform, route, z);
+                    dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
+                }
+                else
+                {
+                    Transform[] anchors = CreateFinalChapterGameplay(hub.transform, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
                 nodes[i] = new StoryRouteNode { Id = Ids[i], DisplayName = Names[i], Arrival = arrival, DialogueEntry = dialogue, PuzzleEntry = puzzle, MemoryEntry = memory };
@@ -479,6 +483,106 @@ namespace SmallWorld.Editor
             return new[] { dialogue, puzzle, memory };
         }
 
+        private static Transform[] CreateFinalChapterGameplay(Transform parent, StoryRouteController route, float z)
+        {
+            CreateBlock("Living House Floor", parent, new Vector3(0f, 0.05f, z - 9f), new Vector3(27f, 0.1f, 11f));
+            CreateBlock("Living House Wall Of Faces", parent, new Vector3(0f, 2f, z - 14f), new Vector3(27f, 4f, 0.35f));
+            for (int i = 0; i < 6; i++)
+            {
+                float x = -10f + i * 4f;
+                GameObject face = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                face.name = $"Living House Victim Face {i + 1}";
+                face.transform.SetParent(parent, true);
+                face.transform.position = new Vector3(x, 2.25f, z - 13.7f);
+                face.transform.localScale = new Vector3(1.25f, 1.55f, 0.45f);
+                GameObject hand = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                hand.name = $"Living House Reaching Hand {i + 1}";
+                hand.transform.SetParent(parent, true);
+                hand.transform.position = new Vector3(x + 1f, 0.8f, z - 11f);
+                hand.transform.rotation = Quaternion.Euler(0f, 0f, 75f);
+                hand.transform.localScale = new Vector3(0.35f, 0.85f, 0.35f);
+            }
+            CreateBlock("Living Memory Furniture", parent, new Vector3(-5f, 0.7f, z - 8f), new Vector3(4f, 1.4f, 2f));
+            CreateBlock("Memory Furniture Preserve Marker", parent, new Vector3(-7f, 0.3f, z - 5.5f), new Vector3(2.5f, 0.2f, 1.2f));
+            CreateBlock("Memory Furniture Destroy Marker", parent, new Vector3(-3f, 0.3f, z - 5.5f), new Vector3(2.5f, 0.2f, 1.2f));
+
+            string[] memoryCores =
+            {
+                "Fourth Place", "Last Platform", "Perfect Day", "Faceless Office",
+                "Cemetery Without A Funeral", "City In The Window"
+            };
+            for (int i = 0; i < memoryCores.Length; i++)
+            {
+                float x = -10f + (i % 3) * 10f;
+                float coreZ = z - 2f + (i / 3) * 4f;
+                GameObject core = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                core.name = $"Management AI Core - {memoryCores[i]}";
+                core.transform.SetParent(parent, true);
+                core.transform.position = new Vector3(x, 1.2f, coreZ);
+                core.transform.localScale = Vector3.one * 1.5f;
+                CreateBlock($"Core Memory Merge Indicator {i + 1}", parent,
+                    new Vector3(x - 1.6f, 0.3f, coreZ), new Vector3(1.5f, 0.2f, 0.8f));
+                CreateBlock($"Core Victim Loss Indicator {i + 1}", parent,
+                    new Vector3(x + 1.6f, 0.3f, coreZ), new Vector3(1.5f, 0.2f, 0.8f));
+            }
+
+            CreateBlock("Reality Developer Body Silhouette", parent, new Vector3(-7f, 1f, z + 7f), new Vector3(2f, 2f, 1f));
+            for (int i = 0; i < 3; i++)
+                CreateBlock($"Reality Connection Cable {i + 1}", parent,
+                    new Vector3(-4f + i * 4f, 0.45f, z + 7f), new Vector3(3.2f, 0.25f, 0.25f));
+            CreateBlock("Cable State Maintained", parent, new Vector3(5f, 0.35f, z + 5.5f), new Vector3(3f, 0.25f, 0.8f));
+            CreateBlock("Cable State Partially Cut", parent, new Vector3(5f, 0.35f, z + 7f), new Vector3(3f, 0.25f, 0.8f));
+            CreateBlock("Cable State City Power Cut", parent, new Vector3(5f, 0.35f, z + 8.5f), new Vector3(3f, 0.25f, 0.8f));
+
+            CreateBlock("Original White Room Floor", parent, new Vector3(0f, 0.05f, z + 12f), new Vector3(18f, 0.1f, 8f));
+            CreateBlock("First White Room Chair - Player", parent, new Vector3(-3f, 0.75f, z + 12f), new Vector3(1.5f, 1.5f, 1.5f));
+            CreateBlock("First White Room Chair - Opposite", parent, new Vector3(3f, 0.75f, z + 12f), new Vector3(1.5f, 1.5f, 1.5f));
+            CreateBlock("Old Computer", parent, new Vector3(0f, 1f, z + 14f), new Vector3(2.6f, 2f, 0.8f));
+            string[] forms = { "Girl Form", "Girl Developer Overlap", "Reality Developer Form" };
+            for (int i = 0; i < forms.Length; i++)
+            {
+                GameObject form = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                form.name = $"Dialogue Transformation Stage {i + 1} - {forms[i]}";
+                form.transform.SetParent(parent, true);
+                form.transform.position = new Vector3(7f + i * 2f, 1f, z + 12f);
+                form.transform.localScale = new Vector3(0.8f, 1f, 0.8f);
+            }
+
+            CreateFinalReadinessPanel(parent, z + 16f);
+            CreateBlock("Final Choice Preparation Gate - Locked", parent,
+                new Vector3(0f, 1.75f, z + 17f), new Vector3(6f, 3.5f, 0.5f));
+            CreateBlock("No Ending Execution Boundary", parent,
+                new Vector3(0f, 0.25f, z + 18f), new Vector3(8f, 0.2f, 1f));
+
+            Transform dialogue = CreateMarker("Survive Living House And Review Memory Preservation", parent,
+                new Vector3(-8f, 0.75f, z - 7f), route, "final-chapter", StoryRouteStep.Dialogue,
+                "살아 있는 집의 기억 가구와 보존·파괴 흔적을 확인한다", "희생자의 얼굴과 손이 깨어난 집을 지나 기억 상태를 확인했다.");
+            Transform puzzle = CreateMarker("Review Management Cores And Reality Cable State", parent,
+                new Vector3(0f, 0.75f, z + 7f), route, "final-chapter", StoryRouteStep.Puzzle,
+                "기억 공간별 관리 핵심과 현실 케이블 상태를 확인한다", "관리 핵심과 현실 연결 상태가 최종 조건 표시에 반영되었다.");
+            Transform memory = CreateMarker("Complete White Room Transformation Dialogue", parent,
+                new Vector3(0f, 0.75f, z + 13f), route, "final-chapter", StoryRouteStep.Memory,
+                "두 의자와 낡은 컴퓨터 앞에서 소녀의 변화 대화를 끝낸다", "소녀가 현실 개발자의 모습으로 바뀌었고 최종 선택 준비 상태만 열렸다.");
+            CreatePointLight("Final Chapter White Room Light", parent, new Vector3(0f, 4f, z + 10f), Color.white, 2.5f, 28f);
+            return new[] { dialogue, puzzle, memory };
+        }
+
+        private static void CreateFinalReadinessPanel(Transform parent, float z)
+        {
+            var panel = new GameObject("Final Choice Readiness Conditions UI", typeof(RectTransform));
+            panel.transform.SetParent(parent, false);
+            panel.transform.position = new Vector3(0f, 2.8f, z);
+            Canvas canvas = panel.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            RectTransform panelRect = (RectTransform)panel.transform;
+            panelRect.sizeDelta = new Vector2(720f, 320f);
+            panelRect.localScale = Vector3.one * 0.008f;
+            Text conditions = CreateText("Readiness Conditions - Memories Nameplate Autonomy Reality Link", panel.transform, 0.5f);
+            conditions.text = "FINAL CHOICE PREPARATION\nMemories preserved / Nameplate / Autonomy / Reality link\nVictims restorable / Developer survival / Girl identity\nChoices and endings are not executable in this scene";
+            conditions.fontSize = 30;
+            conditions.rectTransform.sizeDelta = new Vector2(700f, 300f);
+        }
+
         private static Transform[] CreateActionGrid(Transform parent, StoryRouteProgressAdapter progress, float z,
             OpeningStoryAction[] actions, string[] prompts, PrimitiveType primitive)
         {
@@ -511,51 +615,38 @@ namespace SmallWorld.Editor
             return marker.transform;
         }
 
-        private static void CreateFinalGate(Transform root, StoryRouteController route, int nodeCount)
+        private static void CreateRouteRoomEnvelope(Transform parent, int index, float z)
         {
-            float z = (nodeCount - 1) * 36f + 15f;
-            GameObject gate = CreateBlock("Final Chapter Locked Gate", root, new Vector3(0f, 1.75f, z), new Vector3(5f, 3.5f, 0.5f));
-            gate.AddComponent<StoryRouteInteractable>().ConfigureFinalGate(route, "Inspect the final chapter gate");
+            CreateBlock($"Route Room {index} Left Sight Wall", parent,
+                new Vector3(-15f, 2.5f, z), new Vector3(0.4f, 5f, 32f));
+            CreateBlock($"Route Room {index} Right Sight Wall", parent,
+                new Vector3(15f, 2.5f, z), new Vector3(0.4f, 5f, 32f));
+            CreateBlock($"Route Room {index} Arrival Back Wall", parent,
+                new Vector3(0f, 2.5f, z - 16f), new Vector3(30f, 5f, 0.4f));
+            CreateBlock($"Route Room {index} Forward Occlusion Wall", parent,
+                new Vector3(0f, 2.5f, z + 16f), new Vector3(30f, 5f, 0.4f));
+            CreateBlock($"Route Room {index} Ceiling", parent,
+                new Vector3(0f, 5f, z), new Vector3(30f, 0.3f, 32f));
+            CreatePointLight($"Route Room {index} Entry Light", parent,
+                new Vector3(0f, 3.5f, z - 11f), new Color(0.86f, 0.9f, 1f), 1.4f, 12f);
         }
 
-        private static void IntegrateRealityRoom()
+        private static void CreateFinalGate(Transform root, StoryRouteController route, int nodeCount)
         {
-            Scene scene = EditorSceneManager.OpenScene(RealityRoomPath, OpenSceneMode.Single);
-            StoryRouteEntryInteractable[] oldEntries = UnityEngine.Object.FindObjectsByType<StoryRouteEntryInteractable>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
-            foreach (StoryRouteEntryInteractable oldEntry in oldEntries)
-            {
-                if (oldEntry != null && oldEntry.gameObject.name == "Stage 15 Story Route Entry")
-                    UnityEngine.Object.DestroyImmediate(oldEntry.gameObject);
-            }
-
-            GameObject southWall = GameObject.Find("South Wall B");
-            if (southWall != null)
-            {
-                southWall.transform.position = new Vector3(2.75f, 1.45f, -5f);
-                southWall.transform.localScale = new Vector3(6.5f, 3.1f, 0.2f);
-            }
-
-            GameObject doorHinge = GameObject.Find("Door Hinge");
-            if (doorHinge == null) throw new InvalidOperationException("Reality Room door hinge is missing.");
-            DoorInteractable door = doorHinge.GetComponent<DoorInteractable>();
-            if (door == null) throw new InvalidOperationException("Reality Room door interaction is missing.");
-            StoryRouteEntryInteractable entry = doorHinge.GetComponent<StoryRouteEntryInteractable>();
-            if (entry == null) entry = doorHinge.AddComponent<StoryRouteEntryInteractable>();
-            entry.ConfigureDoorEntry(door);
-            EditorSceneManager.MarkSceneDirty(scene);
-            if (!EditorSceneManager.SaveScene(scene, RealityRoomPath)) throw new InvalidOperationException("Could not integrate the Stage 15 route entry.");
+            float z = (nodeCount - 1) * 36f + 20f;
+            GameObject gate = CreateBlock("Final Choice Readiness Inspector", root, new Vector3(0f, 1.25f, z), new Vector3(4f, 2.5f, 0.5f));
+            gate.AddComponent<StoryRouteInteractable>().ConfigureFinalGate(route, "Inspect final choice readiness only");
         }
 
         private static Transform CreatePlayer(InputActionAsset actions)
         {
             var playerObject = new GameObject("First Person Player");
-            playerObject.transform.position = new Vector3(0f, 0.05f, -4.5f);
+            playerObject.transform.SetPositionAndRotation(new Vector3(0f, 0.05f, -13f), Quaternion.identity);
             CharacterController character = playerObject.AddComponent<CharacterController>();
             character.height = 1.8f; character.radius = 0.32f; character.center = new Vector3(0f, 0.9f, 0f);
             var cameraObject = new GameObject("Player Camera");
             cameraObject.tag = "MainCamera"; cameraObject.transform.SetParent(playerObject.transform, false); cameraObject.transform.localPosition = new Vector3(0f, 1.62f, 0f);
-            Camera camera = cameraObject.AddComponent<Camera>(); camera.fieldOfView = 85f; camera.nearClipPlane = 0.05f; cameraObject.AddComponent<AudioListener>();
+            Camera camera = cameraObject.AddComponent<Camera>(); camera.fieldOfView = 85f; camera.nearClipPlane = 0.05f; camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(0.035f, 0.045f, 0.06f); cameraObject.AddComponent<AudioListener>();
             AudioSource source = playerObject.AddComponent<AudioSource>(); source.playOnAwake = false;
             PlayerFootstepEmitter footsteps = playerObject.AddComponent<PlayerFootstepEmitter>(); footsteps.Configure(source);
             PlayerInteractionDetector detector = playerObject.AddComponent<PlayerInteractionDetector>(); detector.Configure(camera.transform, 2.5f);
