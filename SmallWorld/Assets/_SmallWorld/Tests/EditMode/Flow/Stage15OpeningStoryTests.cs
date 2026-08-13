@@ -300,6 +300,73 @@ namespace SmallWorld.Tests.EditMode.Flow
             Assert.That(restored.ForeshadowFlags, Contains.Item("chapter-5-unlocked"));
         }
 
+        [Test]
+        public void GravelessFuneral_RequiresOrderedContradictionsAndBlankNameUnlocksChapterSix()
+        {
+            var save = SaveData.CreateNew();
+            StoryProgress progress = ReadyChapterFive();
+            var story = new Stage15OpeningStoryService();
+
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.EnterGravelessFuneral).Accepted, Is.False);
+            Perform(story, save, progress,
+                OpeningStoryAction.TalkWithYunaBeforeCemetery, OpeningStoryAction.EnterGravelessFuneral,
+                OpeningStoryAction.OverlayDeathCertificate1, OpeningStoryAction.OverlayDeathCertificate2,
+                OpeningStoryAction.OverlayDeathCertificate3, OpeningStoryAction.OverlayDeathCertificate4,
+                OpeningStoryAction.MatchGuestbookGesture1, OpeningStoryAction.MatchGuestbookGesture2,
+                OpeningStoryAction.MatchGuestbookGesture3, OpeningStoryAction.RefuseCarveGravestoneName,
+                OpeningStoryAction.InspectGravestoneBack, OpeningStoryAction.ConfirmBlankDeadName,
+                OpeningStoryAction.ReturnFromGravelessFuneral);
+
+            Assert.That(progress.CurrentChapter, Is.EqualTo(StoryChapterId.Chapter6));
+            Assert.That(progress.GetChapter(StoryChapterId.Chapter5).IsComplete, Is.True);
+            Assert.That(progress.GetChapter(StoryChapterId.Chapter6).IsComplete, Is.False);
+            Assert.That(progress.ImportantChoices.Find(x => x.ChoiceId == "dead-person-name").OutcomeId, Is.EqualTo("blank"));
+            Assert.That(progress.ExternalEntityFlags, Contains.Item("girl-name-answered-by-different-voices"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("memory-installed-in-developer-date"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("causal-loop-is-origin"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("furniture-empty-frame"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("furniture-nameless-gravestone-fragment"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("furniture-white-vase"));
+            Assert.That(progress.ForeshadowFlags, Contains.Item("chapter-6-unlocked"));
+
+            var store = new SaveDataStoryProgressStore();
+            store.Save(save, progress);
+            var serializer = new BinarySaveDataSerializer();
+            Assert.That(serializer.TryDeserialize(serializer.Serialize(save), out SaveData restoredSave), Is.True);
+            StoryProgress restored = store.Load(restoredSave);
+            Assert.That(restored.CurrentChapter, Is.EqualTo(StoryChapterId.Chapter6));
+            Assert.That(restored.ImportantChoices.Find(x => x.ChoiceId == "dead-person-name").OutcomeId, Is.EqualTo("blank"));
+            Assert.That(restored.ForeshadowFlags, Contains.Item("causal-loop-is-origin"));
+            Assert.That(restored.ForeshadowFlags, Contains.Item("furniture-empty-frame"));
+            Assert.That(new StoryRelationshipService().Get(restoredSave, "girl"), Is.EqualTo(10));
+        }
+
+        [Test]
+        public void GravelessFuneral_InventedNamePersistsGeneralEndingLoopWithoutCompletingChapter()
+        {
+            var save = SaveData.CreateNew();
+            StoryProgress progress = ReadyChapterFiveAtNameChoice();
+            var story = new Stage15OpeningStoryService();
+
+            Perform(story, save, progress, OpeningStoryAction.EnterInventedDeadName);
+
+            Assert.That(progress.CurrentChapter, Is.EqualTo(StoryChapterId.Chapter5));
+            Assert.That(progress.GetChapter(StoryChapterId.Chapter5).IsComplete, Is.False);
+            Assert.That(progress.ImportantChoices.Find(x => x.ChoiceId == "dead-person-name").OutcomeId, Is.EqualTo("invented-name"));
+            Assert.That(progress.ExternalEntityFlags, Contains.Item("general-ending-invented-girl-loop"));
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.ReturnFromGravelessFuneral).Accepted, Is.False);
+
+            var store = new SaveDataStoryProgressStore();
+            store.Save(save, progress);
+            var serializer = new BinarySaveDataSerializer();
+            Assert.That(serializer.TryDeserialize(serializer.Serialize(save), out SaveData restoredSave), Is.True);
+            StoryProgress restored = store.Load(restoredSave);
+            Assert.That(restored.CurrentChapter, Is.EqualTo(StoryChapterId.Chapter5));
+            Assert.That(restored.ImportantChoices.Find(x => x.ChoiceId == "dead-person-name").OutcomeId, Is.EqualTo("invented-name"));
+            Assert.That(restored.ExternalEntityFlags, Contains.Item("general-ending-invented-girl-loop"));
+            Assert.That(new StoryRelationshipService().Get(restoredSave, "girl"), Is.EqualTo(-10));
+        }
+
         private static StoryProgress ReadyChapterOne()
         {
             var progress = new StoryProgress { CurrentChapter = StoryChapterId.Chapter1 };
@@ -341,6 +408,30 @@ namespace SmallWorld.Tests.EditMode.Flow
                 OpeningStoryAction.RecoverInvariantCommand3,
                 OpeningStoryAction.AlignMirrorSeat1, OpeningStoryAction.AlignMirrorSeat2,
                 OpeningStoryAction.AlignMirrorSeat3);
+            return progress;
+        }
+
+        private static StoryProgress ReadyChapterFive()
+        {
+            StoryProgress progress = ReadyChapterFour();
+            StoryChapterProgress chapterFour = progress.GetChapter(StoryChapterId.Chapter4);
+            chapterFour.ObjectiveCompleted = chapterFour.DialogueCompleted = chapterFour.PuzzleCompleted = chapterFour.MemorySpaceCompleted = true;
+            progress.CurrentChapter = StoryChapterId.Chapter5;
+            return progress;
+        }
+
+        private static StoryProgress ReadyChapterFiveAtNameChoice()
+        {
+            StoryProgress progress = ReadyChapterFive();
+            var story = new Stage15OpeningStoryService();
+            var save = SaveData.CreateNew();
+            Perform(story, save, progress,
+                OpeningStoryAction.TalkWithYunaBeforeCemetery, OpeningStoryAction.EnterGravelessFuneral,
+                OpeningStoryAction.OverlayDeathCertificate1, OpeningStoryAction.OverlayDeathCertificate2,
+                OpeningStoryAction.OverlayDeathCertificate3, OpeningStoryAction.OverlayDeathCertificate4,
+                OpeningStoryAction.MatchGuestbookGesture1, OpeningStoryAction.MatchGuestbookGesture2,
+                OpeningStoryAction.MatchGuestbookGesture3, OpeningStoryAction.RefuseCarveGravestoneName,
+                OpeningStoryAction.InspectGravestoneBack);
             return progress;
         }
 

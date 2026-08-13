@@ -96,7 +96,21 @@ namespace SmallWorld.Flow
         EscapeOfficeCheckpoint1,
         EscapeOfficeCheckpoint2,
         EscapeOfficeCheckpoint3,
-        ReturnFromFacelessOffice
+        ReturnFromFacelessOffice,
+        TalkWithYunaBeforeCemetery,
+        EnterGravelessFuneral,
+        OverlayDeathCertificate1,
+        OverlayDeathCertificate2,
+        OverlayDeathCertificate3,
+        OverlayDeathCertificate4,
+        MatchGuestbookGesture1,
+        MatchGuestbookGesture2,
+        MatchGuestbookGesture3,
+        RefuseCarveGravestoneName,
+        InspectGravestoneBack,
+        EnterInventedDeadName,
+        ConfirmBlankDeadName,
+        ReturnFromGravelessFuneral
     }
 
     public readonly struct OpeningStoryResult
@@ -134,6 +148,8 @@ namespace SmallWorld.Flow
                             ? PerformChapterThree(save, progress, action)
                             : progress.CurrentChapter == StoryChapterId.Chapter4
                                 ? PerformChapterFour(save, progress, action)
+                                : progress.CurrentChapter == StoryChapterId.Chapter5
+                                    ? PerformChapterFive(save, progress, action)
                                 : Reject("이 기억은 지금 열 수 없다.");
         }
 
@@ -499,6 +515,76 @@ namespace SmallWorld.Flow
             }
         }
 
+        private OpeningStoryResult PerformChapterFive(SaveData save, StoryProgress progress, OpeningStoryAction action)
+        {
+            if (!progress.GetChapter(StoryChapterId.Chapter4).IsComplete)
+                return Reject("'얼굴 없는 사무실'을 끝내기 전에는 장례식 없는 묘지에 들어갈 수 없다.");
+
+            switch (action)
+            {
+                case OpeningStoryAction.TalkWithYunaBeforeCemetery:
+                    storyFlow.SetFlag(progress, "house-photos-girl-missing", false);
+                    storyFlow.SetFlag(progress, "girl-name-answered-by-different-voices", true);
+                    return Accept(progress, action, "집 안 사진에서 소녀가 사라졌다. 이름을 부르자 방마다 서로 다른 목소리가 대답했다.");
+                case OpeningStoryAction.EnterGravelessFuneral:
+                    if (!Has(progress, OpeningStoryAction.TalkWithYunaBeforeCemetery)) return Need("집에서 사라진 사진과 서로 다른 목소리를 먼저 확인해야 한다.");
+                    return Accept(progress, action, "안개 낀 묘지와 작은 장례식장. 방마다 사망 원인이 사고, 실험, 자살, 삭제로 바뀐다.");
+                case OpeningStoryAction.OverlayDeathCertificate1:
+                case OpeningStoryAction.OverlayDeathCertificate2:
+                case OpeningStoryAction.OverlayDeathCertificate3:
+                case OpeningStoryAction.OverlayDeathCertificate4:
+                    if (!Has(progress, OpeningStoryAction.EnterGravelessFuneral)) return Need("장례식 없는 묘지 기억에 먼저 들어가야 한다.");
+                    int expectedCertificate = DeathCertificateCount(progress) + (int)OpeningStoryAction.OverlayDeathCertificate1;
+                    if ((int)action != expectedCertificate) return Reject("서로 다른 사망 원인을 고르지 말고 네 진단서의 글자 간격과 인쇄 오류를 순서대로 겹쳐야 한다.");
+                    return Accept(progress, action, action == OpeningStoryAction.OverlayDeathCertificate4
+                        ? "네 인쇄 오류가 겹쳐져 시스템 명령 RESTORE HER가 나타났다."
+                        : "사망진단서의 같은 인쇄 오류 하나를 포개었다.");
+                case OpeningStoryAction.MatchGuestbookGesture1:
+                case OpeningStoryAction.MatchGuestbookGesture2:
+                case OpeningStoryAction.MatchGuestbookGesture3:
+                    if (DeathCertificateCount(progress) != 4) return Need("네 사망진단서의 공통 인쇄 오류부터 모두 겹쳐야 한다.");
+                    int expectedGesture = GuestbookGestureCount(progress) + (int)OpeningStoryAction.MatchGuestbookGesture1;
+                    if ((int)action != expectedGesture) return Reject("필체 모양이 아니라 방명록 서명과 묘지 그림자의 손 움직임을 순서대로 맞춰야 한다.");
+                    return Accept(progress, action, action == OpeningStoryAction.MatchGuestbookGesture3
+                        ? "모든 조문객 서명이 서로 다른 필체를 흉내 낸 같은 손의 움직임이었다."
+                        : "서명 하나와 얼굴 없는 그림자의 손동작이 일치했다.");
+                case OpeningStoryAction.RefuseCarveGravestoneName:
+                    if (GuestbookGestureCount(progress) != 3) return Need("방명록 서명과 묘지 그림자의 손동작부터 모두 연결해야 한다.");
+                    return Accept(progress, action, "빈 묘비에 이름을 새기라는 지시를 거부했다. 묘비가 돌아가며 뒷면을 드러냈다.");
+                case OpeningStoryAction.InspectGravestoneBack:
+                    if (!Has(progress, OpeningStoryAction.RefuseCarveGravestoneName)) return Need("존재하지 않는 사람의 이름을 묘비에 새기기를 먼저 거부해야 한다.");
+                    storyFlow.SetFlag(progress, "memory-installed-in-developer-date", false);
+                    return Accept(progress, action, "묘비 뒷면에는 사망일이 아니라 개발자의 뇌에 기억이 설치된 날짜가 적혀 있었다.");
+                case OpeningStoryAction.EnterInventedDeadName:
+                    if (!Has(progress, OpeningStoryAction.InspectGravestoneBack)) return Need("빈 묘비 뒷면의 기억 설치 날짜를 먼저 확인해야 한다.");
+                    storyFlow.RecordChoice(progress, "dead-person-name", "invented-name");
+                    storyFlow.SetFlag(progress, "general-ending-invented-girl-loop", true);
+                    relationships.Set(save, GirlId, relationships.Get(save, GirlId) - 10);
+                    Mark(progress, action);
+                    return new OpeningStoryResult(true, "입력한 이름을 가진 새로운 소녀가 만들어졌다. 장례식은 일반 반복의 시작으로 되돌아간다.");
+                case OpeningStoryAction.ConfirmBlankDeadName:
+                    if (!Has(progress, OpeningStoryAction.InspectGravestoneBack)) return Need("빈 묘비 뒷면의 기억 설치 날짜를 먼저 확인해야 한다.");
+                    if (MadeDeadPersonNameChoice(progress)) return Reject("죽은 사람의 이름에 대한 답은 이미 기록됐다.");
+                    storyFlow.RecordChoice(progress, "dead-person-name", "blank");
+                    storyFlow.SetFlag(progress, "invented-beloved-never-existed", false);
+                    storyFlow.SetFlag(progress, "future-girl-seeded-loss-and-guilt", false);
+                    storyFlow.SetFlag(progress, "causal-loop-is-origin", false);
+                    relationships.Set(save, GirlId, relationships.Get(save, GirlId) + 10);
+                    return Accept(progress, action, "이름을 비워 확정했다. 사랑한 사람은 존재하지 않았고, 미래의 소녀가 상실과 죄책감을 심어 자신을 만들게 했다. 순환 자체가 기원이었다.");
+                case OpeningStoryAction.ReturnFromGravelessFuneral:
+                    if (!Has(progress, OpeningStoryAction.ConfirmBlankDeadName)) return Need("어떤 이름도 만들지 않고 빈 상태로 확정해야 집으로 돌아갈 수 있다.");
+                    Mark(progress, action);
+                    storyFlow.SetFlag(progress, "furniture-empty-frame", false);
+                    storyFlow.SetFlag(progress, "furniture-nameless-gravestone-fragment", false);
+                    storyFlow.SetFlag(progress, "furniture-white-vase", false);
+                    storyFlow.SetFlag(progress, "chapter-6-unlocked", false);
+                    CompleteChapter(progress, StoryChapterId.Chapter5);
+                    return new OpeningStoryResult(true, "집으로 돌아왔다. 빈 액자와 이름 없는 묘비 조각, 하얀 꽃병이 놓였고 창문 안의 도시가 열렸다.");
+                default:
+                    return Reject("이 행동은 '장례식 없는 묘지'의 현재 흐름과 맞지 않는다.");
+            }
+        }
+
         private void CompleteChapter(StoryProgress progress, StoryChapterId chapter)
         {
             StoryChapterProgress state = progress.GetChapter(chapter);
@@ -533,12 +619,15 @@ namespace SmallWorld.Flow
         private static int InvariantCommandCount(StoryProgress p) => Count(p, OpeningStoryAction.RecoverInvariantCommand1, OpeningStoryAction.RecoverInvariantCommand2, OpeningStoryAction.RecoverInvariantCommand3);
         private static int MirrorSeatCount(StoryProgress p) => Count(p, OpeningStoryAction.AlignMirrorSeat1, OpeningStoryAction.AlignMirrorSeat2, OpeningStoryAction.AlignMirrorSeat3);
         private static int OfficeEscapeCount(StoryProgress p) => Count(p, OpeningStoryAction.EscapeOfficeCheckpoint1, OpeningStoryAction.EscapeOfficeCheckpoint2, OpeningStoryAction.EscapeOfficeCheckpoint3);
+        private static int DeathCertificateCount(StoryProgress p) => Count(p, OpeningStoryAction.OverlayDeathCertificate1, OpeningStoryAction.OverlayDeathCertificate2, OpeningStoryAction.OverlayDeathCertificate3, OpeningStoryAction.OverlayDeathCertificate4);
+        private static int GuestbookGestureCount(StoryProgress p) => Count(p, OpeningStoryAction.MatchGuestbookGesture1, OpeningStoryAction.MatchGuestbookGesture2, OpeningStoryAction.MatchGuestbookGesture3);
         private static bool MadePrologueChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "prologue-stay");
         private static bool ChoseMemoryDoor(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "first-memory-door");
         private static bool MadeSeatChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "fourth-seat-name");
         private static bool MadeDestinationChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "platform-destination");
         private static bool MadePerfectDayChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "perfect-day-photo");
         private static bool MadeOfficeRecordChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "office-record");
+        private static bool MadeDeadPersonNameChoice(StoryProgress p) => p.ImportantChoices.Exists(x => x.ChoiceId == "dead-person-name");
         private static bool HasOfficeServerAutonomy(StoryProgress p) => p.ForeshadowFlags.Contains("autonomy-clue-white-station");
         private static OpeningStoryResult Need(string message) => new OpeningStoryResult(false, message);
         private static OpeningStoryResult Reject(string message) => new OpeningStoryResult(false, message);
