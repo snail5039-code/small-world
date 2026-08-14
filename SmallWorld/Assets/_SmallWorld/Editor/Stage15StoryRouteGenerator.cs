@@ -94,32 +94,32 @@ namespace SmallWorld.Editor
                 }
                 else if (i == 2)
                 {
-                    Transform[] anchors = CreateLastPlatformGameplay(hub.transform, route, z);
+                    Transform[] anchors = CreateLastPlatformGameplay(hub.transform, progress, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
                 else if (i == 3)
                 {
-                    Transform[] anchors = CreatePerfectDayGameplay(hub.transform, route, z);
+                    Transform[] anchors = CreatePerfectDayGameplay(hub.transform, progress, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
                 else if (i == 4)
                 {
-                    Transform[] anchors = CreateFacelessOfficeGameplay(hub.transform, route, z);
+                    Transform[] anchors = CreateFacelessOfficeGameplay(hub.transform, progress, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
                 else if (i == 5)
                 {
-                    Transform[] anchors = CreateCemeteryWithoutFuneralGameplay(hub.transform, route, z);
+                    Transform[] anchors = CreateCemeteryWithoutFuneralGameplay(hub.transform, progress, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
                 else if (i == 6)
                 {
-                    Transform[] anchors = CreateCityInTheWindowGameplay(hub.transform, route, z);
+                    Transform[] anchors = CreateCityInTheWindowGameplay(hub.transform, progress, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
                 else
                 {
-                    Transform[] anchors = CreateFinalChapterGameplay(hub.transform, route, z);
+                    Transform[] anchors = CreateFinalChapterGameplay(hub.transform, progress, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
                 nodes[i] = new StoryRouteNode { Id = Ids[i], DisplayName = Names[i], Arrival = arrival, DialogueEntry = dialogue, PuzzleEntry = puzzle, MemoryEntry = memory };
@@ -197,7 +197,7 @@ namespace SmallWorld.Editor
             return new[] { created[0], created[4], created[16] };
         }
 
-        private static Transform[] CreateLastPlatformGameplay(Transform parent, StoryRouteController route, float z)
+        private static Transform[] CreateLastPlatformGameplay(Transform parent, StoryRouteProgressAdapter progress, StoryRouteController route, float z)
         {
             CreateBlock("Last Platform Concourse", parent, new Vector3(0f, 0.05f, z), new Vector3(12f, 0.1f, 29f));
             CreateBlock("Track Bed", parent, new Vector3(9.5f, -0.45f, z), new Vector3(6f, 0.5f, 29f));
@@ -248,10 +248,12 @@ namespace SmallWorld.Editor
                 "chapter-2", StoryRouteStep.Puzzle, "분실물을 돌려주고 역재생 안내방송을 복원한다", "귀가하지 마십시오. 집이 당신을 기억하고 있습니다.");
             Transform memory = CreateMarker("Choose The Last Destination", parent, new Vector3(0f, 0.75f, z + 10f), route,
                 "chapter-2", StoryRouteStep.Memory, "현실 집, 게임 속 집, 하얀 역 중 목적지를 선택한다", "목적지가 기억되었다. 막차에서 안전 구역을 따라 빠져나간다.");
-            return new[] { dialogue, puzzle, memory };
+            Transform[] actions = CreateChapterActionSequence(parent, progress, z, 2,
+                OpeningStoryAction.HearDohyeon, OpeningStoryAction.ReturnFromPlatform, PrimitiveType.Cylinder);
+            return SelectActionAnchors(actions);
         }
 
-        private static Transform[] CreateCemeteryWithoutFuneralGameplay(Transform parent, StoryRouteController route, float z)
+        private static Transform[] CreateCemeteryWithoutFuneralGameplay(Transform parent, StoryRouteProgressAdapter progress, StoryRouteController route, float z)
         {
             CreateBlock("Fog Cemetery Ground", parent, new Vector3(0f, 0.05f, z), new Vector3(27f, 0.1f, 29f));
             for (int i = 0; i < 8; i++)
@@ -310,10 +312,12 @@ namespace SmallWorld.Editor
                 "chapter-5", StoryRouteStep.Puzzle, "네 진단서의 오류를 겹치고 방명록 서명과 그림자를 연결한 뒤 묘비 뒷면을 조사한다", "RESTORE HER와 기억 설치 날짜가 모든 장례 기억이 거짓임을 증명했다.");
             Transform memory = CreateMarker("Confirm Blank Name Or Create Another Girl And Return Home", parent, new Vector3(4f, 0.75f, z + 10f), route,
                 "chapter-5", StoryRouteStep.Memory, "이름을 비워 진실을 확인하거나 이름을 입력해 반복 분기로 간 뒤 집으로 돌아간다", "이름 선택이 기억되었다. 귀환 후 창문 안의 도시로 이어진다.");
-            return new[] { dialogue, puzzle, memory };
+            Transform[] actions = CreateChapterActionSequence(parent, progress, z, 5,
+                OpeningStoryAction.TalkWithYunaBeforeCemetery, OpeningStoryAction.ReturnFromGravelessFuneral, PrimitiveType.Cylinder);
+            return SelectActionAnchors(actions);
         }
 
-        private static Transform[] CreatePerfectDayGameplay(Transform parent, StoryRouteController route, float z)
+        private static Transform[] CreatePerfectDayGameplay(Transform parent, StoryRouteProgressAdapter progress, StoryRouteController route, float z)
         {
             CreateBlock("Perfect Day Village Square", parent, new Vector3(0f, 0.05f, z), new Vector3(27f, 0.1f, 29f));
 
@@ -366,10 +370,12 @@ namespace SmallWorld.Editor
             Transform memory = CreateMarker("Preserve Or Tear The Photo And Return Home", parent, new Vector3(5.5f, 0.75f, z + 11.5f), route,
                 "chapter-3", StoryRouteStep.Memory, "완벽한 사진을 보존하거나 찢고 집으로 돌아간다", "사진에 대한 선택을 기억했다. 집 복귀 상호작용이 열렸다.");
             CreatePointLight("Perfect Day Warm Sun", parent, new Vector3(0f, 5f, z), new Color(1f, 0.76f, 0.45f), 2.4f, 28f);
-            return new[] { dialogue, puzzle, memory };
+            Transform[] actions = CreateChapterActionSequence(parent, progress, z, 3,
+                OpeningStoryAction.TalkWithYunaAtHome, OpeningStoryAction.ReturnFromPerfectDay, PrimitiveType.Sphere);
+            return SelectActionAnchors(actions);
         }
 
-        private static Transform[] CreateFacelessOfficeGameplay(Transform parent, StoryRouteController route, float z)
+        private static Transform[] CreateFacelessOfficeGameplay(Transform parent, StoryRouteProgressAdapter progress, StoryRouteController route, float z)
         {
             CreateBlock("Windowless Developer Office", parent, new Vector3(0f, 0.05f, z), new Vector3(27f, 0.1f, 29f));
             CreateBlock("Windowless Office Ceiling", parent, new Vector3(0f, 3.2f, z), new Vector3(27f, 0.15f, 29f));
@@ -435,10 +441,12 @@ namespace SmallWorld.Editor
             Transform memory = CreateMarker("Choose Developer Record Escape And Return Home", parent, new Vector3(5f, 0.75f, z + 11f), route,
                 "chapter-4", StoryRouteStep.Memory, "세 기록 중 하나를 선택하고 사원증 추격을 피해 집으로 돌아간다", "개발자 기록 선택을 기억했다. 사무실을 탈출해 집 복귀 상호작용이 열렸다.");
             CreatePointLight("Faceless Office Fluorescent Light", parent, new Vector3(0f, 2.8f, z), new Color(0.7f, 0.86f, 1f), 2.1f, 28f);
-            return new[] { dialogue, puzzle, memory };
+            Transform[] actions = CreateChapterActionSequence(parent, progress, z, 4,
+                OpeningStoryAction.TalkWithYunaBeforeOffice, OpeningStoryAction.ReturnFromFacelessOffice, PrimitiveType.Cube);
+            return SelectActionAnchors(actions);
         }
 
-        private static Transform[] CreateCityInTheWindowGameplay(Transform parent, StoryRouteController route, float z)
+        private static Transform[] CreateCityInTheWindowGameplay(Transform parent, StoryRouteProgressAdapter progress, StoryRouteController route, float z)
         {
             CreateBlock("Almost Complete Dollhouse Final Room", parent, new Vector3(0f, 1.8f, z), new Vector3(27f, 3.6f, 29f));
             CreateBlock("Scaled Reality City Basin", parent, new Vector3(0f, 0.15f, z), new Vector3(25f, 0.2f, 27f));
@@ -503,10 +511,12 @@ namespace SmallWorld.Editor
                 new Vector3(5f, 0.75f, z + 8.5f), route, "chapter-6", StoryRouteStep.Memory,
                 "현실 연결을 선택하고 접히는 건물에서 무너지는 도시를 들고 귀환한다", "현실 연결 선택과 세 가구가 최종장으로 이어진다.");
             CreatePointLight("City In The Window Night Light", parent, new Vector3(0f, 4f, z), new Color(0.42f, 0.62f, 1f), 2.2f, 30f);
-            return new[] { dialogue, puzzle, memory };
+            Transform[] actions = CreateChapterActionSequence(parent, progress, z, 6,
+                OpeningStoryAction.EnterWindowCityLastRoom, OpeningStoryAction.ReturnFromWindowCity, PrimitiveType.Cube);
+            return SelectActionAnchors(actions);
         }
 
-        private static Transform[] CreateFinalChapterGameplay(Transform parent, StoryRouteController route, float z)
+        private static Transform[] CreateFinalChapterGameplay(Transform parent, StoryRouteProgressAdapter progress, StoryRouteController route, float z)
         {
             CreateBlock("Living House Floor", parent, new Vector3(0f, 0.05f, z - 9f), new Vector3(27f, 0.1f, 11f));
             CreateBlock("Living House Wall Of Faces", parent, new Vector3(0f, 2f, z - 14f), new Vector3(27f, 4f, 0.35f));
@@ -587,7 +597,9 @@ namespace SmallWorld.Editor
                 new Vector3(0f, 0.75f, z + 13f), route, "final-chapter", StoryRouteStep.Memory,
                 "두 의자와 낡은 컴퓨터 앞에서 소녀의 변화 대화를 끝낸다", "소녀가 현실 개발자의 모습으로 바뀌었고 최종 선택 준비 상태만 열렸다.");
             CreatePointLight("Final Chapter White Room Light", parent, new Vector3(0f, 4f, z + 10f), Color.white, 2.5f, 28f);
-            return new[] { dialogue, puzzle, memory };
+            Transform[] actions = CreateChapterActionSequence(parent, progress, z, 7,
+                OpeningStoryAction.EnterLivingHouse, OpeningStoryAction.PrepareFinalChoice, PrimitiveType.Sphere);
+            return SelectActionAnchors(actions);
         }
 
         private static void CreateFinalReadinessPanel(Transform parent, float z)
@@ -604,6 +616,56 @@ namespace SmallWorld.Editor
             conditions.text = "FINAL CHOICE PREPARATION\nMemories preserved / Nameplate / Autonomy / Reality link\nVictims restorable / Developer survival / Girl identity\nChoices and endings are not executable in this scene";
             conditions.fontSize = 30;
             conditions.rectTransform.sizeDelta = new Vector2(700f, 300f);
+        }
+
+        private static Transform[] CreateChapterActionSequence(Transform parent, StoryRouteProgressAdapter progress,
+            float z, int chapterIndex, OpeningStoryAction first, OpeningStoryAction last, PrimitiveType primitive)
+        {
+            int firstValue = (int)first;
+            int count = (int)last - firstValue + 1;
+            var created = new Transform[count];
+            Color accent = AccentColors[chapterIndex];
+            Material stationMaterial = CreateMaterial($"Route Room {chapterIndex} Action Material",
+                Color.Lerp(FloorColors[chapterIndex], accent, 0.42f), accent * 0.35f);
+            Material beaconMaterial = CreateMaterial($"Route Room {chapterIndex} Action Beacon Material",
+                accent, accent * 2.1f);
+
+            GameObject galleryFloor = CreateBlock($"Route Room {chapterIndex} Interaction Gallery Floor", parent,
+                new Vector3(0f, 0.015f, z), new Vector3(25.5f, 0.03f, 25f));
+            ApplyMaterial(galleryFloor, CreateMaterial($"Route Room {chapterIndex} Interaction Gallery Floor Material",
+                Color.Lerp(FloorColors[chapterIndex], accent, 0.18f)));
+
+            for (int i = 0; i < count; i++)
+            {
+                var action = (OpeningStoryAction)(firstValue + i);
+                int column = i % 5;
+                int row = i / 5;
+                Vector3 position = new Vector3(-11f + column * 5.5f, 0.48f, z - 10f + row * 4f);
+                GameObject station = GameObject.CreatePrimitive(primitive);
+                station.name = $"Story Action {chapterIndex}-{i + 1:00} - {action}";
+                station.transform.SetParent(parent, true);
+                station.transform.position = position;
+                station.transform.localScale = new Vector3(0.85f, 0.9f, 0.85f);
+                ApplyMaterial(station, stationMaterial);
+                station.AddComponent<Stage15StoryActionInteractable>().ConfigureAction(progress, action,
+                    $"진행 단서 조사: {ObjectNames.NicifyVariableName(action.ToString())}");
+
+                GameObject beacon = CreateBlock($"{station.name} Beacon", parent,
+                    position + Vector3.up * 0.95f, new Vector3(0.18f, 0.35f, 0.18f));
+                ApplyMaterial(beacon, beaconMaterial);
+                Collider beaconCollider = beacon.GetComponent<Collider>();
+                if (beaconCollider != null) beaconCollider.enabled = false;
+                created[i] = station.transform;
+            }
+
+            return created;
+        }
+
+        private static Transform[] SelectActionAnchors(Transform[] actions)
+        {
+            if (actions == null || actions.Length == 0)
+                throw new InvalidOperationException("A story chapter must expose at least one playable action.");
+            return new[] { actions[0], actions[actions.Length / 2], actions[actions.Length - 1] };
         }
 
         private static Transform[] CreateActionGrid(Transform parent, StoryRouteProgressAdapter progress, float z,
@@ -634,7 +696,6 @@ namespace SmallWorld.Editor
             marker.transform.SetParent(parent, false);
             marker.transform.position = position;
             marker.transform.localScale = new Vector3(1.2f, 0.75f, 1.2f);
-            marker.AddComponent<StoryRouteInteractable>().ConfigureMarker(route, nodeId, step, prompt, feedback);
             return marker.transform;
         }
 

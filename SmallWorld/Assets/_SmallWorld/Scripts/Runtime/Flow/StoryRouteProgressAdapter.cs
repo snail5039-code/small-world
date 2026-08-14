@@ -53,6 +53,7 @@ namespace SmallWorld.Flow
         public void ReportStep(string nodeId, StoryRouteStep step)
         {
             if (!TryGetChapter(nodeId, out StoryChapterId chapter)) return;
+            if (chapter >= StoryChapterId.Chapter2) return;
             StoryChapterProgress chapterProgress = Progress.GetChapter(chapter);
             switch (step)
             {

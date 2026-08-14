@@ -172,6 +172,46 @@ namespace SmallWorld.Player.Tests
         }
 
         [Test]
+        public void StoryRoute_EveryOpeningActionHasExactlyOnePlayableSceneStation()
+        {
+            MonoBehaviour[] behaviours = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            var actions = new System.Collections.Generic.HashSet<string>();
+            string[] expected = null;
+            int stationCount = 0;
+
+            foreach (MonoBehaviour behaviour in behaviours)
+            {
+                if (behaviour == null || behaviour.GetType().Name != "Stage15StoryActionInteractable") continue;
+                stationCount++;
+                SerializedObject serialized = new SerializedObject(behaviour);
+                SerializedProperty progress = serialized.FindProperty("progress");
+                SerializedProperty action = serialized.FindProperty("action");
+                Assert.That(progress.objectReferenceValue, Is.Not.Null, behaviour.name + " has no progress adapter.");
+                Assert.That(action, Is.Not.Null, behaviour.name + " has no serialized story action.");
+                expected ??= action.enumNames;
+                Assert.That(actions.Add(action.enumNames[action.enumValueIndex]), Is.True,
+                    action.enumNames[action.enumValueIndex] + " is connected more than once.");
+            }
+
+            Assert.That(expected, Is.Not.Null);
+            Assert.That(stationCount, Is.EqualTo(expected.Length),
+                "Every OpeningStoryAction must have exactly one reachable scene station.");
+            foreach (string actionName in expected)
+                Assert.That(actions, Does.Contain(actionName), actionName + " is not connected to the scene.");
+
+            string[] decorativeChapterSummaries =
+            {
+                "Dohyeon And Route Map", "Mina Perfect Day Loop", "Investigate Faceless Office Identities",
+                "Investigate Changing Death Causes And Faceless Mourner",
+                "Find Reality Developer Room Among Thousands Of Windows",
+                "Survive Living House And Review Memory Preservation"
+            };
+            foreach (string summary in decorativeChapterSummaries)
+                Assert.That(GameObject.Find(summary).GetComponent("StoryRouteInteractable"), Is.Null,
+                    summary + " must not bypass the ordered story actions.");
+        }
+
+        [Test]
         public void StoryRoute_PrologueArrivalShowsFirstObjectiveAndExitAsDifferentSignals()
         {
             GameObject objective = GameObject.Find("Route Room 0 Dialogue Highlight");
@@ -247,9 +287,9 @@ namespace SmallWorld.Player.Tests
             foreach (string objectName in requiredObjects)
                 Assert.That(GameObject.Find(objectName), Is.Not.Null, objectName + " is missing from chapter 6.");
 
-            Assert.That(GameObject.Find("Find Reality Developer Room Among Thousands Of Windows").GetComponent("StoryRouteInteractable"), Is.Not.Null);
-            Assert.That(GameObject.Find("Arrange Monitors And Match AI Girl Waveforms").GetComponent("StoryRouteInteractable"), Is.Not.Null);
-            Assert.That(GameObject.Find("Choose Reality Link Carry City And Return Home").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Find Reality Developer Room Among Thousands Of Windows").GetComponent("StoryRouteInteractable"), Is.Null);
+            Assert.That(GameObject.Find("Arrange Monitors And Match AI Girl Waveforms").GetComponent("StoryRouteInteractable"), Is.Null);
+            Assert.That(GameObject.Find("Choose Reality Link Carry City And Return Home").GetComponent("StoryRouteInteractable"), Is.Null);
         }
 
         [Test]
@@ -275,9 +315,9 @@ namespace SmallWorld.Player.Tests
             foreach (string objectName in requiredObjects)
                 Assert.That(GameObject.Find(objectName), Is.Not.Null, objectName + " is missing from chapter 5.");
 
-            Assert.That(GameObject.Find("Investigate Changing Death Causes And Faceless Mourner").GetComponent("StoryRouteInteractable"), Is.Not.Null);
-            Assert.That(GameObject.Find("Prove All Funeral Memories False").GetComponent("StoryRouteInteractable"), Is.Not.Null);
-            Assert.That(GameObject.Find("Confirm Blank Name Or Create Another Girl And Return Home").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Investigate Changing Death Causes And Faceless Mourner").GetComponent("StoryRouteInteractable"), Is.Null);
+            Assert.That(GameObject.Find("Prove All Funeral Memories False").GetComponent("StoryRouteInteractable"), Is.Null);
+            Assert.That(GameObject.Find("Confirm Blank Name Or Create Another Girl And Return Home").GetComponent("StoryRouteInteractable"), Is.Null);
         }
 
         [Test]
@@ -303,9 +343,9 @@ namespace SmallWorld.Player.Tests
             foreach (string objectName in requiredObjects)
                 Assert.That(GameObject.Find(objectName), Is.Not.Null, objectName + " is missing from chapter 4.");
 
-            Assert.That(GameObject.Find("Investigate Faceless Office Identities").GetComponent("StoryRouteInteractable"), Is.Not.Null);
-            Assert.That(GameObject.Find("Exchange Badges Recover Logs And Match Mirror Seats").GetComponent("StoryRouteInteractable"), Is.Not.Null);
-            Assert.That(GameObject.Find("Choose Developer Record Escape And Return Home").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Investigate Faceless Office Identities").GetComponent("StoryRouteInteractable"), Is.Null);
+            Assert.That(GameObject.Find("Exchange Badges Recover Logs And Match Mirror Seats").GetComponent("StoryRouteInteractable"), Is.Null);
+            Assert.That(GameObject.Find("Choose Developer Record Escape And Return Home").GetComponent("StoryRouteInteractable"), Is.Null);
         }
 
         [Test]
@@ -326,9 +366,9 @@ namespace SmallWorld.Player.Tests
             foreach (string objectName in requiredObjects)
                 Assert.That(GameObject.Find(objectName), Is.Not.Null, objectName + " is missing from chapter 3.");
 
-            Assert.That(GameObject.Find("Mina Perfect Day Loop").GetComponent("StoryRouteInteractable"), Is.Not.Null);
-            Assert.That(GameObject.Find("Break The Perfect Day Rules").GetComponent("StoryRouteInteractable"), Is.Not.Null);
-            Assert.That(GameObject.Find("Preserve Or Tear The Photo And Return Home").GetComponent("StoryRouteInteractable"), Is.Not.Null);
+            Assert.That(GameObject.Find("Mina Perfect Day Loop").GetComponent("StoryRouteInteractable"), Is.Null);
+            Assert.That(GameObject.Find("Break The Perfect Day Rules").GetComponent("StoryRouteInteractable"), Is.Null);
+            Assert.That(GameObject.Find("Preserve Or Tear The Photo And Return Home").GetComponent("StoryRouteInteractable"), Is.Null);
         }
 
         [Test]
