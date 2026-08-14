@@ -20,14 +20,14 @@ namespace SmallWorld.Editor
         private static readonly string[] Names = { "Prologue - The White Room", "Chapter 1 - The Fourth Place", "Chapter 2 - Last Platform", "Chapter 3 - A Perfect Day", "Chapter 4 - Faceless Office", "Chapter 5 - Cemetery Without a Funeral", "Chapter 6 - City in the Window", "Final Chapter - The White Room With Nothing Left" };
         private static readonly Color[] FloorColors =
         {
-            new Color(0.72f, 0.68f, 0.61f), new Color(0.24f, 0.29f, 0.38f),
+            new Color(0.42f, 0.36f, 0.29f), new Color(0.24f, 0.29f, 0.38f),
             new Color(0.12f, 0.24f, 0.32f), new Color(0.54f, 0.36f, 0.24f),
             new Color(0.18f, 0.22f, 0.27f), new Color(0.19f, 0.25f, 0.22f),
             new Color(0.12f, 0.19f, 0.31f), new Color(0.68f, 0.69f, 0.72f)
         };
         private static readonly Color[] WallColors =
         {
-            new Color(0.91f, 0.86f, 0.76f), new Color(0.35f, 0.4f, 0.51f),
+            new Color(0.82f, 0.75f, 0.64f), new Color(0.35f, 0.4f, 0.51f),
             new Color(0.2f, 0.34f, 0.42f), new Color(0.75f, 0.58f, 0.4f),
             new Color(0.31f, 0.34f, 0.39f), new Color(0.31f, 0.38f, 0.33f),
             new Color(0.22f, 0.3f, 0.48f), new Color(0.9f, 0.9f, 0.92f)
@@ -151,11 +151,13 @@ namespace SmallWorld.Editor
                 "7년 전 예약 메일을 읽는다", "첫 기억 문을 연다", "유나에게 설명을 요구한다", "오늘은 문을 열지 않는다"
             };
             Transform[] created = CreateActionGrid(parent, progress, z, actions, prompts, PrimitiveType.Cube);
-            CreateBlock("Empty Dollhouse", parent, new Vector3(11f, 1f, z - 10f), new Vector3(3f, 2f, 3f));
-            CreateBlock("Placed Sofa Echo", parent, new Vector3(11f, 0.5f, z - 5f), new Vector3(3f, 1f, 1.2f));
+            CreateBlock("Empty Dollhouse", parent, new Vector3(9.5f, 1f, z - 8f), new Vector3(3f, 2f, 3f));
+            CreateBlock("Placed Sofa Echo", parent, new Vector3(8.5f, 0.5f, z - 3f), new Vector3(3f, 1f, 1.2f));
             CreateBlock("Reserved Email Monitor", parent, new Vector3(11f, 1.2f, z), new Vector3(1.6f, 1.2f, 0.2f));
             CreateBlock("Loop 109 Display", parent, new Vector3(11f, 1.4f, z + 4f), new Vector3(1.8f, 0.8f, 0.2f));
-            CreatePointLight("Prologue Warm Light", parent, new Vector3(0f, 3.2f, z), new Color(1f, 0.78f, 0.58f), 2.2f, 15f);
+            CreateWorldLabel("Prologue First Objective Label", parent, "YUNA", new Vector3(-7.5f, 2.8f, z - 9f), new Color(1f, 0.72f, 0.35f));
+            CreatePointLight("Prologue Yuna Key Light", parent, new Vector3(-7.5f, 3.2f, z - 9f), new Color(1f, 0.62f, 0.32f), 3.1f, 8f);
+            CreatePointLight("Prologue Warm Light", parent, new Vector3(0f, 3.2f, z), new Color(1f, 0.78f, 0.58f), 2.6f, 15f);
             return new[] { created[0], created[1], created[9] };
         }
 
@@ -630,28 +632,24 @@ namespace SmallWorld.Editor
             Material beaconMaterial = CreateMaterial($"Route Room {chapterIndex} Action Beacon Material",
                 accent, accent * 2.1f);
 
-            GameObject galleryFloor = CreateBlock($"Route Room {chapterIndex} Interaction Gallery Floor", parent,
-                new Vector3(0f, 0.015f, z), new Vector3(25.5f, 0.03f, 25f));
-            ApplyMaterial(galleryFloor, CreateMaterial($"Route Room {chapterIndex} Interaction Gallery Floor Material",
-                Color.Lerp(FloorColors[chapterIndex], accent, 0.18f)));
-
             for (int i = 0; i < count; i++)
             {
                 var action = (OpeningStoryAction)(firstValue + i);
-                int column = i % 5;
-                int row = i / 5;
-                Vector3 position = new Vector3(-11f + column * 5.5f, 0.48f, z - 10f + row * 4f);
-                GameObject station = GameObject.CreatePrimitive(primitive);
-                station.name = $"Story Action {chapterIndex}-{i + 1:00} - {action}";
+                int row = i / 2;
+                float side = i % 2 == 0 ? -1f : 1f;
+                Vector3 position = new Vector3(side * 11.5f, 0.45f, z - 11.5f + row * 1.8f);
+                SemanticActionVisual visual = GetSemanticActionVisual(action, primitive);
+                GameObject station = GameObject.CreatePrimitive(visual.Primitive);
+                station.name = $"{visual.Label} - {action}";
                 station.transform.SetParent(parent, true);
                 station.transform.position = position;
-                station.transform.localScale = new Vector3(0.85f, 0.9f, 0.85f);
+                station.transform.localScale = visual.Scale;
                 ApplyMaterial(station, stationMaterial);
                 station.AddComponent<Stage15StoryActionInteractable>().ConfigureAction(progress, action,
                     $"진행 단서 조사: {ObjectNames.NicifyVariableName(action.ToString())}");
 
                 GameObject beacon = CreateBlock($"{station.name} Beacon", parent,
-                    position + Vector3.up * 0.95f, new Vector3(0.18f, 0.35f, 0.18f));
+                    position + Vector3.up * (visual.Scale.y + 0.35f), new Vector3(0.12f, 0.24f, 0.12f));
                 ApplyMaterial(beacon, beaconMaterial);
                 Collider beaconCollider = beacon.GetComponent<Collider>();
                 if (beaconCollider != null) beaconCollider.enabled = false;
@@ -674,18 +672,78 @@ namespace SmallWorld.Editor
             var created = new Transform[actions.Length];
             for (int i = 0; i < actions.Length; i++)
             {
-                int column = i % 5;
-                int row = i / 5;
-                Vector3 position = new Vector3(-10f + column * 4f, 0.75f, z - 9f + row * 4f);
-                GameObject station = GameObject.CreatePrimitive(primitive);
-                station.name = $"{i + 1:00} {actions[i]}";
+                int row = i / 2;
+                float side = i % 2 == 0 ? -1f : 1f;
+                Vector3 position = new Vector3(side * 10.5f, 0.45f, z - 9f + row * 1.8f);
+                SemanticActionVisual visual = GetSemanticActionVisual(actions[i], primitive);
+                GameObject station = GameObject.CreatePrimitive(visual.Primitive);
+                station.name = $"{visual.Label} - {actions[i]}";
                 station.transform.SetParent(parent, true);
                 station.transform.position = position;
-                station.transform.localScale = new Vector3(1.3f, 1.5f, 1.3f);
+                station.transform.localScale = visual.Scale;
                 station.AddComponent<Stage15StoryActionInteractable>().ConfigureAction(progress, actions[i], prompts[i]);
+                if (actions[i] == OpeningStoryAction.MeetYuna)
+                {
+                    station.transform.position = new Vector3(-7.5f, 1f, z - 9f);
+                    station.transform.localScale = new Vector3(0.85f, 1.9f, 0.85f);
+                    ApplyMaterial(station, CreateMaterial("Yuna Warm Silhouette Material",
+                        new Color(0.82f, 0.38f, 0.22f), new Color(0.45f, 0.12f, 0.04f)));
+                    GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    head.name = "Yuna Face";
+                    head.transform.SetParent(parent, true);
+                    head.transform.position = station.transform.position + Vector3.up * 1.35f;
+                    head.transform.localScale = Vector3.one * 0.62f;
+                    ApplyMaterial(head, CreateMaterial("Yuna Face Material", new Color(0.95f, 0.72f, 0.58f)));
+                    Collider headCollider = head.GetComponent<Collider>();
+                    if (headCollider != null) headCollider.enabled = false;
+                }
                 created[i] = station.transform;
             }
             return created;
+        }
+
+        private readonly struct SemanticActionVisual
+        {
+            public SemanticActionVisual(string label, PrimitiveType primitive, Vector3 scale)
+            {
+                Label = label;
+                Primitive = primitive;
+                Scale = scale;
+            }
+
+            public string Label { get; }
+            public PrimitiveType Primitive { get; }
+            public Vector3 Scale { get; }
+        }
+
+        private static SemanticActionVisual GetSemanticActionVisual(OpeningStoryAction action, PrimitiveType fallback)
+        {
+            string value = action.ToString();
+            if (value.Contains("Yuna") || value.StartsWith("HearGirl") || value.Contains("Dohyeon"))
+                return new SemanticActionVisual("Character", PrimitiveType.Capsule, new Vector3(0.65f, 1.2f, 0.65f));
+            if (value.Contains("Sofa") || value.Contains("Furniture") || value.Contains("Chair") || value.StartsWith("Seat"))
+                return new SemanticActionVisual("Furniture", PrimitiveType.Cube, new Vector3(1.5f, 0.65f, 0.9f));
+            if (value.Contains("Door") || value.Contains("Checkpoint") || value.StartsWith("Enter") || value.StartsWith("Return"))
+                return new SemanticActionVisual("Doorway", PrimitiveType.Cube, new Vector3(0.85f, 1.8f, 0.24f));
+            if (value.Contains("Photo") || value.Contains("Certificate") || value.Contains("Menu") || value.Contains("Mail") || value.Contains("Board") || value.Contains("Frame"))
+                return new SemanticActionVisual("Document", PrimitiveType.Cube, new Vector3(1.15f, 0.12f, 0.8f));
+            if (value.Contains("Clock") || value.Contains("Time"))
+                return new SemanticActionVisual("Clock", PrimitiveType.Cylinder, new Vector3(0.72f, 0.16f, 0.72f));
+            if (value.Contains("Badge") || value.Contains("Card") || value.Contains("Band") || value.Contains("Key"))
+                return new SemanticActionVisual("Identity Item", PrimitiveType.Cube, new Vector3(0.55f, 0.12f, 0.8f));
+            if (value.Contains("Grave") || value.Contains("DeadName"))
+                return new SemanticActionVisual("Gravestone", PrimitiveType.Cube, new Vector3(0.75f, 1.35f, 0.28f));
+            if (value.Contains("Monitor") || value.Contains("Computer") || value.Contains("Server") || value.Contains("Command"))
+                return new SemanticActionVisual("Terminal", PrimitiveType.Cube, new Vector3(1.2f, 0.85f, 0.24f));
+            if (value.Contains("Cable") || value.Contains("Power") || value.Contains("Waveform") || value.Contains("Announcement"))
+                return new SemanticActionVisual("Control Console", PrimitiveType.Cylinder, new Vector3(0.8f, 0.45f, 0.8f));
+            if (value.Contains("Window") || value.Contains("City"))
+                return new SemanticActionVisual("Window", PrimitiveType.Cube, new Vector3(1.2f, 1.1f, 0.18f));
+            if (value.Contains("Food") || value.Contains("Egg") || value.Contains("Apple") || value.Contains("Soup") || value.Contains("Bowl") || value.Contains("Coffee") || value.Contains("Drink") || value.Contains("Teacup"))
+                return new SemanticActionVisual("Tableware", PrimitiveType.Cylinder, new Vector3(0.62f, 0.3f, 0.62f));
+            if (value.Contains("Core"))
+                return new SemanticActionVisual("Management Core", PrimitiveType.Sphere, Vector3.one * 0.85f);
+            return new SemanticActionVisual(ObjectNames.NicifyVariableName(value), fallback, new Vector3(0.75f, 0.85f, 0.75f));
         }
 
         private static Transform CreateMarker(string name, Transform parent, Vector3 position,
@@ -858,7 +916,13 @@ namespace SmallWorld.Editor
         private static void CreateLighting(Transform root)
         {
             var lightObject = new GameObject("Route Directional Light"); lightObject.transform.SetParent(root, false); lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-            Light light = lightObject.AddComponent<Light>(); light.type = LightType.Directional; light.intensity = 1.1f;
+            Light light = lightObject.AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.intensity = 0.65f;
+            light.color = new Color(1f, 0.94f, 0.86f);
+            light.shadows = LightShadows.Soft;
+            RenderSettings.ambientLight = new Color(0.16f, 0.18f, 0.22f);
+            RenderSettings.ambientIntensity = 0.7f;
         }
 
         private static GameObject CreateBlock(string name, Transform parent, Vector3 position, Vector3 scale)

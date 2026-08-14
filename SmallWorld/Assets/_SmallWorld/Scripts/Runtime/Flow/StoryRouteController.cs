@@ -58,6 +58,20 @@ namespace SmallWorld.Flow
         public bool IsRuntimePaused => runtimeOverlay == RuntimeOverlay.Paused;
         public string CurrentLocation => currentLocation;
         public string CurrentObjective => currentObjective;
+        public static string PauseTitle => "일시정지";
+        public static string PauseMessage => "Esc를 누르면 이야기로 돌아갑니다.";
+        public static string RecordsTitle => "기록";
+        public static string EmptyRecordsMessage => "아직 수집한 기록이 없습니다.\n\nTab 또는 Esc를 누르면 닫힙니다.";
+
+        public static Rect RuntimeOverlayRect(int screenWidth, int screenHeight, bool paused)
+        {
+            float margin = Mathf.Clamp(screenWidth * 0.02f, 16f, 32f);
+            float width = Mathf.Clamp(screenWidth * (paused ? 0.28f : 0.36f), 300f, paused ? 460f : 580f);
+            width = Mathf.Min(width, Mathf.Max(240f, screenWidth - margin * 2f));
+            float height = paused ? 116f : Mathf.Clamp(screenHeight * 0.32f, 220f, 340f);
+            height = Mathf.Min(height, Mathf.Max(100f, screenHeight - margin * 2f));
+            return new Rect(screenWidth - width - margin, margin, width, height);
+        }
 
         public void UpdateGuidance(string location, string objective, string dialogue)
         {
@@ -210,26 +224,47 @@ namespace SmallWorld.Flow
         {
             DrawGuidance();
             if (runtimeOverlay == RuntimeOverlay.None) return;
-            float width = Mathf.Min(620f, Screen.width - 40f);
-            float height = runtimeOverlay == RuntimeOverlay.Paused ? 220f : 360f;
-            Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
-            GUI.Box(panel, runtimeOverlay == RuntimeOverlay.Paused ? "Paused" : "Records");
-            Rect message = new Rect(panel.x + 28f, panel.y + 62f, panel.width - 56f, panel.height - 105f);
-            GUI.Label(message, runtimeOverlay == RuntimeOverlay.Paused
-                ? "Press Esc to return to the story."
-                : "No route records have been collected yet.\n\nPress Tab or Esc to close.");
+            bool paused = runtimeOverlay == RuntimeOverlay.Paused;
+            Rect panel = RuntimeOverlayRect(Screen.width, Screen.height, paused);
+            GUIStyle boxStyle = new GUIStyle(GUI.skin.box)
+            {
+                fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height / 60f), 14, 20),
+                alignment = TextAnchor.UpperCenter
+            };
+            GUIStyle messageStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height / 68f), 13, 18),
+                alignment = TextAnchor.MiddleLeft,
+                wordWrap = true,
+                padding = new RectOffset(8, 8, 4, 4)
+            };
+            GUI.Box(panel, paused ? PauseTitle : RecordsTitle, boxStyle);
+            Rect message = new Rect(panel.x + 18f, panel.y + 36f, panel.width - 36f, panel.height - 48f);
+            GUI.Label(message, paused ? PauseMessage : EmptyRecordsMessage, messageStyle);
         }
 
         private void DrawGuidance()
         {
             if (string.IsNullOrWhiteSpace(currentLocation)) return;
-            Rect panel = new Rect(20f, 20f, Mathf.Min(680f, Screen.width - 40f),
-                Time.unscaledTime < arrivalNoticeUntil ? 104f : 70f);
-            GUI.Box(panel, currentLocation);
-            GUI.Label(new Rect(panel.x + 18f, panel.y + 28f, panel.width - 36f, 36f),
-                $"현재 목표: {currentObjective}");
+            float margin = Mathf.Clamp(Screen.width * 0.0125f, 12f, 24f);
+            float width = Mathf.Min(Mathf.Clamp(Screen.width * 0.36f, 340f, 680f), Screen.width - margin * 2f);
+            Rect panel = new Rect(margin, margin, width, Time.unscaledTime < arrivalNoticeUntil ? 112f : 76f);
+            GUIStyle boxStyle = new GUIStyle(GUI.skin.box)
+            {
+                fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height / 64f), 14, 19),
+                alignment = TextAnchor.UpperCenter
+            };
+            GUIStyle labelStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height / 72f), 13, 17),
+                wordWrap = true
+            };
+            labelStyle.normal.textColor = Color.white;
+            GUI.Box(panel, currentLocation, boxStyle);
+            GUI.Label(new Rect(panel.x + 18f, panel.y + 30f, panel.width - 36f, 38f),
+                $"현재 목표: {currentObjective}", labelStyle);
             if (Time.unscaledTime < arrivalNoticeUntil)
-                GUI.Label(new Rect(panel.x + 18f, panel.y + 64f, panel.width - 36f, 32f), arrivalDialogue);
+                GUI.Label(new Rect(panel.x + 18f, panel.y + 68f, panel.width - 36f, 36f), arrivalDialogue, labelStyle);
         }
 
         public bool TryTravelTo(int index, out string feedback)

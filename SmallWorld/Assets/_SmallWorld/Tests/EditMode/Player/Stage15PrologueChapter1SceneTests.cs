@@ -209,6 +209,49 @@ namespace SmallWorld.Player.Tests
             foreach (string summary in decorativeChapterSummaries)
                 Assert.That(GameObject.Find(summary).GetComponent("StoryRouteInteractable"), Is.Null,
                     summary + " must not bypass the ordered story actions.");
+
+            Assert.That(GameObject.Find("Route Room 2 Interaction Gallery Floor"), Is.Null,
+                "Ordered actions must be represented by story props, not a station gallery.");
+            Assert.That(GameObject.Find("Route Room 7 Interaction Gallery Floor"), Is.Null,
+                "The final chapter must preserve a readable room instead of a station gallery.");
+        }
+
+        [Test]
+        public void StoryRoute_UsesSemanticPropsAndKeepsThePrologueObjectiveReadable()
+        {
+            GameObject yuna = GameObject.Find("Character - MeetYuna");
+            GameObject yunaFace = GameObject.Find("Yuna Face");
+            GameObject yunaLabel = GameObject.Find("Prologue First Objective Label");
+            GameObject yunaLight = GameObject.Find("Prologue Yuna Key Light");
+            GameObject arrival = GameObject.Find("00 Prologue - The White Room").transform.Find("Arrival").gameObject;
+
+            Assert.That(yuna, Is.Not.Null);
+            Assert.That(yuna.GetComponent<CapsuleCollider>(), Is.Not.Null);
+            Assert.That(yunaFace, Is.Not.Null);
+            Assert.That(yunaLabel.GetComponent<TextMesh>(), Is.Not.Null);
+            Assert.That(yunaLight.GetComponent<Light>().intensity, Is.GreaterThan(2.5f));
+            Assert.That(Vector3.Distance(arrival.transform.position, yuna.transform.position), Is.LessThan(9f));
+
+            string[] representativeProps =
+            {
+                "Furniture - PlaceSofa", "Identity Item - FindKey", "Tableware - FindTeacup",
+                "Document - FindPhotoFragment", "Clock - MatchDeveloperRoomTime",
+                "Terminal - ArrangeMonitorLoop1", "Gravestone - InspectGravestoneBack",
+                "Control Console - CutSomeRealityCables", "Management Core - DestroyManagementCore1",
+                "Furniture - SitInFirstChair", "Terminal - ActivateOldComputer"
+            };
+            foreach (string prop in representativeProps)
+                Assert.That(GameObject.Find(prop), Is.Not.Null, prop + " must be a readable semantic story prop.");
+
+            foreach (MonoBehaviour behaviour in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+            {
+                if (behaviour == null || behaviour.GetType().Name != "Stage15StoryActionInteractable") continue;
+                if (behaviour.name == "Character - MeetYuna") continue;
+                int chapter = Mathf.RoundToInt(behaviour.transform.position.z / 36f);
+                if (chapter >= 0)
+                    Assert.That(Mathf.Abs(behaviour.transform.position.x), Is.GreaterThanOrEqualTo(10f),
+                        behaviour.name + " blocks the central navigation aisle.");
+            }
         }
 
         [Test]
@@ -408,6 +451,33 @@ namespace SmallWorld.Player.Tests
         }
 
         [Test]
+        public void StoryRoute_PausePresentationIsLocalizedCompactAndResponsive()
+        {
+            Component route = FindStoryRouteController();
+            System.Type type = route.GetType();
+
+            Assert.That(ReadStaticProperty<string>(type, "PauseTitle"), Is.EqualTo("일시정지"));
+            Assert.That(ReadStaticProperty<string>(type, "PauseMessage"), Does.Contain("Esc"));
+            Assert.That(ReadStaticProperty<string>(type, "PauseMessage"), Does.Contain("이야기"));
+            Assert.That(ReadStaticProperty<string>(type, "RecordsTitle"), Is.EqualTo("기록"));
+
+            MethodInfo layout = type.GetMethod("RuntimeOverlayRect",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.That(layout, Is.Not.Null);
+            Rect fullHd = (Rect)layout.Invoke(null, new object[] { 1920, 1080, true });
+            Rect compact = (Rect)layout.Invoke(null, new object[] { 640, 360, true });
+
+            Assert.That(fullHd.width, Is.LessThanOrEqualTo(460f));
+            Assert.That(fullHd.height, Is.LessThanOrEqualTo(120f));
+            Assert.That(fullHd.xMin, Is.GreaterThan(1920f * 0.5f), "Pause must not cover the center view.");
+            Assert.That(fullHd.xMax, Is.LessThanOrEqualTo(1920f));
+            Assert.That(compact.xMin, Is.GreaterThanOrEqualTo(0f));
+            Assert.That(compact.yMin, Is.GreaterThanOrEqualTo(0f));
+            Assert.That(compact.xMax, Is.LessThanOrEqualTo(640f));
+            Assert.That(compact.yMax, Is.LessThanOrEqualTo(360f));
+        }
+
+        [Test]
         public void StoryRoute_DoesNotStealInputWhileSavePanelOwnsIt()
         {
             Component route = FindStoryRouteController();
@@ -457,6 +527,14 @@ namespace SmallWorld.Player.Tests
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             Assert.That(property, Is.Not.Null, propertyName + " property is missing.");
             return (T)property.GetValue(target);
+        }
+
+        private static T ReadStaticProperty<T>(System.Type target, string propertyName)
+        {
+            PropertyInfo property = target.GetProperty(propertyName,
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.That(property, Is.Not.Null, propertyName + " property is missing.");
+            return (T)property.GetValue(null);
         }
 
         private static void AssertNode(SerializedProperty node, string id, string displayFragment)
