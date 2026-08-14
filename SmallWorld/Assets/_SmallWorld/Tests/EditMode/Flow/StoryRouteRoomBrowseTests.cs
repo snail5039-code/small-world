@@ -1,6 +1,7 @@
 #if UNITY_EDITOR && UNITY_INCLUDE_TESTS
 using NUnit.Framework;
 using SmallWorld.Flow;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace SmallWorld.Tests.EditMode.Flow
@@ -93,6 +94,62 @@ namespace SmallWorld.Tests.EditMode.Flow
             Assert.That(progress.ReportedNodeCount, Is.Zero);
         }
 
+        [Test]
+        public async Task RealityReturn_FromPrologue_PreparesSaveAndLoadsExactlyOnce()
+        {
+            root = new GameObject("route-reality-return-test");
+            StoryRouteController controller = root.AddComponent<StoryRouteController>();
+            Transform player = new GameObject("player").transform;
+            player.SetParent(root.transform);
+            StoryRouteNode[] nodes = CreateNodes(3);
+            var progress = new ReturnProgressSource(2);
+            int loads = 0;
+            controller.Configure(player, nodes);
+            controller.BindProgressSource(progress);
+            controller.RestoreToNodeOrPrologue(0);
+            controller.ConfigureRealityRoomLoader(() => { loads++; return Task.CompletedTask; });
+
+            StoryRouteReturnResult result = await controller.ReturnToRealityRoomAsync();
+
+            Assert.That(result.Accepted, Is.True);
+            Assert.That(progress.PrepareCount, Is.EqualTo(1));
+            Assert.That(loads, Is.EqualTo(1));
+            Assert.That(progress.LatestUnlockedNodeIndex, Is.EqualTo(2), "CurrentChapter must not rewind.");
+        }
+
+        [Test]
+        public async Task RealityReturn_BlocksNonPrologueUiAndDuplicateTransitions()
+        {
+            root = new GameObject("route-reality-return-guards-test");
+            StoryRouteController controller = root.AddComponent<StoryRouteController>();
+            Transform player = new GameObject("player").transform;
+            player.SetParent(root.transform);
+            StoryRouteNode[] nodes = CreateNodes(3);
+            var progress = new ReturnProgressSource(2);
+            controller.Configure(player, nodes);
+            controller.BindProgressSource(progress);
+            controller.RestoreToNodeOrPrologue(2);
+            controller.ConfigureRealityRoomLoader(() => Task.CompletedTask);
+            Assert.That((await controller.ReturnToRealityRoomAsync()).Accepted, Is.False);
+            Assert.That(progress.PrepareCount, Is.Zero);
+
+            controller.RestoreToNodeOrPrologue(0);
+            controller.HandleEscapePressed();
+            Assert.That((await controller.ReturnToRealityRoomAsync()).Accepted, Is.False);
+            Assert.That(progress.PrepareCount, Is.Zero);
+            controller.HandleEscapePressed();
+
+            var pending = new TaskCompletionSource<bool>();
+            controller.ConfigureRealityRoomLoader(() => pending.Task);
+            Task<StoryRouteReturnResult> first = controller.ReturnToRealityRoomAsync();
+            StoryRouteReturnResult duplicate = await controller.ReturnToRealityRoomAsync();
+            Assert.That(duplicate.Accepted, Is.False);
+            Assert.That(duplicate.Feedback, Does.Contain("이미"));
+            Assert.That(progress.PrepareCount, Is.EqualTo(1));
+            pending.SetResult(true);
+            Assert.That((await first).Accepted, Is.True);
+        }
+
         private StoryRouteNode[] CreateNodes(int count)
         {
             var nodes = new StoryRouteNode[count];
@@ -115,6 +172,24 @@ namespace SmallWorld.Tests.EditMode.Flow
             public bool IsNodeUnlocked(string nodeId) => true;
             public void ReportNodeReached(string nodeId) => ReportedNodeCount++;
             public void ReportStep(string nodeId, StoryRouteStep step) { }
+        }
+
+        private sealed class ReturnProgressSource : IStoryRouteProgressSource, IStoryRouteChapterPositionSource,
+            IStoryRouteRealityReturnSource
+        {
+            public ReturnProgressSource(int latest) => LatestUnlockedNodeIndex = latest;
+            public int LatestUnlockedNodeIndex { get; }
+            public int PrepareCount { get; private set; }
+            public bool IsFinalGateUnlocked => false;
+            public bool IsNodeUnlocked(string nodeId) => true;
+            public void ReportNodeReached(string nodeId) { }
+            public void ReportStep(string nodeId, StoryRouteStep step) { }
+            public bool PrepareRealityRoomReturn(out string feedback)
+            {
+                PrepareCount++;
+                feedback = "저장 완료";
+                return true;
+            }
         }
     }
 }

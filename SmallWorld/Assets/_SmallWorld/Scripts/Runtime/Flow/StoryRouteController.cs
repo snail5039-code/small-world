@@ -1,4 +1,6 @@
 using System;
+using System.Threading.Tasks;
+using SmallWorld.Core;
 using SmallWorld.Player;
 using SmallWorld.Save.Stage10.Integration;
 using SmallWorld.Save.Story;
@@ -21,6 +23,22 @@ namespace SmallWorld.Flow
     public interface IStoryRouteChapterPositionSource
     {
         int LatestUnlockedNodeIndex { get; }
+    }
+
+    public interface IStoryRouteRealityReturnSource
+    {
+        bool PrepareRealityRoomReturn(out string feedback);
+    }
+
+    public readonly struct StoryRouteReturnResult
+    {
+        public StoryRouteReturnResult(bool accepted, string feedback)
+        {
+            Accepted = accepted;
+            Feedback = feedback;
+        }
+        public bool Accepted { get; }
+        public string Feedback { get; }
     }
 
     [Serializable]
@@ -56,6 +74,8 @@ namespace SmallWorld.Flow
         private string arrivalDialogue = string.Empty;
         private float arrivalNoticeUntil;
         private int activeNodeIndex;
+        private bool realityRoomTransitionStarted;
+        private Func<Task> realityRoomLoader;
 
         public int NodeCount => nodes?.Length ?? 0;
         public int FallbackUnlockedIndex => fallbackUnlockedIndex;
@@ -142,6 +162,11 @@ namespace SmallWorld.Flow
             if (Keyboard.current.pageDownKey.wasPressedThisFrame)
             {
                 HandleRoomBrowse(1, out _);
+                return;
+            }
+            if (Keyboard.current.homeKey.wasPressedThisFrame)
+            {
+                _ = ReturnToRealityRoomAsync();
                 return;
             }
 
@@ -354,6 +379,46 @@ namespace SmallWorld.Flow
                 return false;
             }
             return TryTravelTo(target, out feedback);
+        }
+
+        public void ConfigureRealityRoomLoader(Func<Task> loader) => realityRoomLoader = loader;
+
+        public async Task<StoryRouteReturnResult> ReturnToRealityRoomAsync()
+        {
+            if (activeNodeIndex != 0)
+                return ReturnRejected("프롤로그 방에서만 현실방으로 돌아갈 수 있습니다.");
+            if (runtimeOverlay != RuntimeOverlay.None || IsSaveMenuOpen())
+                return ReturnRejected("열린 UI를 닫은 뒤 현실방으로 돌아가세요.");
+            if (realityRoomTransitionStarted)
+                return ReturnRejected("이미 현실방으로 이동하고 있습니다.");
+            if (!(progressSource is IStoryRouteRealityReturnSource returnSource))
+                return ReturnRejected("현실방 복귀 저장 장치가 연결되지 않았습니다.");
+            if (realityRoomLoader == null && SceneTransitionService.Instance == null)
+                return ReturnRejected("장면 이동 서비스를 찾을 수 없습니다.");
+            if (!returnSource.PrepareRealityRoomReturn(out string saveFeedback))
+                return ReturnRejected(string.IsNullOrWhiteSpace(saveFeedback)
+                    ? "현실방 복귀 상태를 저장하지 못했습니다."
+                    : saveFeedback);
+
+            realityRoomTransitionStarted = true;
+            try
+            {
+                if (realityRoomLoader != null) await realityRoomLoader();
+                else await SceneTransitionService.Instance.LoadSceneAsync(SceneId.RealityRoom);
+                return new StoryRouteReturnResult(true, "현실방으로 돌아갑니다.");
+            }
+            catch (Exception exception)
+            {
+                realityRoomTransitionStarted = false;
+                Debug.LogException(exception, this);
+                return ReturnRejected("현실방 이동에 실패했습니다. 다시 시도하세요.");
+            }
+        }
+
+        private StoryRouteReturnResult ReturnRejected(string feedback)
+        {
+            UpdateObjective(feedback);
+            return new StoryRouteReturnResult(false, feedback);
         }
     }
 }

@@ -124,6 +124,15 @@ namespace SmallWorld.Editor
                 }
                 nodes[i] = new StoryRouteNode { Id = Ids[i], DisplayName = Names[i], Arrival = arrival, DialogueEntry = dialogue, PuzzleEntry = puzzle, MemoryEntry = memory };
                 CreateRoomWayfinding(hub.transform, i, z, arrival, dialogue, puzzle, memory);
+                if (i == 0)
+                {
+                    GameObject realityReturnGate = CreateBlock("Route Room 0 Reality Return Gate", hub.transform,
+                        new Vector3(10.5f, 1.25f, z - 10.5f), new Vector3(2.2f, 2.5f, 0.3f));
+                    realityReturnGate.AddComponent<StoryRouteRealityReturnInteractable>().ConfigureReturn(route,
+                        "[E] 현실방으로 돌아가기");
+                    CreateWorldLabel("Route Room 0 Reality Return Sign", hub.transform, "현실방으로 돌아가기",
+                        new Vector3(10.5f, 3.35f, z - 10.5f), new Color(0.55f, 0.9f, 1f));
+                }
                 if (i > 0)
                 {
                     GameObject previousGate = CreateBlock($"Route Room {i} Previous Room Gate", hub.transform,
@@ -164,7 +173,7 @@ namespace SmallWorld.Editor
             CreateBlock("Placed Sofa Echo", parent, new Vector3(8.5f, 0.5f, z - 3f), new Vector3(3f, 1f, 1.2f));
             CreateBlock("Reserved Email Monitor", parent, new Vector3(11f, 1.2f, z), new Vector3(1.6f, 1.2f, 0.2f));
             CreateBlock("Loop 109 Display", parent, new Vector3(11f, 1.4f, z + 4f), new Vector3(1.8f, 0.8f, 0.2f));
-            CreateWorldLabel("Prologue First Objective Label", parent, "YUNA", new Vector3(-5.5f, 2.55f, z - 6.5f), new Color(1f, 0.72f, 0.35f));
+            CreateWorldLabel("Prologue First Objective Label", parent, "유나 · 먼저 대화하기", new Vector3(-5.5f, 4f, z - 6.5f), new Color(1f, 0.72f, 0.35f));
             CreatePointLight("Prologue Yuna Key Light", parent, new Vector3(-5.5f, 3f, z - 6.5f), new Color(1f, 0.62f, 0.32f), 3.1f, 7f);
             CreatePointLight("Prologue Warm Light", parent, new Vector3(0f, 3.2f, z), new Color(1f, 0.78f, 0.58f), 2.6f, 15f);
             return new[] { created[0], created[1], created[9] };
@@ -705,6 +714,33 @@ namespace SmallWorld.Editor
                     ApplyMaterial(head, CreateMaterial("Yuna Face Material", new Color(0.95f, 0.72f, 0.58f)));
                     Collider headCollider = head.GetComponent<Collider>();
                     if (headCollider != null) headCollider.enabled = false;
+                    Material yunaBodyMaterial = station.GetComponent<Renderer>().sharedMaterial;
+                    for (int armIndex = 0; armIndex < 2; armIndex++)
+                    {
+                        float armSide = armIndex == 0 ? -1f : 1f;
+                        GameObject arm = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                        arm.name = armIndex == 0 ? "Yuna Left Arm" : "Yuna Right Arm";
+                        arm.transform.SetParent(parent, true);
+                        arm.transform.position = station.transform.position + new Vector3(armSide * 0.47f, 0.05f, 0f);
+                        arm.transform.localScale = new Vector3(0.18f, 0.58f, 0.18f);
+                        arm.transform.rotation = Quaternion.Euler(0f, 0f, armSide * -12f);
+                        ApplyMaterial(arm, yunaBodyMaterial);
+                        Collider armCollider = arm.GetComponent<Collider>();
+                        if (armCollider != null) armCollider.enabled = false;
+                    }
+
+                    Material eyeMaterial = CreateMaterial("Yuna Eye Material", new Color(0.08f, 0.055f, 0.045f));
+                    for (int eyeIndex = 0; eyeIndex < 2; eyeIndex++)
+                    {
+                        GameObject eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        eye.name = eyeIndex == 0 ? "Yuna Left Eye" : "Yuna Right Eye";
+                        eye.transform.SetParent(parent, true);
+                        eye.transform.position = head.transform.position + new Vector3(eyeIndex == 0 ? -0.12f : 0.12f, 0.05f, -0.2f);
+                        eye.transform.localScale = Vector3.one * 0.075f;
+                        ApplyMaterial(eye, eyeMaterial);
+                        Collider eyeCollider = eye.GetComponent<Collider>();
+                        if (eyeCollider != null) eyeCollider.enabled = false;
+                    }
                 }
                 created[i] = station.transform;
             }
@@ -790,8 +826,10 @@ namespace SmallWorld.Editor
             Material accentMaterial = CreateMaterial($"Route Room {index} Accent Material", accent, accent * 1.8f);
             Material pathMaterial = CreateMaterial($"Route Room {index} Path Material", Color.Lerp(FloorColors[index], accent, 0.55f), accent * 0.55f);
 
-            CreateWorldLabel($"Route Room {index} Entrance Sign", parent, Names[index],
-                new Vector3(0f, 2.65f, z - 14.8f), accent);
+            Vector3 signPosition = index == 0
+                ? new Vector3(0f, 3.7f, z + 15.65f)
+                : new Vector3(0f, 2.65f, z - 14.8f);
+            CreateWorldLabel($"Route Room {index} Entrance Sign", parent, Names[index], signPosition, accent);
             CreateHighlightFrame($"Route Room {index} Dialogue Highlight", parent, dialogue.position, accentMaterial);
             CreateHighlightFrame($"Route Room {index} Puzzle Highlight", parent, puzzle.position, accentMaterial);
             CreateHighlightFrame($"Route Room {index} Memory Highlight", parent, memory.position, accentMaterial);

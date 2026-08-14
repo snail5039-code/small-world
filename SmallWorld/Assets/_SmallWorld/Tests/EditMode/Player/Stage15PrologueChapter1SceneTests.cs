@@ -228,7 +228,12 @@ namespace SmallWorld.Player.Tests
             Assert.That(yuna, Is.Not.Null);
             Assert.That(yuna.GetComponent<CapsuleCollider>(), Is.Not.Null);
             Assert.That(yunaFace, Is.Not.Null);
+            Assert.That(GameObject.Find("Yuna Left Arm"), Is.Not.Null);
+            Assert.That(GameObject.Find("Yuna Right Arm"), Is.Not.Null);
+            Assert.That(GameObject.Find("Yuna Left Eye"), Is.Not.Null);
+            Assert.That(GameObject.Find("Yuna Right Eye"), Is.Not.Null);
             Assert.That(yunaLabel.GetComponent<TextMesh>(), Is.Not.Null);
+            Assert.That(yunaLabel.GetComponent<TextMesh>().text, Does.Contain("유나"));
             Assert.That(yunaLabel.transform.rotation, Is.EqualTo(Quaternion.identity),
                 "World text must show its readable front face to a player looking into the room.");
             Assert.That(yunaLight.GetComponent<Light>().intensity, Is.GreaterThan(2.5f));
@@ -239,6 +244,14 @@ namespace SmallWorld.Player.Tests
             Assert.That(yuna.transform.localScale.y, Is.LessThan(1.4f));
             Assert.That(Mathf.Abs(yuna.transform.position.x - arrival.transform.position.x), Is.GreaterThan(4f),
                 "The first objective must remain beside, not directly across, the central sight line.");
+            Assert.That(yunaLabel.transform.position.y - yuna.transform.position.y, Is.GreaterThan(2.8f),
+                "The label must stay above the objective frame and character silhouette.");
+
+            TextMesh prologueSign = GameObject.Find("Route Room 0 Entrance Sign").GetComponent<TextMesh>();
+            Assert.That(prologueSign.transform.position.x, Is.Zero.Within(0.01f));
+            Assert.That(prologueSign.transform.position.z, Is.GreaterThan(14f));
+            Assert.That(Mathf.Abs(prologueSign.transform.position.x), Is.LessThan(12f),
+                "The room title needs safe horizontal margins and must not be clipped by a side wall.");
 
             foreach (TextMesh worldText in Object.FindObjectsByType<TextMesh>(FindObjectsSortMode.None))
                 Assert.That(worldText.transform.rotation, Is.EqualTo(Quaternion.identity),
@@ -283,6 +296,17 @@ namespace SmallWorld.Player.Tests
         [Test]
         public void StoryRoute_ExposesSevenPreviousAndSevenNextRoomGatesWithClearKoreanPrompts()
         {
+            GameObject realityReturn = GameObject.Find("Route Room 0 Reality Return Gate");
+            Assert.That(realityReturn, Is.Not.Null);
+            Component returnInteractable = realityReturn.GetComponent("StoryRouteRealityReturnInteractable");
+            Assert.That(returnInteractable, Is.Not.Null);
+            SerializedObject serializedReturn = new SerializedObject(returnInteractable);
+            Assert.That(serializedReturn.FindProperty("route").objectReferenceValue, Is.Not.Null);
+            Assert.That(serializedReturn.FindProperty("prompt").stringValue, Does.Contain("현실방으로 돌아가기"));
+            Assert.That(realityReturn.transform.position.x, Is.GreaterThan(8f));
+            Assert.That(GameObject.Find("Route Room 0 Reality Return Sign").GetComponent<TextMesh>().text,
+                Does.Contain("현실방으로 돌아가기"));
+
             int previousCount = 0;
             int nextCount = 0;
             for (int room = 0; room < 8; room++)

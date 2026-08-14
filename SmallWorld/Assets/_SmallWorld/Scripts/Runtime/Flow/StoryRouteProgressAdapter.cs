@@ -6,7 +6,8 @@ using UnityEngine;
 namespace SmallWorld.Flow
 {
     [RequireComponent(typeof(StoryRouteController))]
-    public sealed class StoryRouteProgressAdapter : MonoBehaviour, IStoryRouteProgressSource, IStoryRouteChapterPositionSource
+    public sealed class StoryRouteProgressAdapter : MonoBehaviour, IStoryRouteProgressSource, IStoryRouteChapterPositionSource,
+        IStoryRouteRealityReturnSource
     {
         private readonly SaveDataStoryProgressStore store = new SaveDataStoryProgressStore();
         private readonly StoryFlowService flow = new StoryFlowService();
@@ -104,6 +105,21 @@ namespace SmallWorld.Flow
                 ? StoryRouteGuidance.ArrivalDialogue(progress, new StoryRelationshipService().Get(save, "girl"))
                 : "과거 방에서는 완료한 행동이 잠기며 저장된 진행은 바뀌지 않습니다.";
             route.UpdateGuidance(StoryRouteGuidance.Location(room), objective, dialogue);
+        }
+
+        public bool PrepareRealityRoomReturn(out string feedback)
+        {
+            EnsureLoaded();
+            store.Save(save, progress);
+            save.ActiveSceneId = "RealityRoom";
+            if (!Stage10SaveRuntime.Service.AutoSave(save))
+            {
+                feedback = "현실방 복귀 상태를 저장하지 못했습니다.";
+                return false;
+            }
+            Stage10SaveRuntime.QueueLoad(save);
+            feedback = "현실방 복귀 상태를 저장했습니다.";
+            return true;
         }
 
         private void EnsureLoaded()
