@@ -229,8 +229,20 @@ namespace SmallWorld.Player.Tests
             Assert.That(yuna.GetComponent<CapsuleCollider>(), Is.Not.Null);
             Assert.That(yunaFace, Is.Not.Null);
             Assert.That(yunaLabel.GetComponent<TextMesh>(), Is.Not.Null);
+            Assert.That(yunaLabel.transform.rotation, Is.EqualTo(Quaternion.identity),
+                "World text must show its readable front face to a player looking into the room.");
             Assert.That(yunaLight.GetComponent<Light>().intensity, Is.GreaterThan(2.5f));
             Assert.That(Vector3.Distance(arrival.transform.position, yuna.transform.position), Is.LessThan(9f));
+            Assert.That(Vector3.Distance(arrival.transform.position, yuna.transform.position), Is.GreaterThan(7f),
+                "Yuna must not spawn close enough to cover the first-person camera.");
+            Assert.That(yuna.transform.localScale.x, Is.LessThan(0.7f));
+            Assert.That(yuna.transform.localScale.y, Is.LessThan(1.4f));
+            Assert.That(Mathf.Abs(yuna.transform.position.x - arrival.transform.position.x), Is.GreaterThan(4f),
+                "The first objective must remain beside, not directly across, the central sight line.");
+
+            foreach (TextMesh worldText in Object.FindObjectsByType<TextMesh>(FindObjectsSortMode.None))
+                Assert.That(worldText.transform.rotation, Is.EqualTo(Quaternion.identity),
+                    worldText.name + " is mirrored or tilted away from the route arrival.");
 
             string[] representativeProps =
             {
@@ -258,7 +270,7 @@ namespace SmallWorld.Player.Tests
         public void StoryRoute_PrologueArrivalShowsFirstObjectiveAndExitAsDifferentSignals()
         {
             GameObject objective = GameObject.Find("Route Room 0 Dialogue Highlight");
-            GameObject exit = GameObject.Find("Next Chapter Gate");
+            GameObject exit = GameObject.Find("Route Room 0 Next Room Gate");
             GameObject arrival = GameObject.Find("00 Prologue - The White Room").transform.Find("Arrival").gameObject;
 
             Assert.That(objective, Is.Not.Null);
@@ -266,6 +278,49 @@ namespace SmallWorld.Player.Tests
             Assert.That(Vector3.Dot((objective.transform.position - arrival.transform.position).normalized, Vector3.forward), Is.GreaterThan(0.25f));
             Assert.That(Vector3.Distance(objective.transform.position, exit.transform.position), Is.GreaterThan(4f));
             Assert.That(GameObject.Find("Route Room 0 Objective Light").transform.position.z, Is.LessThan(exit.transform.position.z));
+        }
+
+        [Test]
+        public void StoryRoute_ExposesSevenPreviousAndSevenNextRoomGatesWithClearKoreanPrompts()
+        {
+            int previousCount = 0;
+            int nextCount = 0;
+            for (int room = 0; room < 8; room++)
+            {
+                GameObject previous = GameObject.Find($"Route Room {room} Previous Room Gate");
+                GameObject next = GameObject.Find($"Route Room {room} Next Room Gate");
+
+                if (room == 0)
+                    Assert.That(previous, Is.Null, "The prologue has no earlier room.");
+                else
+                {
+                    previousCount++;
+                    AssertTravelGate(previous, room - 1, "이전 방으로 돌아가기");
+                    Assert.That(previous.transform.position.x, Is.LessThan(-10f));
+                }
+
+                if (room == 7)
+                    Assert.That(next, Is.Null, "The final chapter has no later room before endings are implemented.");
+                else
+                {
+                    nextCount++;
+                    AssertTravelGate(next, room + 1, "다음 방으로 이동하기");
+                    Assert.That(next.transform.position.x, Is.GreaterThan(10f));
+                }
+            }
+
+            Assert.That(previousCount, Is.EqualTo(7));
+            Assert.That(nextCount, Is.EqualTo(7));
+        }
+
+        private static void AssertTravelGate(GameObject gate, int expectedTarget, string expectedPrompt)
+        {
+            Assert.That(gate, Is.Not.Null);
+            Component interactable = gate.GetComponent("StoryRouteInteractable");
+            Assert.That(interactable, Is.Not.Null);
+            SerializedObject serialized = new SerializedObject(interactable);
+            Assert.That(serialized.FindProperty("targetNodeIndex").intValue, Is.EqualTo(expectedTarget));
+            Assert.That(serialized.FindProperty("prompt").stringValue, Does.Contain(expectedPrompt));
         }
 
         [Test]

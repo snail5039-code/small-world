@@ -6,7 +6,7 @@ using UnityEngine;
 namespace SmallWorld.Flow
 {
     [RequireComponent(typeof(StoryRouteController))]
-    public sealed class StoryRouteProgressAdapter : MonoBehaviour, IStoryRouteProgressSource
+    public sealed class StoryRouteProgressAdapter : MonoBehaviour, IStoryRouteProgressSource, IStoryRouteChapterPositionSource
     {
         private readonly SaveDataStoryProgressStore store = new SaveDataStoryProgressStore();
         private readonly StoryFlowService flow = new StoryFlowService();
@@ -16,6 +16,7 @@ namespace SmallWorld.Flow
 
         public SaveData CurrentSave => save;
         public StoryChapterId CurrentChapter => Progress.CurrentChapter;
+        public int LatestUnlockedNodeIndex => CurrentChapterNodeIndex(Progress.CurrentChapter);
 
         public bool IsFinalGateUnlocked => flow.CanEnterFinalChapter(Progress);
 
@@ -68,10 +69,12 @@ namespace SmallWorld.Flow
         public OpeningStoryResult PerformOpeningAction(OpeningStoryAction action)
         {
             EnsureLoaded();
+            StoryRouteController route = GetComponent<StoryRouteController>();
+            if (route != null && !IsLiveChapterRoom(route.ActiveNodeIndex, progress.CurrentChapter))
+                return new OpeningStoryResult(false, "과거 방에서는 완료한 행동을 다시 실행할 수 없습니다. PageDown으로 현재 진행 방에 복귀하세요.");
             OpeningStoryResult result = openingStory.TryPerform(save, progress, action);
             if (result.Accepted) Persist();
             string objective = StoryRouteGuidance.NextObjective(progress.CurrentChapter, action, result.Accepted);
-            StoryRouteController route = GetComponent<StoryRouteController>();
             if (route != null) route.UpdateObjective(objective);
             string status = result.Accepted ? "완료" : "잠김";
             return new OpeningStoryResult(result.Accepted,
@@ -87,6 +90,20 @@ namespace SmallWorld.Flow
                 StoryRouteGuidance.ArrivalObjective(chapter),
                 StoryRouteGuidance.ArrivalDialogue(progress,
                     new StoryRelationshipService().Get(save, "girl")));
+        }
+
+        public void PresentVisitedRoom(StoryChapterId room, bool isCurrentChapter)
+        {
+            EnsureLoaded();
+            StoryRouteController route = GetComponent<StoryRouteController>();
+            if (route == null) return;
+            string objective = isCurrentChapter
+                ? StoryRouteGuidance.ArrivalObjective(room)
+                : $"완료한 방을 다시 살펴보는 중입니다. PageDown 또는 다음 방 게이트로 {StoryRouteGuidance.Location(progress.CurrentChapter)}까지 복귀하세요.";
+            string dialogue = isCurrentChapter
+                ? StoryRouteGuidance.ArrivalDialogue(progress, new StoryRelationshipService().Get(save, "girl"))
+                : "과거 방에서는 완료한 행동이 잠기며 저장된 진행은 바뀌지 않습니다.";
+            route.UpdateGuidance(StoryRouteGuidance.Location(room), objective, dialogue);
         }
 
         private void EnsureLoaded()
@@ -129,5 +146,8 @@ namespace SmallWorld.Flow
                 ? index
                 : 0;
         }
+
+        internal static bool IsLiveChapterRoom(int activeNodeIndex, StoryChapterId currentChapter) =>
+            activeNodeIndex == CurrentChapterNodeIndex(currentChapter);
     }
 }

@@ -43,6 +43,24 @@ namespace SmallWorld.Player.Tests
             Assert.That(keyLight.intensity, Is.GreaterThan(2.5f));
             Assert.That(Vector3.Distance(arrival.transform.position, yuna.transform.position), Is.LessThan(9f),
                 "Yuna must be immediately discoverable from the prologue spawn.");
+            Assert.That(Vector3.Distance(arrival.transform.position, yuna.transform.position), Is.GreaterThan(7f));
+            Assert.That(Mathf.Abs(yuna.transform.position.x - arrival.transform.position.x), Is.GreaterThan(4f),
+                "Yuna belongs beside the initial sight line and must not cover the camera.");
+            Assert.That(yuna.transform.localScale.x, Is.LessThan(0.7f));
+            Assert.That(yuna.transform.localScale.y, Is.LessThan(1.4f));
+
+            foreach (TextMesh worldText in UnityEngine.Object.FindObjectsByType<TextMesh>(FindObjectsSortMode.None))
+                Assert.That(worldText.transform.rotation, Is.EqualTo(Quaternion.identity),
+                    worldText.name + " is mirrored, backwards or tilted away from room arrivals.");
+            Assert.That(Vector3.Distance(arrival.transform.position, yuna.transform.position), Is.GreaterThan(7f));
+            Assert.That(Mathf.Abs(yuna.transform.position.x - arrival.transform.position.x), Is.GreaterThan(4f),
+                "Yuna belongs beside the initial sight line and must not cover the camera.");
+            Assert.That(yuna.transform.localScale.x, Is.LessThan(0.7f));
+            Assert.That(yuna.transform.localScale.y, Is.LessThan(1.4f));
+
+            foreach (TextMesh worldText in UnityEngine.Object.FindObjectsByType<TextMesh>(FindObjectsSortMode.None))
+                Assert.That(worldText.transform.rotation, Is.EqualTo(Quaternion.identity),
+                    worldText.name + " is mirrored, backwards or tilted away from room arrivals.");
         }
 
         [Test]
@@ -142,6 +160,91 @@ namespace SmallWorld.Player.Tests
             Assert.That(Time.timeScale, Is.GreaterThan(0f));
         }
 
+        [Test]
+        public void BrowseMovesOnlyAcrossUnlockedRoomsWithoutMutatingStoryOrSaveState()
+        {
+            Component route = RequireObject("Stage 15 Story Route").GetComponent("StoryRouteController");
+            Component adapter = RequireObject("Stage 15 Story Route").GetComponent("StoryRouteProgressAdapter");
+            Type progressType = RequireType("SmallWorld.Save.Story.StoryProgress");
+            Type chapterType = RequireType("SmallWorld.Save.Story.StoryChapterId");
+            Type saveType = RequireType("SmallWorld.Save.Stage10.SaveData");
+            object progress = Activator.CreateInstance(progressType);
+            object save = saveType.GetMethod("CreateNew", BindingFlags.Static | BindingFlags.Public).Invoke(null, null);
+            progressType.GetField("CurrentChapter").SetValue(progress, Enum.ToObject(chapterType, 3));
+            SetField(adapter, "progress", progress);
+            SetField(adapter, "save", save);
+            route.GetType().GetMethod("BindProgressSource").Invoke(route, new object[] { adapter });
+            route.GetType().GetMethod("RestoreToNodeOrPrologue").Invoke(route, new object[] { 3 });
+
+            string progressBefore = JsonUtility.ToJson(progress);
+            string saveBefore = JsonUtility.ToJson(save);
+            Assert.That(InvokeBrowse(route, -1), Is.True);
+            Assert.That(ReadProperty<int>(route, "ActiveNodeIndex"), Is.EqualTo(2));
+            Assert.That(JsonUtility.ToJson(progress), Is.EqualTo(progressBefore));
+            Assert.That(JsonUtility.ToJson(save), Is.EqualTo(saveBefore));
+            Assert.That(Convert.ToInt32(progressType.GetField("CurrentChapter").GetValue(progress)), Is.EqualTo(3));
+
+            Type actionType = RequireType("SmallWorld.Flow.OpeningStoryAction");
+            object pastRoomAction = Enum.Parse(actionType, "HearDohyeon");
+            object result = adapter.GetType().GetMethod("PerformOpeningAction").Invoke(adapter, new[] { pastRoomAction });
+            Assert.That((bool)result.GetType().GetProperty("Accepted").GetValue(result), Is.False,
+                "Past-room props are review-only and cannot execute unfinished actions.");
+            Assert.That(JsonUtility.ToJson(progress), Is.EqualTo(progressBefore));
+            Assert.That(JsonUtility.ToJson(save), Is.EqualTo(saveBefore));
+
+            Assert.That(InvokeBrowse(route, 1), Is.True);
+            Assert.That(ReadProperty<int>(route, "ActiveNodeIndex"), Is.EqualTo(3));
+            Assert.That(InvokeBrowse(route, 1), Is.False, "The player cannot browse beyond the live chapter.");
+        }
+
+        [Test]
+        public void RoomBrowseIsBlockedByOverlayAndSavePanelInputOwnership()
+        {
+            Component route = RequireObject("Stage 15 Story Route").GetComponent("StoryRouteController");
+            route.GetType().GetMethod("RestoreToNodeOrPrologue").Invoke(route, new object[] { 2 });
+            route.GetType().GetMethod("HandleEscapePressed").Invoke(route, null);
+            Assert.That(InvokeBrowse(route, -1), Is.False);
+            Assert.That(InvokeTravel(route, 1), Is.False,
+                "A physical gate must not bypass pause-overlay input ownership.");
+            route.GetType().GetMethod("HandleEscapePressed").Invoke(route, null);
+
+            Type savePanelType = RequireType("SmallWorld.Save.Stage10.Integration.Stage10ManualSavePanel");
+            var owner = new GameObject("visual-qa-save-owner");
+            try
+            {
+                CanvasGroup canvas = owner.AddComponent<CanvasGroup>();
+                Component panel = owner.AddComponent(savePanelType);
+                MethodInfo configure = savePanelType.GetMethods().Single(method =>
+                    method.Name == "Configure" && method.GetParameters().Length == 4);
+                configure.Invoke(panel, new object[] { canvas, null, null, null });
+                savePanelType.GetMethod("Open").Invoke(panel, null);
+                SetField(route, "savePanel", panel);
+                Assert.That((bool)savePanelType.GetProperty("IsOpen").GetValue(panel), Is.True);
+                Assert.That(InvokeBrowse(route, -1), Is.False);
+                Assert.That(InvokeTravel(route, 1), Is.False,
+                    "A physical gate must not bypass save-panel input ownership.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(owner);
+            }
+        }
+
+        [Test]
+        public void EveryUnlockedRoomHasPhysicalPreviousAndNextTravelGates()
+        {
+            for (int room = 0; room < 8; room++)
+            {
+                GameObject hub = RequireObject($"{room:00} " + RoomName(room));
+                if (room > 0)
+                    Assert.That(hub.transform.Find($"Route Room {room} Previous Room Gate"), Is.Not.Null,
+                        hub.name + " needs a visible physical return gate in addition to PageUp.");
+                if (room < 7)
+                    Assert.That(hub.transform.Find($"Route Room {room} Next Room Gate"), Is.Not.Null,
+                        hub.name + " needs a visible forward gate.");
+            }
+        }
+
         private static IEnumerable<MonoBehaviour> SceneBehaviours(string fullName)
         {
             return Resources.FindObjectsOfTypeAll<MonoBehaviour>().Where(item => item != null &&
@@ -175,6 +278,31 @@ namespace SmallWorld.Player.Tests
             PropertyInfo info = type.GetProperty(property, BindingFlags.Static | BindingFlags.Public);
             Assert.That(info, Is.Not.Null);
             return (T)info.GetValue(null);
+        }
+
+        private static bool InvokeTravel(Component route, int index)
+        {
+            object[] arguments = { index, null };
+            return (bool)route.GetType().GetMethod("TryTravelTo").Invoke(route, arguments);
+        }
+
+        private static T ReadProperty<T>(Component component, string property)
+        {
+            return (T)component.GetType().GetProperty(property, BindingFlags.Instance | BindingFlags.Public)
+                .GetValue(component);
+        }
+
+        private static void SetField(Component component, string field, object value)
+        {
+            FieldInfo info = component.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(info, Is.Not.Null);
+            info.SetValue(component, value);
+        }
+
+        private static bool InvokeBrowse(Component route, int direction)
+        {
+            object[] arguments = { direction, null };
+            return (bool)route.GetType().GetMethod("HandleRoomBrowse").Invoke(route, arguments);
         }
 
         private static string RoomName(int room)

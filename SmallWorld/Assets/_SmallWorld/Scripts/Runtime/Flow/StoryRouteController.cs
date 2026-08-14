@@ -18,6 +18,11 @@ namespace SmallWorld.Flow
         void ReportStep(string nodeId, StoryRouteStep step);
     }
 
+    public interface IStoryRouteChapterPositionSource
+    {
+        int LatestUnlockedNodeIndex { get; }
+    }
+
     [Serializable]
     public sealed class StoryRouteNode
     {
@@ -50,6 +55,7 @@ namespace SmallWorld.Flow
         private string currentObjective = string.Empty;
         private string arrivalDialogue = string.Empty;
         private float arrivalNoticeUntil;
+        private int activeNodeIndex;
 
         public int NodeCount => nodes?.Length ?? 0;
         public int FallbackUnlockedIndex => fallbackUnlockedIndex;
@@ -58,6 +64,7 @@ namespace SmallWorld.Flow
         public bool IsRuntimePaused => runtimeOverlay == RuntimeOverlay.Paused;
         public string CurrentLocation => currentLocation;
         public string CurrentObjective => currentObjective;
+        public int ActiveNodeIndex => activeNodeIndex;
         public static string PauseTitle => "일시정지";
         public static string PauseMessage => "Esc를 누르면 이야기로 돌아갑니다.";
         public static string RecordsTitle => "기록";
@@ -107,6 +114,7 @@ namespace SmallWorld.Flow
             player.SetPositionAndRotation(nodes[safeIndex].Arrival.position, nodes[safeIndex].Arrival.rotation);
             if (character != null) character.enabled = true;
             fallbackUnlockedIndex = Mathf.Max(fallbackUnlockedIndex, safeIndex);
+            activeNodeIndex = safeIndex;
             return safeIndex;
         }
 
@@ -123,6 +131,17 @@ namespace SmallWorld.Flow
             if (Keyboard.current.tabKey.wasPressedThisFrame)
             {
                 HandleTabPressed();
+                return;
+            }
+
+            if (Keyboard.current.pageUpKey.wasPressedThisFrame)
+            {
+                HandleRoomBrowse(-1, out _);
+                return;
+            }
+            if (Keyboard.current.pageDownKey.wasPressedThisFrame)
+            {
+                HandleRoomBrowse(1, out _);
                 return;
             }
 
@@ -269,9 +288,14 @@ namespace SmallWorld.Flow
 
         public bool TryTravelTo(int index, out string feedback)
         {
+            if (runtimeOverlay != RuntimeOverlay.None || IsSaveMenuOpen())
+            {
+                feedback = "열린 UI를 닫은 뒤 방을 이동하세요.";
+                return false;
+            }
             if (nodes == null || index < 0 || index >= nodes.Length || nodes[index]?.Arrival == null)
             {
-                feedback = "The story route node is not configured.";
+                feedback = "이동할 이야기 방이 연결되지 않았습니다.";
                 return false;
             }
 
@@ -281,13 +305,13 @@ namespace SmallWorld.Flow
                 : index <= fallbackUnlockedIndex;
             if (!unlocked)
             {
-                feedback = $"{node.DisplayName} is still sealed.";
+                feedback = $"{node.DisplayName}은(는) 아직 잠겨 있습니다.";
                 return false;
             }
 
             if (player == null)
             {
-                feedback = "The route player is unavailable.";
+                feedback = "플레이어를 찾을 수 없어 방을 이동할 수 없습니다.";
                 return false;
             }
 
@@ -295,12 +319,41 @@ namespace SmallWorld.Flow
             if (character != null) character.enabled = false;
             player.SetPositionAndRotation(node.Arrival.position, node.Arrival.rotation);
             if (character != null) character.enabled = true;
-            progressSource?.ReportNodeReached(node.Id);
+            int storyIndex = progressSource is IStoryRouteChapterPositionSource position
+                ? position.LatestUnlockedNodeIndex
+                : index;
+            if (index == storyIndex) progressSource?.ReportNodeReached(node.Id);
             if (progressSource is StoryRouteProgressAdapter adapter)
-                adapter.PresentArrival((StoryChapterId)index);
+                adapter.PresentVisitedRoom((StoryChapterId)index, index == storyIndex);
             fallbackUnlockedIndex = Mathf.Max(fallbackUnlockedIndex, Mathf.Min(index + 1, nodes.Length - 1));
-            feedback = $"Entered {node.DisplayName}.";
+            activeNodeIndex = index;
+            feedback = $"{node.DisplayName}에 들어왔습니다.";
             return true;
+        }
+
+        public bool HandleRoomBrowse(int direction, out string feedback)
+        {
+            if (direction == 0)
+            {
+                feedback = "이전 방 또는 다음 방을 선택하세요.";
+                return false;
+            }
+            if (runtimeOverlay != RuntimeOverlay.None || IsSaveMenuOpen())
+            {
+                feedback = "열린 UI를 닫은 뒤 방을 이동하세요.";
+                return false;
+            }
+
+            int latest = progressSource is IStoryRouteChapterPositionSource position
+                ? position.LatestUnlockedNodeIndex
+                : Mathf.Clamp(fallbackUnlockedIndex, 0, Mathf.Max(0, NodeCount - 1));
+            int target = Mathf.Clamp(activeNodeIndex + Math.Sign(direction), 0, latest);
+            if (target == activeNodeIndex)
+            {
+                feedback = direction < 0 ? "더 이전에 해금된 방이 없습니다." : "이미 현재 진행 방에 있습니다.";
+                return false;
+            }
+            return TryTravelTo(target, out feedback);
         }
     }
 }

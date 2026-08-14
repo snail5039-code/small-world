@@ -124,10 +124,19 @@ namespace SmallWorld.Editor
                 }
                 nodes[i] = new StoryRouteNode { Id = Ids[i], DisplayName = Names[i], Arrival = arrival, DialogueEntry = dialogue, PuzzleEntry = puzzle, MemoryEntry = memory };
                 CreateRoomWayfinding(hub.transform, i, z, arrival, dialogue, puzzle, memory);
+                if (i > 0)
+                {
+                    GameObject previousGate = CreateBlock($"Route Room {i} Previous Room Gate", hub.transform,
+                        new Vector3(-12.2f, 1.25f, z - 13.5f), new Vector3(2.2f, 2.5f, 0.3f));
+                    previousGate.AddComponent<StoryRouteInteractable>().ConfigureTravel(route, i - 1,
+                        $"[E] 이전 방으로 돌아가기: {Names[i - 1]}");
+                }
                 if (i < nodes.Length - 1)
                 {
-                    GameObject gate = CreateBlock("Next Chapter Gate", hub.transform, new Vector3(0f, 1.25f, z + 15f), new Vector3(3f, 2.5f, 0.35f));
-                    gate.AddComponent<StoryRouteInteractable>().ConfigureTravel(route, i + 1, $"Continue to {Names[i + 1]}");
+                    GameObject nextGate = CreateBlock($"Route Room {i} Next Room Gate", hub.transform,
+                        new Vector3(12.2f, 1.25f, z + 13.5f), new Vector3(2.2f, 2.5f, 0.3f));
+                    nextGate.AddComponent<StoryRouteInteractable>().ConfigureTravel(route, i + 1,
+                        $"[E] 다음 방으로 이동하기: {Names[i + 1]}");
                 }
             }
             return nodes;
@@ -155,8 +164,8 @@ namespace SmallWorld.Editor
             CreateBlock("Placed Sofa Echo", parent, new Vector3(8.5f, 0.5f, z - 3f), new Vector3(3f, 1f, 1.2f));
             CreateBlock("Reserved Email Monitor", parent, new Vector3(11f, 1.2f, z), new Vector3(1.6f, 1.2f, 0.2f));
             CreateBlock("Loop 109 Display", parent, new Vector3(11f, 1.4f, z + 4f), new Vector3(1.8f, 0.8f, 0.2f));
-            CreateWorldLabel("Prologue First Objective Label", parent, "YUNA", new Vector3(-7.5f, 2.8f, z - 9f), new Color(1f, 0.72f, 0.35f));
-            CreatePointLight("Prologue Yuna Key Light", parent, new Vector3(-7.5f, 3.2f, z - 9f), new Color(1f, 0.62f, 0.32f), 3.1f, 8f);
+            CreateWorldLabel("Prologue First Objective Label", parent, "YUNA", new Vector3(-5.5f, 2.55f, z - 6.5f), new Color(1f, 0.72f, 0.35f));
+            CreatePointLight("Prologue Yuna Key Light", parent, new Vector3(-5.5f, 3f, z - 6.5f), new Color(1f, 0.62f, 0.32f), 3.1f, 7f);
             CreatePointLight("Prologue Warm Light", parent, new Vector3(0f, 3.2f, z), new Color(1f, 0.78f, 0.58f), 2.6f, 15f);
             return new[] { created[0], created[1], created[9] };
         }
@@ -684,15 +693,15 @@ namespace SmallWorld.Editor
                 station.AddComponent<Stage15StoryActionInteractable>().ConfigureAction(progress, actions[i], prompts[i]);
                 if (actions[i] == OpeningStoryAction.MeetYuna)
                 {
-                    station.transform.position = new Vector3(-7.5f, 1f, z - 9f);
-                    station.transform.localScale = new Vector3(0.85f, 1.9f, 0.85f);
+                    station.transform.position = new Vector3(-5.5f, 0.82f, z - 6.5f);
+                    station.transform.localScale = new Vector3(0.58f, 1.25f, 0.58f);
                     ApplyMaterial(station, CreateMaterial("Yuna Warm Silhouette Material",
                         new Color(0.82f, 0.38f, 0.22f), new Color(0.45f, 0.12f, 0.04f)));
                     GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                     head.name = "Yuna Face";
                     head.transform.SetParent(parent, true);
-                    head.transform.position = station.transform.position + Vector3.up * 1.35f;
-                    head.transform.localScale = Vector3.one * 0.62f;
+                    head.transform.position = station.transform.position + Vector3.up * 0.95f;
+                    head.transform.localScale = Vector3.one * 0.43f;
                     ApplyMaterial(head, CreateMaterial("Yuna Face Material", new Color(0.95f, 0.72f, 0.58f)));
                     Collider headCollider = head.GetComponent<Collider>();
                     if (headCollider != null) headCollider.enabled = false;
@@ -838,7 +847,9 @@ namespace SmallWorld.Editor
             var label = new GameObject(name);
             label.transform.SetParent(parent, true);
             label.transform.position = position;
-            label.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            // TextMesh's readable face points toward -Z at identity. Every route arrival looks
+            // toward +Z, so identity presents the front face instead of mirrored back-face text.
+            label.transform.rotation = Quaternion.identity;
             TextMesh text = label.AddComponent<TextMesh>();
             text.text = value;
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
