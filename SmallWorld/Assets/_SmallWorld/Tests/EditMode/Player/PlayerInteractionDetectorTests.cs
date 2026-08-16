@@ -139,6 +139,33 @@ namespace SmallWorld.Player.Tests
             Assert.That(promptObject.activeSelf, Is.True);
         }
 
+        [Test]
+        public void PromptSuppression_RepeatedlyCancelsFeedbackWithoutNullCoroutineFailure()
+        {
+            detectorObject = new GameObject("Interaction Detector Lifecycle Test");
+            PlayerInteractionDetector detector = detectorObject.AddComponent<PlayerInteractionDetector>();
+            GameObject viewObject = new GameObject("Interaction Lifecycle HUD");
+            var promptObject = new GameObject("Prompt");
+            promptObject.transform.SetParent(viewObject.transform);
+            Text prompt = promptObject.AddComponent<Text>();
+            var feedbackObject = new GameObject("Feedback");
+            feedbackObject.transform.SetParent(viewObject.transform);
+            Text feedback = feedbackObject.AddComponent<Text>();
+            InteractionPromptView view = viewObject.AddComponent<InteractionPromptView>();
+            view.Configure(prompt, feedback);
+            view.ShowFeedback("첫 번째 피드백", 10f);
+            Assert.DoesNotThrow(() => view.SetSuppressed(true));
+            Assert.That(view.IsSuppressed, Is.True);
+            Assert.That(feedbackObject.activeSelf, Is.False);
+
+            view.SetSuppressed(false);
+            Assert.That(view.IsSuppressed, Is.False);
+            view.ShowFeedback("두 번째 피드백", 10f);
+            Assert.DoesNotThrow(() => view.SetSuppressed(true),
+                "Repeated suppression must not pass an invalid Coroutine handle to StopCoroutine.");
+            Assert.That(feedbackObject.activeSelf, Is.False);
+        }
+
         private PlayerInteractionDetector CreateDetector()
         {
             detectorObject = new GameObject("Interaction Detector Test Detector");

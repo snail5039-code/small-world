@@ -44,7 +44,7 @@ namespace SmallWorld.Player
         public void ShowFeedback(string message, float duration = 2.5f)
         {
             if (feedbackText == null || suppressed) return;
-            if (feedbackRoutine != null) StopCoroutine(feedbackRoutine);
+            CancelFeedbackRoutine();
             feedbackRoutine = StartCoroutine(ShowFeedbackRoutine(message, duration));
         }
 
@@ -63,17 +63,21 @@ namespace SmallWorld.Player
             if (suppressed == value) return;
             suppressed = value;
             if (!suppressed) return;
-            if (feedbackRoutine != null)
-            {
-                StopCoroutine(feedbackRoutine);
-                feedbackRoutine = null;
-            }
+            CancelFeedbackRoutine();
             if (promptText != null)
             {
                 promptText.text = string.Empty;
                 promptText.gameObject.SetActive(false);
             }
             if (feedbackText != null) feedbackText.gameObject.SetActive(false);
+        }
+
+        private void CancelFeedbackRoutine()
+        {
+            // A Coroutine native handle may already be invalidated when a sibling detector's
+            // OnDisable runs. StopAllCoroutines does not dereference that stale/null handle.
+            feedbackRoutine = null;
+            StopAllCoroutines();
         }
     }
 }
