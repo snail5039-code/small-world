@@ -262,12 +262,12 @@ namespace SmallWorld.Player.Tests
                     worldText.name + " is mirrored or tilted away from the route arrival.");
                 Assert.That(worldText.fontSize, Is.GreaterThanOrEqualTo(64));
                 Assert.That(worldText.characterSize, Is.GreaterThanOrEqualTo(0.09f));
-                Assert.That(worldText.color.maxColorComponent, Is.GreaterThanOrEqualTo(0.85f));
                 GameObject plate = GameObject.Find(worldText.name + " Backplate");
                 Assert.That(plate, Is.Not.Null, worldText.name + " needs a dark contrast backplate.");
                 Assert.That(plate.GetComponent<Collider>().enabled, Is.False,
                     worldText.name + " backplate must not obstruct the route.");
-                Assert.That(plate.GetComponent<Renderer>().sharedMaterial.color.grayscale, Is.LessThan(0.12f));
+                Assert.That(Contrast(worldText.color, plate.GetComponent<Renderer>().sharedMaterial.color),
+                    Is.GreaterThanOrEqualTo(3f), worldText.name + " needs readable contrast against its plate.");
             }
 
             string[] koreanWorldTitles =
@@ -668,6 +668,23 @@ namespace SmallWorld.Player.Tests
             Assert.That(node.FindPropertyRelative("DialogueEntry").objectReferenceValue, Is.Not.Null);
             Assert.That(node.FindPropertyRelative("PuzzleEntry").objectReferenceValue, Is.Not.Null);
             Assert.That(node.FindPropertyRelative("MemoryEntry").objectReferenceValue, Is.Not.Null);
+        }
+
+        private static float Contrast(Color first, Color second)
+        {
+            float bright = Mathf.Max(Luminance(first), Luminance(second));
+            float dark = Mathf.Min(Luminance(first), Luminance(second));
+            return (bright + 0.05f) / (dark + 0.05f);
+        }
+
+        private static float Luminance(Color color)
+        {
+            return 0.2126f * Linear(color.r) + 0.7152f * Linear(color.g) + 0.0722f * Linear(color.b);
+        }
+
+        private static float Linear(float value)
+        {
+            return value <= 0.03928f ? value / 12.92f : Mathf.Pow((value + 0.055f) / 1.055f, 2.4f);
         }
     }
 }

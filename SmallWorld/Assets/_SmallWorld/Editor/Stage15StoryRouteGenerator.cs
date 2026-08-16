@@ -185,6 +185,12 @@ namespace SmallWorld.Editor
             CreatePointLight("Prologue Warm Light", parent, new Vector3(0f, 3.2f, z), new Color(1f, 0.78f, 0.58f), 2.6f, 15f);
             CreatePointLight("Prologue Route Fill Light", parent, new Vector3(0f, 3.1f, z - 6f),
                 new Color(1f, 0.86f, 0.68f), 2.2f, 18f);
+            for (int navigationIndex = 0; navigationIndex < 3; navigationIndex++)
+            {
+                CreatePointLight($"Prologue Navigation Light {navigationIndex + 1}", parent,
+                    new Vector3(0f, 3.2f, z - 10f + navigationIndex * 10f),
+                    new Color(1f, 0.9f, 0.76f), 2f, 14f);
+            }
             return new[] { created[0], created[1], created[9] };
         }
 
@@ -642,7 +648,7 @@ namespace SmallWorld.Editor
             panelRect.sizeDelta = new Vector2(720f, 320f);
             panelRect.localScale = Vector3.one * 0.008f;
             Text conditions = CreateText("Readiness Conditions - Memories Nameplate Autonomy Reality Link", panel.transform, 0.5f);
-            conditions.text = "FINAL CHOICE PREPARATION\nMemories preserved / Nameplate / Autonomy / Reality link\nVictims restorable / Developer survival / Girl identity\nChoices and endings are not executable in this scene";
+            conditions.text = "최종 선택 준비\n보존된 기억 / 이름표 / 자율성 / 현실 연결\n희생자 복원 / 개발자 생존 / 소녀의 정체\n이 장면에서는 선택과 엔딩을 실행하지 않습니다";
             conditions.fontSize = 30;
             conditions.rectTransform.sizeDelta = new Vector2(700f, 300f);
         }
@@ -838,7 +844,8 @@ namespace SmallWorld.Editor
             Vector3 signPosition = index == 0
                 ? new Vector3(0f, 4.15f, z - 1.5f)
                 : new Vector3(0f, 3.8f, z - 9.5f);
-            CreateWorldLabel($"Route Room {index} Entrance Sign", parent, WorldNames[index], signPosition, accent);
+            CreateWorldLabel($"Route Room {index} Entrance Sign", parent, WorldNames[index], signPosition,
+                ReadableTextAgainst(WallColors[index]));
             CreateHighlightFrame($"Route Room {index} Dialogue Highlight", parent, dialogue.position, accentMaterial);
             CreateHighlightFrame($"Route Room {index} Puzzle Highlight", parent, puzzle.position, accentMaterial);
             CreateHighlightFrame($"Route Room {index} Memory Highlight", parent, memory.position, accentMaterial);
@@ -892,10 +899,13 @@ namespace SmallWorld.Editor
         private static void CreateWorldLabel(string name, Transform parent, string value, Vector3 position, Color color)
         {
             float plateWidth = Mathf.Clamp(value.Length * 0.34f + 1.2f, 3.4f, 9.5f);
+            bool darkText = RelativeLuminance(color) < 0.18f;
+            Color plateColor = darkText
+                ? new Color(0.92f, 0.9f, 0.84f, 1f)
+                : new Color(0.025f, 0.035f, 0.05f, 1f);
             GameObject backplate = CreateBlock(name + " Backplate", parent,
                 position + Vector3.forward * 0.08f, new Vector3(plateWidth, 0.72f, 0.08f));
-            ApplyMaterial(backplate, CreateMaterial(name + " Backplate Material",
-                new Color(0.025f, 0.035f, 0.05f, 1f)));
+            ApplyMaterial(backplate, CreateMaterial(name + " Backplate Material", plateColor));
             Collider plateCollider = backplate.GetComponent<Collider>();
             if (plateCollider != null) plateCollider.enabled = false;
 
@@ -912,7 +922,24 @@ namespace SmallWorld.Editor
             text.characterSize = 0.09f;
             text.anchor = TextAnchor.MiddleCenter;
             text.alignment = TextAlignment.Center;
-            text.color = Color.Lerp(color, Color.white, 0.28f);
+            text.color = color;
+        }
+
+        private static Color ReadableTextAgainst(Color background)
+        {
+            return RelativeLuminance(background) > 0.3f
+                ? new Color(0.025f, 0.035f, 0.05f, 1f)
+                : new Color(1f, 0.98f, 0.92f, 1f);
+        }
+
+        private static float RelativeLuminance(Color color)
+        {
+            return 0.2126f * LinearColor(color.r) + 0.7152f * LinearColor(color.g) + 0.0722f * LinearColor(color.b);
+        }
+
+        private static float LinearColor(float value)
+        {
+            return value <= 0.03928f ? value / 12.92f : Mathf.Pow((value + 0.055f) / 1.055f, 2.4f);
         }
 
         private static Material CreateMaterial(string name, Color color, Color? emission = null)
@@ -998,7 +1025,7 @@ namespace SmallWorld.Editor
             light.color = new Color(1f, 0.94f, 0.86f);
             light.shadows = LightShadows.Soft;
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.22f, 0.23f, 0.26f);
+            RenderSettings.ambientLight = new Color(0.48f, 0.50f, 0.54f);
             RenderSettings.ambientIntensity = 0.9f;
         }
 

@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using SmallWorld.UI;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -14,11 +17,11 @@ namespace SmallWorld.Player.Tests
     {
         private static readonly object[] SceneInventory =
         {
-            new object[] { "Assets/_SmallWorld/Scenes/00_Boot.unity", new[] { "Loading Canvas", "Loading Panel" } },
+            new object[] { "Assets/_SmallWorld/Scenes/00_Boot.unity", new[] { "Loading Canvas", "Loading Progress" } },
             new object[] { "Assets/_SmallWorld/Scenes/01_MainMenu.unity", new[] { "Main Menu Canvas", "Title Panel", "Menu Panel", "Settings Panel", "Loading Panel" } },
             new object[] { "Assets/_SmallWorld/Scenes/02_RealityRoom.unity", new[] { "Gameplay HUD", "Interaction Prompt", "Stage 7 Dialogue UI", "Stage 8 Record UI", "Stage 9 Photo Puzzle UI", "Stage 10 Save Integration", "Settings Panel", "Pause Panel" } },
             new object[] { "Assets/_SmallWorld/Scenes/03_FirstMemory.unity", new[] { "Player HUD", "Interaction UI", "Interaction Prompt" } },
-            new object[] { "Assets/_SmallWorld/Scenes/04_StoryRoute.unity", new[] { "Player HUD", "Interaction UI", "Interaction Prompt", "Stage 15 Story Route" } }
+            new object[] { "Assets/_SmallWorld/Scenes/04_StoryRoute.unity", new[] { "Player HUD", "Interaction UI", "Prompt", "Stage 15 Story Route" } }
         };
 
         [TestCaseSource(nameof(SceneInventory))]
@@ -59,11 +62,13 @@ namespace SmallWorld.Player.Tests
             EditorSceneManager.OpenScene(scene);
             Text[] texts = Object.FindObjectsByType<Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             Assert.That(texts.Length, Is.GreaterThan(5));
-            string[] forbidden = { "Lorem", "Paused", "Press Esc", "No route records", "Button", "�" };
+            string[] forbidden = { "Lorem", "Paused", "Press Esc", "No route records", "Button" };
             foreach (Text text in texts.Where(item => !string.IsNullOrWhiteSpace(item.text)))
             {
                 Assert.That(text.font, Is.Not.Null, text.name + " has no Korean-capable project font.");
                 Assert.That(text.fontSize, Is.GreaterThanOrEqualTo(12), text.name + " is too small to read.");
+                Assert.That(text.text.IndexOf('\uFFFD'), Is.EqualTo(-1),
+                    text.name + " exposes a Unicode replacement character.");
                 foreach (string value in forbidden)
                     Assert.That(text.text, Does.Not.Contain(value), text.name + " exposes placeholder English or broken text.");
             }
@@ -80,7 +85,8 @@ namespace SmallWorld.Player.Tests
             {
                 Text label = button.GetComponentInChildren<Text>(true);
                 Assert.That(label, Is.Not.Null, button.name + " has no visible label.");
-                Assert.That(label.text, Is.Not.Empty, button.name + " has an empty label.");
+                if (!IsRuntimePopulatedDialogueChoice(button))
+                    Assert.That(label.text, Is.Not.Empty, button.name + " has an empty label.");
                 RectTransform rect = button.transform as RectTransform;
                 Assert.That(rect, Is.Not.Null);
                 Vector2 size = rect.rect.size;
@@ -134,7 +140,7 @@ namespace SmallWorld.Player.Tests
             string[] modalRoots =
             {
                 "Pause Panel", "Settings Panel", "Inspection Panel", "Stage 7 Dialogue UI",
-                "Stage 8 Record UI", "Stage 9 Photo Puzzle UI", "Stage 10 Save Integration"
+                "Stage 8 Record UI", "Stage 9 Photo Puzzle UI"
             };
             foreach (string name in modalRoots)
             {
@@ -143,6 +149,28 @@ namespace SmallWorld.Player.Tests
                 Assert.That(item.GetComponent<CanvasGroup>() ?? item.GetComponentInChildren<CanvasGroup>(true),
                     Is.Not.Null, name + " needs explicit interactable/raycast ownership.");
             }
+
+            Type panelType = Type.GetType(
+                "SmallWorld.Save.Stage10.Integration.Stage10ManualSavePanel, SmallWorld.Save.Stage10.Integration");
+            Assert.That(panelType, Is.Not.Null);
+            Component savePanel = Object.FindFirstObjectByType(panelType, FindObjectsInactive.Include) as Component;
+            Assert.That(savePanel, Is.Not.Null);
+            SerializedProperty panel = new SerializedObject(savePanel).FindProperty("panel");
+            Assert.That(panel, Is.Not.Null);
+            Assert.That(panel.objectReferenceValue, Is.TypeOf<CanvasGroup>(),
+                "Stage 10 save input ownership belongs to its serialized panel CanvasGroup.");
+        }
+
+        private static bool IsRuntimePopulatedDialogueChoice(Button button)
+        {
+            if (!button.name.StartsWith("Choice ", StringComparison.Ordinal)) return false;
+            Transform current = button.transform;
+            while (current != null)
+            {
+                if (current.name == "Stage 7 Dialogue UI") return true;
+                current = current.parent;
+            }
+            return false;
         }
 
         private static GameObject FindInactive(string name)

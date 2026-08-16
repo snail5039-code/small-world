@@ -10,11 +10,11 @@ StoryRoute 좌상단 목표 HUD의 세부 수치 계약은 `stage-15-visual-pres
 
 | 장면 | 기본 HUD/메뉴 | 오버레이 | 주요 입력 |
 |---|---|---|---|
-| `00_Boot` | Loading Canvas | Loading Panel | 자동 전환 |
+| `00_Boot` | Loading Canvas | Loading Progress | 자동 전환 |
 | `01_MainMenu` | Main Menu Canvas, Title Panel, Menu Panel | Settings Panel, Loading Panel | 마우스/키보드 선택, Esc 설정 닫기 |
 | `02_RealityRoom` | Gameplay HUD, Player HUD, Interaction Prompt | Dialogue Card/History, Inspection, Inventory·Records, Photo Puzzle, Manual Save, Settings, Pause, Notification | E 조사, Tab 기록, Esc 우선순위 체인, 마우스, 저장 |
 | `03_FirstMemory` | Player HUD, Interaction Prompt | 기억 공간 안내/피드백 | E 조사, Esc 복귀 계열 |
-| `04_StoryRoute` | Player HUD, Interaction Prompt, 좌상단 목표 HUD | Records, Pause, 최종 선택 준비 정보 | E 조사, Tab 기록, Esc, PageUp/PageDown, Home 복귀 |
+| `04_StoryRoute` | Player HUD, Prompt, 좌상단 목표 HUD | Records, Pause, 최종 선택 준비 정보 | E 조사, Tab 기록, Esc, PageUp/PageDown, Home 복귀 |
 
 ## 공통 화면 계약
 
@@ -23,9 +23,10 @@ StoryRoute 좌상단 목표 HUD의 세부 수치 계약은 `stage-15-visual-pres
 - 각 사용자 장면에는 `SafeAreaFitter` 또는 같은 역할의 명시적 안전영역 루트가 있어야 합니다.
 - 화면 가장자리 고정 UI는 최소 16px, 주요 모달 내용은 최소 24px의 안전 여백을 둡니다.
 - 본문 한글은 최소 14px, 버튼 16px, 모달 제목 20px을 사용하고 줄바꿈을 허용합니다.
-- 사용자 텍스트에 `Text`, `Button`, `Paused`, `Press Esc`, `Lorem`, 깨진 대체문자 `�` 같은 개발용 문자열을 노출하지 않습니다. 고유명·게임 제목·키 이름은 예외입니다.
+- 사용자 텍스트에 `Text`, `Button`, `Paused`, `Press Esc`, `Lorem` 같은 개발용 문자열을 노출하지 않습니다. 깨진 문자는 소스에 글리프를 직접 적지 않고 Unicode U+FFFD 코드값으로 검사합니다. 고유명·게임 제목·키 이름은 예외입니다.
 - 본문과 배경 대비는 4.5:1, 큰 제목·강조는 3:1 이상을 목표로 합니다. 반투명 배경은 실제 합성 결과로 판단합니다.
 - 같은 행의 버튼 크기·간격과 같은 계층의 제목 정렬을 통일합니다. 클릭 영역은 최소 44×44px입니다.
+- 비활성 `Stage 7 Dialogue UI`의 `Choice 1`~`Choice 3` 라벨은 런타임 대화 데이터가 채우는 템플릿이므로 직렬화 상태에서만 빈 문자열을 허용합니다. 그 밖의 버튼 라벨은 비어 있으면 안 됩니다.
 
 ## 레이어와 입력 소유권
 
@@ -46,6 +47,7 @@ StoryRoute 좌상단 목표 HUD의 세부 수치 계약은 `stage-15-visual-pres
 - 마지막 UI를 닫으면 열기 직전의 player enabled, cursor lock/visible, `Time.timeScale`을 정확히 복원합니다.
 - Pause만 `Time.timeScale=0`을 소유하며 Dialogue·기록·저장은 기존 값을 임의로 0 또는 1로 덮어쓰지 않습니다.
 - 비활성 오버레이의 `CanvasGroup`은 interactable=false, blocksRaycasts=false여야 하며 보이지 않는 UI가 클릭을 가로채지 않습니다.
+- Stage 10 저장 입력 소유권은 `Stage 10 Save Integration` 루트가 아니라 `Stage10ManualSavePanel.panel`에 직렬화된 `CanvasGroup`이 담당합니다.
 
 ## 기능별 필수 확인
 

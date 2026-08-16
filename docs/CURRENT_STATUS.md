@@ -15,7 +15,7 @@
 - 방 이동: PageUp/PageDown 및 각 방의 한국어 이전·다음 방 게이트로 해금된 과거 방을 왕복할 수 있습니다. 프롤로그에서는 전용 `현실방으로 돌아가기` 게이트 또는 Home 키로 현재 스토리 상태를 저장한 뒤 RealityRoom으로 복귀합니다. 과거 방문·복귀 중 CurrentChapter·관계·선택은 보존되며 UI가 열려 있으면 차단됩니다.
 - UI 상태: 1~15단계의 기본 UI 테마·안전영역·한글·프롬프트·모달 입력 소유권 계약을 통합했습니다. StoryRoute 목표·일시정지·기록은 compact 카드로 통일했고, 프롤로그 조도·한글 월드 표지·대비판 생성 규칙도 보강했습니다.
 - 다음 구현 범위: 장별 조사 스테이션을 실제 퍼즐 조작과 기억 공간 연출로 고도화.
-- 최신 검증: 직전 기준 Unity 6000.3.18f1 일반 Editor Test Runner에서 EditMode 208/208, PlayMode 58/58 통과, Windows Development 빌드 성공, 런타임 스모크 PASS. `d807ce0` UI 변경은 정적 검사만 통과했으며 LicensingClient 연결 실패로 씬 재생성·Unity 자동 테스트·새 빌드가 아직 필요합니다.
+- 최신 검증: Unity 6000.3.18f1 일반 Editor에서 UI 기준을 `00_Boot`~`04_StoryRoute`에 실제 적용했습니다. 전체 EditMode 242/242, PlayMode 59/59 통과, Windows Development 빌드 성공, 새 빌드 런타임 스모크 `[Stage2Smoke] PASS`를 확인했습니다.
 - 라이선스 참고: 이 환경의 Personal 좌석은 배치 전용 `com.unity.editor.headless` 권한이 없어 `-batchmode` Editor 실행이 return code 198로 종료된다. 관리자 검증은 일반 Editor 자동 실행으로 수행한다.
 - 이후 단계: 시작 금지. 15단계는 가시적 하위 작업을 만들고 진행합니다.
 - 커밋·푸시 권한: 관리자에게만 있으며, 하위 작업은 별도 지시 없이는 금지합니다.

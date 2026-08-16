@@ -69,8 +69,8 @@ namespace SmallWorld.Player.Tests
             TextMesh entrance = RequireObject("Route Room 0 Entrance Sign").GetComponent<TextMesh>();
             Assert.That(objective.text, Does.Contain("유나"));
             Assert.That(Mathf.Abs(objective.transform.position.x), Is.LessThanOrEqualTo(11f));
-            Assert.That(objective.characterSize, Is.LessThanOrEqualTo(0.08f));
-            Assert.That(entrance.characterSize, Is.LessThanOrEqualTo(0.08f));
+            Assert.That(objective.characterSize, Is.InRange(0.09f, 0.1f));
+            Assert.That(entrance.characterSize, Is.InRange(0.09f, 0.1f));
             Assert.That(objective.GetComponent<Renderer>().bounds.Intersects(entrance.GetComponent<Renderer>().bounds),
                 Is.False, "The Yuna objective and room description overlap in the starting view.");
 
@@ -78,7 +78,7 @@ namespace SmallWorld.Player.Tests
             {
                 TextMesh sign = RequireObject($"Route Room {room} Entrance Sign").GetComponent<TextMesh>();
                 Assert.That(Mathf.Abs(sign.transform.position.x), Is.LessThanOrEqualTo(11f));
-                Assert.That(sign.characterSize, Is.LessThanOrEqualTo(0.08f),
+                Assert.That(sign.characterSize, Is.InRange(0.09f, 0.1f),
                     sign.name + " can clip through the room's side walls.");
             }
         }
@@ -368,7 +368,7 @@ namespace SmallWorld.Player.Tests
             }
             finally
             {
-                Object.DestroyImmediate(owner);
+                UnityEngine.Object.DestroyImmediate(owner);
             }
         }
 

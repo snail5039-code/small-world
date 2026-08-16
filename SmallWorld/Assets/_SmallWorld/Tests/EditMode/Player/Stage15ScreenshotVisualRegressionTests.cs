@@ -57,7 +57,8 @@ namespace SmallWorld.Player.Tests
                 Assert.That(text.text, Does.Not.Contain("Paused"));
                 Assert.That(text.text, Does.Not.Contain("Press Esc"));
                 Assert.That(text.text, Does.Not.Contain("No route records"));
-                Assert.That(text.text, Does.Not.Contain("�"));
+                Assert.That(text.text.IndexOf('\uFFFD'), Is.EqualTo(-1),
+                    text.name + " exposes a Unicode replacement character.");
             }
         }
 
@@ -108,8 +109,8 @@ namespace SmallWorld.Player.Tests
                 Assert.That(sign.characterSize, Is.GreaterThanOrEqualTo(0.09f));
                 Assert.That(Quaternion.Angle(sign.transform.rotation, Quaternion.identity), Is.LessThan(0.1f));
 
-                camera.transform.SetPositionAndRotation(arrival.position, arrival.rotation);
-                Vector3 viewport = camera.WorldToViewportPoint(sign.GetComponent<Renderer>().bounds.center);
+                camera.transform.SetPositionAndRotation(arrival.position + Vector3.up * 1.65f, arrival.rotation);
+                Vector3 viewport = camera.WorldToViewportPoint(sign.transform.position);
                 Assert.That(viewport.z, Is.GreaterThan(0f), sign.name + " is behind the arrival camera.");
                 Assert.That(viewport.x, Is.InRange(0.08f, 0.92f));
                 Assert.That(viewport.y, Is.InRange(0.08f, 0.92f));
