@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using SmallWorld.Flow;
 using SmallWorld.Player;
+using SmallWorld.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -18,6 +19,12 @@ namespace SmallWorld.Editor
         private const string InputPath = "Assets/InputSystem_Actions.inputactions";
         private static readonly string[] Ids = { "prologue", "chapter-1", "chapter-2", "chapter-3", "chapter-4", "chapter-5", "chapter-6", "final-chapter" };
         private static readonly string[] Names = { "Prologue - The White Room", "Chapter 1 - The Fourth Place", "Chapter 2 - Last Platform", "Chapter 3 - A Perfect Day", "Chapter 4 - Faceless Office", "Chapter 5 - Cemetery Without a Funeral", "Chapter 6 - City in the Window", "Final Chapter - The White Room With Nothing Left" };
+        private static readonly string[] WorldNames =
+        {
+            "프롤로그 · 하얀 방", "1장 · 네 번째 자리", "2장 · 마지막 승강장", "3장 · 완벽한 하루",
+            "4장 · 얼굴 없는 사무실", "5장 · 장례식 없는 묘지", "6장 · 창문 안의 도시",
+            "최종장 · 아무것도 남지 않은 하얀 방"
+        };
         private static readonly Color[] FloorColors =
         {
             new Color(0.42f, 0.36f, 0.29f), new Color(0.24f, 0.29f, 0.38f),
@@ -173,9 +180,11 @@ namespace SmallWorld.Editor
             CreateBlock("Placed Sofa Echo", parent, new Vector3(8.5f, 0.5f, z - 3f), new Vector3(3f, 1f, 1.2f));
             CreateBlock("Reserved Email Monitor", parent, new Vector3(11f, 1.2f, z), new Vector3(1.6f, 1.2f, 0.2f));
             CreateBlock("Loop 109 Display", parent, new Vector3(11f, 1.4f, z + 4f), new Vector3(1.8f, 0.8f, 0.2f));
-            CreateWorldLabel("Prologue First Objective Label", parent, "유나 · 먼저 대화하기", new Vector3(-5.5f, 4f, z - 6.5f), new Color(1f, 0.72f, 0.35f));
-            CreatePointLight("Prologue Yuna Key Light", parent, new Vector3(-5.5f, 3f, z - 6.5f), new Color(1f, 0.62f, 0.32f), 3.1f, 7f);
+            CreateWorldLabel("Prologue First Objective Label", parent, "유나 · 먼저 대화하기", new Vector3(5.5f, 4f, z - 6.5f), new Color(1f, 0.72f, 0.35f));
+            CreatePointLight("Prologue Yuna Key Light", parent, new Vector3(5.5f, 3f, z - 6.5f), new Color(1f, 0.62f, 0.32f), 3.1f, 7f);
             CreatePointLight("Prologue Warm Light", parent, new Vector3(0f, 3.2f, z), new Color(1f, 0.78f, 0.58f), 2.6f, 15f);
+            CreatePointLight("Prologue Route Fill Light", parent, new Vector3(0f, 3.1f, z - 6f),
+                new Color(1f, 0.86f, 0.68f), 2.2f, 18f);
             return new[] { created[0], created[1], created[9] };
         }
 
@@ -702,7 +711,7 @@ namespace SmallWorld.Editor
                 station.AddComponent<Stage15StoryActionInteractable>().ConfigureAction(progress, actions[i], prompts[i]);
                 if (actions[i] == OpeningStoryAction.MeetYuna)
                 {
-                    station.transform.position = new Vector3(-5.5f, 0.82f, z - 6.5f);
+                    station.transform.position = new Vector3(5.5f, 0.82f, z - 6.5f);
                     station.transform.localScale = new Vector3(0.58f, 1.25f, 0.58f);
                     ApplyMaterial(station, CreateMaterial("Yuna Warm Silhouette Material",
                         new Color(0.82f, 0.38f, 0.22f), new Color(0.45f, 0.12f, 0.04f)));
@@ -827,9 +836,9 @@ namespace SmallWorld.Editor
             Material pathMaterial = CreateMaterial($"Route Room {index} Path Material", Color.Lerp(FloorColors[index], accent, 0.55f), accent * 0.55f);
 
             Vector3 signPosition = index == 0
-                ? new Vector3(0f, 3.7f, z + 15.65f)
-                : new Vector3(0f, 2.65f, z - 14.8f);
-            CreateWorldLabel($"Route Room {index} Entrance Sign", parent, Names[index], signPosition, accent);
+                ? new Vector3(0f, 4.15f, z - 1.5f)
+                : new Vector3(0f, 3.8f, z - 9.5f);
+            CreateWorldLabel($"Route Room {index} Entrance Sign", parent, WorldNames[index], signPosition, accent);
             CreateHighlightFrame($"Route Room {index} Dialogue Highlight", parent, dialogue.position, accentMaterial);
             CreateHighlightFrame($"Route Room {index} Puzzle Highlight", parent, puzzle.position, accentMaterial);
             CreateHighlightFrame($"Route Room {index} Memory Highlight", parent, memory.position, accentMaterial);
@@ -882,6 +891,14 @@ namespace SmallWorld.Editor
 
         private static void CreateWorldLabel(string name, Transform parent, string value, Vector3 position, Color color)
         {
+            float plateWidth = Mathf.Clamp(value.Length * 0.34f + 1.2f, 3.4f, 9.5f);
+            GameObject backplate = CreateBlock(name + " Backplate", parent,
+                position + Vector3.forward * 0.08f, new Vector3(plateWidth, 0.72f, 0.08f));
+            ApplyMaterial(backplate, CreateMaterial(name + " Backplate Material",
+                new Color(0.025f, 0.035f, 0.05f, 1f)));
+            Collider plateCollider = backplate.GetComponent<Collider>();
+            if (plateCollider != null) plateCollider.enabled = false;
+
             var label = new GameObject(name);
             label.transform.SetParent(parent, true);
             label.transform.position = position;
@@ -891,11 +908,11 @@ namespace SmallWorld.Editor
             TextMesh text = label.AddComponent<TextMesh>();
             text.text = value;
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 48;
-            text.characterSize = 0.08f;
+            text.fontSize = 64;
+            text.characterSize = 0.09f;
             text.anchor = TextAnchor.MiddleCenter;
             text.alignment = TextAlignment.Center;
-            text.color = color;
+            text.color = Color.Lerp(color, Color.white, 0.28f);
         }
 
         private static Material CreateMaterial(string name, Color color, Color? emission = null)
@@ -945,11 +962,21 @@ namespace SmallWorld.Editor
         {
             var hud = new GameObject("Player HUD", typeof(RectTransform));
             Canvas canvas = hud.AddComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            hud.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            CanvasScaler scaler = hud.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
+            var safeArea = new GameObject("Safe Area", typeof(RectTransform));
+            safeArea.transform.SetParent(hud.transform, false);
+            RectTransform safeRect = (RectTransform)safeArea.transform;
+            safeRect.anchorMin = Vector2.zero; safeRect.anchorMax = Vector2.one;
+            safeRect.offsetMin = safeRect.offsetMax = Vector2.zero;
+            safeArea.AddComponent<SafeAreaFitter>();
             var crosshairObject = new GameObject("Crosshair", typeof(RectTransform)); crosshairObject.transform.SetParent(hud.transform, false);
             RectTransform crosshairRect = (RectTransform)crosshairObject.transform; crosshairRect.anchorMin = crosshairRect.anchorMax = new Vector2(0.5f, 0.5f); crosshairRect.sizeDelta = new Vector2(4f, 4f);
             Image crosshair = crosshairObject.AddComponent<Image>(); crosshair.color = new Color(1f, 1f, 1f, 0.8f); crosshair.raycastTarget = false;
-            var ui = new GameObject("Interaction UI", typeof(RectTransform)); ui.transform.SetParent(hud.transform, false);
+            var ui = new GameObject("Interaction UI", typeof(RectTransform)); ui.transform.SetParent(safeArea.transform, false);
             RectTransform rect = (RectTransform)ui.transform; rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero;
             InteractionPromptView view = ui.AddComponent<InteractionPromptView>(); view.Configure(CreateText("Prompt", ui.transform, 0.33f), CreateText("Feedback", ui.transform, 0.72f)); detector.ConfigureView(view);
             return crosshair;
@@ -970,8 +997,9 @@ namespace SmallWorld.Editor
             light.intensity = 0.65f;
             light.color = new Color(1f, 0.94f, 0.86f);
             light.shadows = LightShadows.Soft;
-            RenderSettings.ambientLight = new Color(0.16f, 0.18f, 0.22f);
-            RenderSettings.ambientIntensity = 0.7f;
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.22f, 0.23f, 0.26f);
+            RenderSettings.ambientIntensity = 0.9f;
         }
 
         private static GameObject CreateBlock(string name, Transform parent, Vector3 position, Vector3 scale)

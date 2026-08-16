@@ -6,6 +6,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SmallWorld.Player.Tests
 {
@@ -278,6 +279,97 @@ namespace SmallWorld.Player.Tests
             int count = Resources.FindObjectsOfTypeAll(returnType).Cast<Component>()
                 .Count(component => component != null && component.gameObject.scene.IsValid());
             Assert.That(count, Is.EqualTo(1), "Duplicate return gates can start overlapping scene transitions.");
+        }
+
+        [TestCase(1280, 720)]
+        [TestCase(1920, 1080)]
+        public void GuidanceHudUsesCompactSafeHighContrastHierarchy(int width, int height)
+        {
+            Type controller = RequireType("SmallWorld.Flow.StoryRouteController");
+            MethodInfo calculate = controller.GetMethod("GuidanceLayout", BindingFlags.Static | BindingFlags.Public);
+            Assert.That(calculate, Is.Not.Null);
+            object compact = calculate.Invoke(null, new object[] { width, height, false });
+            object withDialogue = calculate.Invoke(null, new object[] { width, height, true });
+
+            Rect compactPanel = ReadLayoutRect(compact, "Panel");
+            Rect dialoguePanel = ReadLayoutRect(withDialogue, "Panel");
+            Rect title = ReadLayoutRect(compact, "Title");
+            Rect location = ReadLayoutRect(compact, "Location");
+            Rect objectiveHeading = ReadLayoutRect(compact, "ObjectiveHeading");
+            Rect objective = ReadLayoutRect(compact, "Objective");
+            Rect dialogue = ReadLayoutRect(withDialogue, "Dialogue");
+
+            Assert.That(compactPanel.xMin, Is.GreaterThanOrEqualTo(16f));
+            Assert.That(compactPanel.yMin, Is.GreaterThanOrEqualTo(16f));
+            Assert.That(compactPanel.xMax, Is.LessThanOrEqualTo(width - 16f));
+            Assert.That(compactPanel.yMax, Is.LessThanOrEqualTo(height - 16f));
+            Assert.That(compactPanel.width, Is.LessThanOrEqualTo(480f));
+            Assert.That(compactPanel.width / width, Is.LessThan(0.38f), "The objective card must not dominate the view.");
+            Assert.That(dialoguePanel.height, Is.GreaterThan(compactPanel.height));
+            Assert.That(ReadLayout<bool>(compact, "HasDialogue"), Is.False);
+            Assert.That(ReadLayout<bool>(withDialogue, "HasDialogue"), Is.True);
+            Assert.That(ReadLayoutRect(compact, "Dialogue"), Is.EqualTo(Rect.zero));
+
+            Assert.That(title.xMax, Is.LessThanOrEqualTo(location.xMin));
+            Assert.That(title.yMin, Is.EqualTo(location.yMin).Within(0.01f));
+            Assert.That(location.yMax, Is.LessThan(objectiveHeading.yMin));
+            Assert.That(objectiveHeading.yMax, Is.LessThanOrEqualTo(objective.yMin));
+            Assert.That(objective.yMax, Is.LessThan(dialogue.yMin));
+            Assert.That(ReadLayout<int>(compact, "LocationFont"), Is.GreaterThan(ReadLayout<int>(compact, "TitleFont")));
+            Assert.That(ReadLayout<int>(compact, "ObjectiveFont"), Is.GreaterThanOrEqualTo(15));
+            Assert.That(ReadStatic<string>(controller, "GuidanceTitle"), Is.EqualTo("이야기 안내"));
+            Assert.That(ReadStatic<string>(controller, "GuidanceObjectiveTitle"), Is.EqualTo("현재 목표"));
+
+            Color background = ReadStatic<Color>(controller, "GuidanceBackgroundColor");
+            Color accent = ReadStatic<Color>(controller, "GuidanceAccentColor");
+            Color text = ReadStatic<Color>(controller, "GuidancePrimaryTextColor");
+            Assert.That(background.a, Is.GreaterThanOrEqualTo(0.85f));
+            Assert.That(accent.maxColorComponent, Is.GreaterThan(0.9f));
+            Assert.That(text.grayscale, Is.GreaterThan(0.85f));
+        }
+
+        private static T ReadLayout<T>(object layout, string property)
+        {
+            PropertyInfo info = layout.GetType().GetProperty(property, BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(info, Is.Not.Null, property + " is missing from the guidance layout contract.");
+            return (T)info.GetValue(layout);
+        }
+
+        private static Rect ReadLayoutRect(object layout, string property) => ReadLayout<Rect>(layout, property);
+
+        [Test]
+        public void SharedUiThemeKeepsInteractionPromptAndFeedbackDistinctWithoutDuplicateInputHints()
+        {
+            Type theme = RequireType("SmallWorld.UI.SmallWorldUiTheme");
+            MethodInfo formatPrompt = theme.GetMethod("FormatInteractionPrompt", BindingFlags.Static | BindingFlags.Public);
+            Assert.That(formatPrompt.Invoke(null, new object[] { "조사하기" }), Is.EqualTo("[E] 조사하기"));
+            Assert.That(formatPrompt.Invoke(null, new object[] { "[E] 다음 방으로 이동하기" }),
+                Is.EqualTo("[E] 다음 방으로 이동하기"));
+
+            var owner = new GameObject("Shared UI Theme Contract");
+            try
+            {
+                Text prompt = new GameObject("Prompt", typeof(RectTransform)).AddComponent<Text>();
+                Text feedback = new GameObject("Feedback", typeof(RectTransform)).AddComponent<Text>();
+                prompt.transform.SetParent(owner.transform, false);
+                feedback.transform.SetParent(owner.transform, false);
+                Type promptViewType = RequireType("SmallWorld.Player.InteractionPromptView");
+                Component view = owner.AddComponent(promptViewType);
+                promptViewType.GetMethod("Configure").Invoke(view, new object[] { prompt, feedback });
+
+                Assert.That(prompt.fontSize, Is.GreaterThan(feedback.fontSize));
+                Assert.That(prompt.fontStyle, Is.EqualTo(FontStyle.Bold));
+                Assert.That(prompt.GetComponent<Outline>(), Is.Not.Null);
+                Assert.That(feedback.GetComponent<Outline>(), Is.Not.Null);
+                Assert.That(prompt.rectTransform.anchorMin.y, Is.EqualTo(0.18f).Within(0.001f));
+                Assert.That(feedback.rectTransform.anchorMin.y, Is.EqualTo(0.27f).Within(0.001f));
+                Assert.That(feedback.rectTransform.anchorMin.y - prompt.rectTransform.anchorMin.y,
+                    Is.GreaterThanOrEqualTo(0.08f), "Prompt and result feedback need separate bottom-center rows.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(owner);
+            }
         }
 
         private static IEnumerable<MonoBehaviour> SceneBehaviours(string fullName)

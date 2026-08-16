@@ -11,6 +11,7 @@ namespace SmallWorld.Player
         private const float OriginContactRadius = 0.05f;
         private Transform view;
         private float currentTargetDistance;
+        private FirstPersonPlayerController gameplayOwner;
 
         public bool HasTarget { get; private set; }
         public RaycastHit CurrentHit { get; private set; }
@@ -38,6 +39,7 @@ namespace SmallWorld.Player
         private void Awake()
         {
             if (view == null && Camera.main != null) view = Camera.main.transform;
+            gameplayOwner = GetComponent<FirstPersonPlayerController>();
         }
 
         private void Update()
@@ -47,6 +49,14 @@ namespace SmallWorld.Player
 
         public void RefreshDetection()
         {
+            if (gameplayOwner == null) gameplayOwner = GetComponent<FirstPersonPlayerController>();
+            bool suppressUi = gameplayOwner != null && !gameplayOwner.enabled;
+            promptView?.SetSuppressed(suppressUi);
+            if (suppressUi)
+            {
+                ClearDetection();
+                return;
+            }
             RaycastHit hit = default;
             IInteractable next = null;
             float targetDistance = float.PositiveInfinity;
@@ -137,6 +147,12 @@ namespace SmallWorld.Player
         }
 
         private void OnDisable()
+        {
+            ClearDetection();
+            promptView?.SetSuppressed(true);
+        }
+
+        private void ClearDetection()
         {
             CurrentInteractable?.SetFocused(false);
             CurrentInteractable = null;

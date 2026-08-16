@@ -1,6 +1,8 @@
 #if UNITY_EDITOR && UNITY_INCLUDE_TESTS
 using NUnit.Framework;
 using SmallWorld.Flow;
+using SmallWorld.Save.Stage10.Integration;
+using SmallWorld.UI.Stage7;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -13,6 +15,8 @@ namespace SmallWorld.Tests.EditMode.Flow
         [TearDown]
         public void TearDown()
         {
+            Time.timeScale = 1f;
+            DialogueCursorMode.RequestGameplay();
             if (root != null) Object.DestroyImmediate(root);
         }
 
@@ -95,6 +99,49 @@ namespace SmallWorld.Tests.EditMode.Flow
         }
 
         [Test]
+        public void RecordsPauseAndSaveUi_BlockEveryRoomNavigationPathWithoutStealingState()
+        {
+            root = new GameObject("route-all-navigation-guards-test");
+            StoryRouteController controller = root.AddComponent<StoryRouteController>();
+            Transform player = new GameObject("player").transform;
+            player.SetParent(root.transform);
+            StoryRouteNode[] nodes = CreateNodes(3);
+            var progress = new BrowseProgressSource(2);
+            controller.Configure(player, nodes);
+            controller.BindProgressSource(progress);
+            controller.RestoreToNodeOrPrologue(2);
+
+            Assert.That(controller.HandleTabPressed(), Is.True);
+            Assert.That(controller.HandleRoomBrowse(-1, out _), Is.False);
+            Assert.That(controller.TryTravelTo(1, out _), Is.False);
+            Assert.That(controller.ActiveNodeIndex, Is.EqualTo(2));
+            Assert.That(controller.HandleEscapePressed(), Is.True, "Esc must close records without opening pause.");
+            Assert.That(controller.IsRuntimeOverlayOpen, Is.False);
+
+            Assert.That(controller.HandleEscapePressed(), Is.True);
+            Assert.That(Time.timeScale, Is.Zero);
+            Assert.That(controller.HandleRoomBrowse(-1, out _), Is.False);
+            Assert.That(controller.TryTravelTo(1, out _), Is.False);
+            Assert.That(Time.timeScale, Is.Zero, "Rejected navigation must not release pause ownership.");
+            Assert.That(DialogueCursorMode.RequestedLockState, Is.EqualTo(CursorLockMode.None));
+            controller.HandleEscapePressed();
+            Assert.That(Time.timeScale, Is.EqualTo(1f));
+
+            var saveObject = new GameObject("route-navigation-save-owner");
+            saveObject.transform.SetParent(root.transform);
+            CanvasGroup canvas = saveObject.AddComponent<CanvasGroup>();
+            Stage10ManualSavePanel savePanel = saveObject.AddComponent<Stage10ManualSavePanel>();
+            savePanel.Configure(canvas, null, null, null);
+            savePanel.Open();
+            Assert.That(controller.HandleTabPressed(), Is.False);
+            Assert.That(controller.HandleEscapePressed(), Is.False);
+            Assert.That(controller.HandleRoomBrowse(-1, out _), Is.False);
+            Assert.That(controller.TryTravelTo(1, out _), Is.False);
+            Assert.That(controller.ActiveNodeIndex, Is.EqualTo(2));
+            Assert.That(savePanel.IsOpen, Is.True);
+        }
+
+        [Test]
         public async Task RealityReturn_FromPrologue_PreparesSaveAndLoadsExactlyOnce()
         {
             root = new GameObject("route-reality-return-test");
@@ -132,6 +179,7 @@ namespace SmallWorld.Tests.EditMode.Flow
             controller.ConfigureRealityRoomLoader(() => Task.CompletedTask);
             Assert.That((await controller.ReturnToRealityRoomAsync()).Accepted, Is.False);
             Assert.That(progress.PrepareCount, Is.Zero);
+            Assert.That(controller.CurrentObjective, Does.Contain("프롤로그"));
 
             controller.RestoreToNodeOrPrologue(0);
             controller.HandleEscapePressed();

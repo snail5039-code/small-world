@@ -11,12 +11,20 @@ namespace SmallWorld.UI
 
         public bool IsPromptVisible { get; private set; }
 
+        private void Awake() => ApplyTheme();
+
         public void Configure(Graphic crosshairGraphic, CanvasGroup group, Text text)
         {
             crosshair = crosshairGraphic;
             promptGroup = group;
             promptText = text;
+            ApplyTheme();
             HidePrompt();
+        }
+
+        private void ApplyTheme()
+        {
+            SmallWorldUiTheme.ApplyText(promptText, SmallWorldTextRole.Prompt);
         }
 
         public void SetCrosshairVisible(bool visible)

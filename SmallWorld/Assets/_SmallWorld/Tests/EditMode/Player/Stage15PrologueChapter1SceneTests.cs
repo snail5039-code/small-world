@@ -244,18 +244,62 @@ namespace SmallWorld.Player.Tests
             Assert.That(yuna.transform.localScale.y, Is.LessThan(1.4f));
             Assert.That(Mathf.Abs(yuna.transform.position.x - arrival.transform.position.x), Is.GreaterThan(4f),
                 "The first objective must remain beside, not directly across, the central sight line.");
+            Assert.That(yuna.transform.position.x, Is.GreaterThan(4f),
+                "Yuna stays on the right side so the upper-left objective HUD never covers her label.");
             Assert.That(yunaLabel.transform.position.y - yuna.transform.position.y, Is.GreaterThan(2.8f),
                 "The label must stay above the objective frame and character silhouette.");
 
             TextMesh prologueSign = GameObject.Find("Route Room 0 Entrance Sign").GetComponent<TextMesh>();
             Assert.That(prologueSign.transform.position.x, Is.Zero.Within(0.01f));
-            Assert.That(prologueSign.transform.position.z, Is.GreaterThan(14f));
+            Assert.That(prologueSign.transform.position.z, Is.InRange(-3f, 0f),
+                "The prologue title must be readable from Arrival instead of shrinking on the far wall.");
             Assert.That(Mathf.Abs(prologueSign.transform.position.x), Is.LessThan(12f),
                 "The room title needs safe horizontal margins and must not be clipped by a side wall.");
 
             foreach (TextMesh worldText in Object.FindObjectsByType<TextMesh>(FindObjectsSortMode.None))
+            {
                 Assert.That(worldText.transform.rotation, Is.EqualTo(Quaternion.identity),
                     worldText.name + " is mirrored or tilted away from the route arrival.");
+                Assert.That(worldText.fontSize, Is.GreaterThanOrEqualTo(64));
+                Assert.That(worldText.characterSize, Is.GreaterThanOrEqualTo(0.09f));
+                Assert.That(worldText.color.maxColorComponent, Is.GreaterThanOrEqualTo(0.85f));
+                GameObject plate = GameObject.Find(worldText.name + " Backplate");
+                Assert.That(plate, Is.Not.Null, worldText.name + " needs a dark contrast backplate.");
+                Assert.That(plate.GetComponent<Collider>().enabled, Is.False,
+                    worldText.name + " backplate must not obstruct the route.");
+                Assert.That(plate.GetComponent<Renderer>().sharedMaterial.color.grayscale, Is.LessThan(0.12f));
+            }
+
+            string[] koreanWorldTitles =
+            {
+                "프롤로그 · 하얀 방", "1장 · 네 번째 자리", "2장 · 마지막 승강장", "3장 · 완벽한 하루",
+                "4장 · 얼굴 없는 사무실", "5장 · 장례식 없는 묘지", "6장 · 창문 안의 도시",
+                "최종장 · 아무것도 남지 않은 하얀 방"
+            };
+            for (int room = 0; room < koreanWorldTitles.Length; room++)
+            {
+                TextMesh title = GameObject.Find($"Route Room {room} Entrance Sign").GetComponent<TextMesh>();
+                Assert.That(title.text, Is.EqualTo(koreanWorldTitles[room]));
+                Assert.That(title.text, Does.Not.Contain("Chapter"));
+                Assert.That(title.text, Does.Not.Contain("Prologue"));
+            }
+
+            Light fill = GameObject.Find("Prologue Route Fill Light").GetComponent<Light>();
+            Assert.That(fill.intensity, Is.GreaterThanOrEqualTo(2.2f));
+            Assert.That(fill.range, Is.GreaterThanOrEqualTo(18f));
+            Assert.That(GameObject.Find("Prologue Warm Light").GetComponent<Light>().intensity,
+                Is.GreaterThanOrEqualTo(2.5f));
+            Assert.That(RenderSettings.ambientIntensity, Is.GreaterThanOrEqualTo(0.85f));
+            Assert.That(RenderSettings.ambientLight.grayscale, Is.GreaterThanOrEqualTo(0.2f));
+            Assert.That(RenderSettings.ambientMode, Is.EqualTo(UnityEngine.Rendering.AmbientMode.Flat));
+
+            Material yunaMaterial = yuna.GetComponent<Renderer>().sharedMaterial;
+            Assert.That(yunaMaterial.IsKeywordEnabled("_EMISSION"), Is.True);
+            Assert.That(yunaMaterial.GetColor("_EmissionColor").maxColorComponent, Is.GreaterThan(0.3f));
+            Renderer firstPath = GameObject.Find("Route Room 0 Path 1-1").GetComponent<Renderer>();
+            Assert.That(firstPath.sharedMaterial.IsKeywordEnabled("_EMISSION"), Is.True);
+            Assert.That(firstPath.sharedMaterial.GetColor("_EmissionColor").maxColorComponent,
+                Is.GreaterThan(0.25f), "The first route markers need to remain visible above the floor value.");
 
             string[] representativeProps =
             {

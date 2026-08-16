@@ -131,6 +131,29 @@ namespace SmallWorld.Player.Tests
             Assert.That(DialogueCursorMode.RequestedVisible, Is.True);
         }
 
+        [Test]
+        public void RealityRoomGameplayShortcuts_AreRejectedBehindRecordsAndSaveUi()
+        {
+            Type roomType = GetRealityRoomControllerType();
+            Component room = UnityEngine.Object.FindFirstObjectByType(roomType) as Component;
+            MethodInfo canUse = roomType.GetMethod("CanUseGameplayShortcuts",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(room, Is.Not.Null);
+            Assert.That(canUse, Is.Not.Null);
+            Assert.That((bool)canUse.Invoke(room, null), Is.True);
+
+            Stage8RecordView records = FindRequired<Stage8RecordView>();
+            Assert.That(records.Open(), Is.True);
+            Assert.That((bool)canUse.Invoke(room, null), Is.False,
+                "M and other gameplay shortcuts must not fire behind records.");
+            records.Close();
+
+            Stage10ManualSavePanel savePanel = FindRequired<Stage10ManualSavePanel>();
+            savePanel.Open();
+            Assert.That((bool)canUse.Invoke(room, null), Is.False,
+                "M and other gameplay shortcuts must not fire behind save UI.");
+        }
+
         private static T FindRequired<T>() where T : UnityEngine.Object
         {
             T value = UnityEngine.Object.FindFirstObjectByType<T>(FindObjectsInactive.Include);

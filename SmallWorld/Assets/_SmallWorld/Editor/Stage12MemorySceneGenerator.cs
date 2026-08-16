@@ -5,6 +5,7 @@ using System.Reflection;
 using SmallWorld.Core;
 using SmallWorld.Flow;
 using SmallWorld.Player;
+using SmallWorld.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -206,7 +207,19 @@ namespace SmallWorld.Editor
             Canvas canvas = hud.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 10;
-            hud.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            CanvasScaler scaler = hud.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
+
+            var safeArea = new GameObject("Safe Area", typeof(RectTransform));
+            safeArea.transform.SetParent(hud.transform, false);
+            RectTransform safeRect = (RectTransform)safeArea.transform;
+            safeRect.anchorMin = Vector2.zero;
+            safeRect.anchorMax = Vector2.one;
+            safeRect.offsetMin = safeRect.offsetMax = Vector2.zero;
+            safeArea.AddComponent<SafeAreaFitter>();
 
             var crosshairObject = new GameObject("Crosshair", typeof(RectTransform));
             crosshairObject.transform.SetParent(hud.transform, false);
@@ -218,7 +231,7 @@ namespace SmallWorld.Editor
             crosshair.raycastTarget = false;
 
             var interactionUi = new GameObject("Interaction UI", typeof(RectTransform));
-            interactionUi.transform.SetParent(hud.transform, false);
+            interactionUi.transform.SetParent(safeArea.transform, false);
             RectTransform interactionRect = (RectTransform)interactionUi.transform;
             interactionRect.anchorMin = Vector2.zero;
             interactionRect.anchorMax = Vector2.one;

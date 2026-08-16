@@ -1,7 +1,7 @@
 {
   "name": "SmallWorld.Player",
   "rootNamespace": "SmallWorld.Player",
-  "references": ["SmallWorld.Services", "Unity.InputSystem", "Unity.ugui"],
+  "references": ["SmallWorld.Services", "SmallWorld.UI.Stage6", "Unity.InputSystem", "Unity.ugui"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

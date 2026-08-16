@@ -1,4 +1,5 @@
 using System.Collections;
+using SmallWorld.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,27 +10,40 @@ namespace SmallWorld.Player
         [SerializeField] private Text promptText;
         [SerializeField] private Text feedbackText;
         private Coroutine feedbackRoutine;
+        private bool suppressed;
 
         public string CurrentPrompt => promptText != null ? promptText.text : string.Empty;
+        public bool IsSuppressed => suppressed;
+
+        private void Awake() => ApplyTheme();
 
         public void Configure(Text prompt, Text feedback)
         {
             promptText = prompt;
             feedbackText = feedback;
+            ApplyTheme();
             SetPrompt(string.Empty);
             if (feedbackText != null) feedbackText.gameObject.SetActive(false);
+        }
+
+        private void ApplyTheme()
+        {
+            SmallWorldUiTheme.ApplyText(promptText, SmallWorldTextRole.Prompt);
+            SmallWorldUiTheme.ApplyBottomCenterLayout(promptText, 0.18f, 760f, 52f);
+            SmallWorldUiTheme.ApplyText(feedbackText, SmallWorldTextRole.Feedback);
+            SmallWorldUiTheme.ApplyBottomCenterLayout(feedbackText, 0.27f, 760f, 64f);
         }
 
         public void SetPrompt(string prompt)
         {
             if (promptText == null) return;
-            promptText.text = string.IsNullOrWhiteSpace(prompt) ? string.Empty : $"[E] {prompt}";
+            promptText.text = suppressed ? string.Empty : SmallWorldUiTheme.FormatInteractionPrompt(prompt);
             promptText.gameObject.SetActive(promptText.text.Length > 0);
         }
 
         public void ShowFeedback(string message, float duration = 2.5f)
         {
-            if (feedbackText == null) return;
+            if (feedbackText == null || suppressed) return;
             if (feedbackRoutine != null) StopCoroutine(feedbackRoutine);
             feedbackRoutine = StartCoroutine(ShowFeedbackRoutine(message, duration));
         }
@@ -37,10 +51,29 @@ namespace SmallWorld.Player
         private IEnumerator ShowFeedbackRoutine(string message, float duration)
         {
             feedbackText.text = message;
+            feedbackText.color = SmallWorldUiTheme.FeedbackColor(message);
             feedbackText.gameObject.SetActive(!string.IsNullOrWhiteSpace(message));
             yield return new WaitForSecondsRealtime(duration);
             feedbackText.gameObject.SetActive(false);
             feedbackRoutine = null;
+        }
+
+        public void SetSuppressed(bool value)
+        {
+            if (suppressed == value) return;
+            suppressed = value;
+            if (!suppressed) return;
+            if (feedbackRoutine != null)
+            {
+                StopCoroutine(feedbackRoutine);
+                feedbackRoutine = null;
+            }
+            if (promptText != null)
+            {
+                promptText.text = string.Empty;
+                promptText.gameObject.SetActive(false);
+            }
+            if (feedbackText != null) feedbackText.gameObject.SetActive(false);
         }
     }
 }

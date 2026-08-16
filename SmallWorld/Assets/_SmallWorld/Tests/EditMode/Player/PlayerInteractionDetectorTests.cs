@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SmallWorld.Player.Tests
 {
@@ -107,6 +108,35 @@ namespace SmallWorld.Player.Tests
 
             Assert.That(detector.HasTarget, Is.False);
             Assert.That(detector.CurrentInteractable, Is.Null);
+        }
+
+        [Test]
+        public void InteractionHud_SuppressionHidesPromptAndRejectsUiBehindModalOwners()
+        {
+            GameObject viewObject = new GameObject("Interaction HUD Suppression Test");
+            var promptObject = new GameObject("Prompt");
+            promptObject.transform.SetParent(viewObject.transform);
+            Text prompt = promptObject.AddComponent<Text>();
+            var feedbackObject = new GameObject("Feedback");
+            feedbackObject.transform.SetParent(viewObject.transform);
+            Text feedback = feedbackObject.AddComponent<Text>();
+            InteractionPromptView view = viewObject.AddComponent<InteractionPromptView>();
+            view.Configure(prompt, feedback);
+            view.SetPrompt("조사하기");
+            Assert.That(view.CurrentPrompt, Does.Contain("[E]"));
+
+            view.SetSuppressed(true);
+            view.SetPrompt("UI 뒤에서 실행되면 안 됨");
+            view.ShowFeedback("UI 뒤 피드백");
+            Assert.That(view.IsSuppressed, Is.True);
+            Assert.That(view.CurrentPrompt, Is.Empty);
+            Assert.That(promptObject.activeSelf, Is.False);
+            Assert.That(feedbackObject.activeSelf, Is.False);
+
+            view.SetSuppressed(false);
+            view.SetPrompt("다시 조사하기");
+            Assert.That(view.CurrentPrompt, Does.Contain("다시 조사하기"));
+            Assert.That(promptObject.activeSelf, Is.True);
         }
 
         private PlayerInteractionDetector CreateDetector()

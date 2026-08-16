@@ -88,10 +88,10 @@ namespace SmallWorld.Editor
 
             Canvas canvas = CreateCanvas("Loading Canvas", 100);
             CanvasGroup group = canvas.gameObject.AddComponent<CanvasGroup>();
-            Image backdrop = CreateImage("Backdrop", canvas.transform, Background);
+            Image backdrop = CreateImage("Backdrop", CanvasContent(canvas), Background);
             Stretch(backdrop.rectTransform);
 
-            Text label = CreateText("Loading Label", backdrop.transform, "LOADING", 28, TextAnchor.MiddleCenter);
+            Text label = CreateText("Loading Label", backdrop.transform, "불러오는 중", 28, TextAnchor.MiddleCenter);
             SetRect(label.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(340f, 60f), new Vector2(0f, 40f));
 
             Slider slider = CreateSlider(backdrop.transform);
@@ -109,7 +109,7 @@ namespace SmallWorld.Editor
             CreateEventSystem();
 
             Canvas canvas = CreateCanvas("Main Menu Canvas");
-            Image backdrop = CreateImage("Backdrop", canvas.transform, Background);
+            Image backdrop = CreateImage("Backdrop", CanvasContent(canvas), Background);
             Stretch(backdrop.rectTransform);
             Image panel = CreateImage("Menu Panel", backdrop.transform, Panel);
             SetRect(panel.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(520f, 460f), Vector2.zero);
@@ -117,8 +117,8 @@ namespace SmallWorld.Editor
             Text title = CreateText("Title", panel.transform, "SMALL WORLD", 42, TextAnchor.MiddleCenter);
             SetRect(title.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(440f, 100f), new Vector2(0f, 125f));
 
-            Button newGame = CreateButton("New Game Button", panel.transform, "NEW GAME", new Vector2(0f, 10f));
-            Button quit = CreateButton("Quit Button", panel.transform, "QUIT", new Vector2(0f, -85f));
+            Button newGame = CreateButton("New Game Button", panel.transform, "새 게임", new Vector2(0f, 10f));
+            Button quit = CreateButton("Quit Button", panel.transform, "종료", new Vector2(0f, -85f));
 
             TitleScreenController controller = panel.gameObject.AddComponent<TitleScreenController>();
             controller.Configure(newGame, quit);
@@ -146,7 +146,7 @@ namespace SmallWorld.Editor
             flow.AddComponent<RealityRoomController>();
 
             Canvas canvas = CreateCanvas("Reality Room UI");
-            Text hint = CreateText("Return Hint", canvas.transform, "ESC  -  RETURN TO MENU", 20, TextAnchor.MiddleCenter);
+            Text hint = CreateText("Return Hint", CanvasContent(canvas), "Esc · 메뉴 열기", 20, TextAnchor.MiddleCenter);
             SetRect(hint.rectTransform, new Vector2(0.5f, 0f), new Vector2(420f, 50f), new Vector2(0f, 45f));
             Save(scene, SceneId.RealityRoom);
         }
@@ -180,8 +180,14 @@ namespace SmallWorld.Editor
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.matchWidthOrHeight = 0.5f;
             canvasObject.AddComponent<GraphicRaycaster>();
+            GameObject safeArea = new GameObject("Safe Area", typeof(RectTransform));
+            safeArea.transform.SetParent(canvasObject.transform, false);
+            Stretch((RectTransform)safeArea.transform);
+            safeArea.AddComponent<SafeAreaFitter>();
             return canvas;
         }
+
+        private static Transform CanvasContent(Canvas canvas) => canvas.transform.Find("Safe Area") ?? canvas.transform;
 
         private static void CreateEventSystem()
         {

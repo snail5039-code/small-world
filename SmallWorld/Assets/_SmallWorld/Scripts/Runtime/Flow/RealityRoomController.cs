@@ -95,6 +95,7 @@ namespace SmallWorld.Flow
         {
             if (Keyboard.current != null && Keyboard.current.mKey.wasPressedThisFrame)
             {
+                if (!CanUseGameplayShortcuts()) return;
                 if (SceneTransitionService.Instance != null)
                     await SceneTransitionService.Instance.LoadSceneAsync(SceneId.FirstMemory);
                 return;
@@ -147,6 +148,16 @@ namespace SmallWorld.Flow
         {
             if (manualSavePanel == null)
                 manualSavePanel = FindFirstObjectByType<Stage10ManualSavePanel>(FindObjectsInactive.Include);
+        }
+
+        internal bool CanUseGameplayShortcuts()
+        {
+            ResolveManualSavePanel();
+            if (manualSavePanel != null && manualSavePanel.IsOpen) return false;
+            if (photoPuzzleView != null && photoPuzzleView.IsOpen) return false;
+            if (recordView != null && recordView.IsOpen) return false;
+            if (dialogueView != null && dialogueView.IsDialogueActive) return false;
+            return stage6UI == null || stage6UI.StateMachine.Current == UIState.Gameplay;
         }
 
         private void OnInteractionCompleted(InteractableBase current)

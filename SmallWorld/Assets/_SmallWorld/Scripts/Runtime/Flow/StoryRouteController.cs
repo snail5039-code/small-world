@@ -4,6 +4,7 @@ using SmallWorld.Core;
 using SmallWorld.Player;
 using SmallWorld.Save.Stage10.Integration;
 using SmallWorld.Save.Story;
+using SmallWorld.UI;
 using SmallWorld.UI.Stage7;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -52,6 +53,53 @@ namespace SmallWorld.Flow
         public Transform MemoryEntry;
     }
 
+    public readonly struct StoryRouteGuidanceLayout
+    {
+        public StoryRouteGuidanceLayout(Rect panel, Rect title, Rect location, Rect objectiveHeading,
+            Rect objective, Rect dialogue, int titleFont, int locationFont, int objectiveFont,
+            int dialogueFont, bool hasDialogue, Color panelColor, Color titleColor,
+            Color objectiveLabelColor, Color bodyColor)
+        {
+            Panel = panel;
+            Title = title;
+            Location = location;
+            ObjectiveHeading = objectiveHeading;
+            Objective = objective;
+            Dialogue = dialogue;
+            TitleFont = titleFont;
+            LocationFont = locationFont;
+            ObjectiveFont = objectiveFont;
+            DialogueFont = dialogueFont;
+            HasDialogue = hasDialogue;
+            PanelColor = panelColor;
+            TitleColor = titleColor;
+            ObjectiveLabelColor = objectiveLabelColor;
+            BodyColor = bodyColor;
+        }
+
+        public Rect Panel { get; }
+        public Rect Title { get; }
+        public Rect Location { get; }
+        public Rect ObjectiveHeading { get; }
+        public Rect Objective { get; }
+        public Rect Dialogue { get; }
+        public int TitleFont { get; }
+        public int LocationFont { get; }
+        public int ObjectiveFont { get; }
+        public int DialogueFont { get; }
+        public bool HasDialogue { get; }
+        public Rect ObjectiveLabel => ObjectiveHeading;
+        public Rect ObjectiveText => Objective;
+        public int TitleFontSize => LocationFont;
+        public int ObjectiveFontSize => ObjectiveFont;
+        public int DialogueFontSize => DialogueFont;
+        public bool WordWrap => true;
+        public Color PanelColor { get; }
+        public Color TitleColor { get; }
+        public Color ObjectiveLabelColor { get; }
+        public Color BodyColor { get; }
+    }
+
     public sealed class StoryRouteController : MonoBehaviour
     {
         private enum RuntimeOverlay { None, Records, Paused }
@@ -89,6 +137,32 @@ namespace SmallWorld.Flow
         public static string PauseMessage => "Esc를 누르면 이야기로 돌아갑니다.";
         public static string RecordsTitle => "기록";
         public static string EmptyRecordsMessage => "아직 수집한 기록이 없습니다.\n\nTab 또는 Esc를 누르면 닫힙니다.";
+        public static string GuidanceTitle => "이야기 안내";
+        public static string GuidanceObjectiveTitle => "현재 목표";
+        public static Color GuidanceBackgroundColor => SmallWorldUiTheme.Surface;
+        public static Color GuidanceAccentColor => SmallWorldUiTheme.Accent;
+        public static Color GuidancePrimaryTextColor => SmallWorldUiTheme.PrimaryText;
+
+        public static StoryRouteGuidanceLayout GuidanceLayout(int screenWidth, int screenHeight, bool hasArrivalDialogue)
+        {
+            float margin = Mathf.Clamp(screenWidth * 0.014f, 16f, 28f);
+            float width = Mathf.Clamp(screenWidth * 0.28f, 360f, 480f);
+            width = Mathf.Min(width, Mathf.Max(280f, screenWidth - margin * 2f));
+            float height = hasArrivalDialogue ? 128f : 94f;
+            height = Mathf.Min(height, Mathf.Max(100f, screenHeight - margin * 2f));
+            Rect panel = new Rect(margin, margin, width, height);
+            float x = panel.x + 18f;
+            float contentWidth = panel.width - 32f;
+            return new StoryRouteGuidanceLayout(
+                panel,
+                new Rect(x, panel.y + 6f, 80f, 20f),
+                new Rect(x + 88f, panel.y + 6f, contentWidth - 88f, 20f),
+                new Rect(x, panel.y + 32f, contentWidth, 14f),
+                new Rect(x, panel.y + 52f, contentWidth, 30f),
+                hasArrivalDialogue ? new Rect(x, panel.y + 88f, contentWidth, 28f) : Rect.zero,
+                12, 18, 15, 14, hasArrivalDialogue,
+                GuidanceBackgroundColor, GuidanceAccentColor, GuidanceAccentColor, GuidancePrimaryTextColor);
+        }
 
         public static Rect RuntimeOverlayRect(int screenWidth, int screenHeight, bool paused)
         {
@@ -270,11 +344,19 @@ namespace SmallWorld.Flow
             if (runtimeOverlay == RuntimeOverlay.None) return;
             bool paused = runtimeOverlay == RuntimeOverlay.Paused;
             Rect panel = RuntimeOverlayRect(Screen.width, Screen.height, paused);
-            GUIStyle boxStyle = new GUIStyle(GUI.skin.box)
+            Color previousColor = GUI.color;
+            GUI.color = SmallWorldUiTheme.SurfaceRaised;
+            GUI.DrawTexture(panel, Texture2D.whiteTexture);
+            GUI.color = SmallWorldUiTheme.Accent;
+            GUI.DrawTexture(new Rect(panel.x, panel.y, 5f, panel.height), Texture2D.whiteTexture);
+            GUI.color = previousColor;
+            GUIStyle titleStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height / 60f), 14, 20),
-                alignment = TextAnchor.UpperCenter
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleLeft
             };
+            titleStyle.normal.textColor = SmallWorldUiTheme.Accent;
             GUIStyle messageStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height / 68f), 13, 18),
@@ -282,33 +364,71 @@ namespace SmallWorld.Flow
                 wordWrap = true,
                 padding = new RectOffset(8, 8, 4, 4)
             };
-            GUI.Box(panel, paused ? PauseTitle : RecordsTitle, boxStyle);
-            Rect message = new Rect(panel.x + 18f, panel.y + 36f, panel.width - 36f, panel.height - 48f);
+            messageStyle.normal.textColor = SmallWorldUiTheme.PrimaryText;
+            GUI.Label(new Rect(panel.x + 18f, panel.y + 8f, panel.width - 36f, 24f),
+                paused ? PauseTitle : RecordsTitle, titleStyle);
+            Rect message = new Rect(panel.x + 18f, panel.y + 34f, panel.width - 36f, panel.height - 42f);
             GUI.Label(message, paused ? PauseMessage : EmptyRecordsMessage, messageStyle);
         }
 
         private void DrawGuidance()
         {
             if (string.IsNullOrWhiteSpace(currentLocation)) return;
-            float margin = Mathf.Clamp(Screen.width * 0.0125f, 12f, 24f);
-            float width = Mathf.Min(Mathf.Clamp(Screen.width * 0.36f, 340f, 680f), Screen.width - margin * 2f);
-            Rect panel = new Rect(margin, margin, width, Time.unscaledTime < arrivalNoticeUntil ? 112f : 76f);
-            GUIStyle boxStyle = new GUIStyle(GUI.skin.box)
+            bool showArrival = Time.unscaledTime < arrivalNoticeUntil && !string.IsNullOrWhiteSpace(arrivalDialogue);
+            StoryRouteGuidanceLayout layout = GuidanceLayout(Screen.width, Screen.height, showArrival);
+            Color previousColor = GUI.color;
+            GUI.color = GuidanceBackgroundColor;
+            GUI.DrawTexture(layout.Panel, Texture2D.whiteTexture);
+            GUI.color = GuidanceAccentColor;
+            GUI.DrawTexture(new Rect(layout.Panel.x, layout.Panel.y, 5f, layout.Panel.height), Texture2D.whiteTexture);
+            GUI.color = previousColor;
+
+            GUIStyle eyebrowStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height / 64f), 14, 19),
-                alignment = TextAnchor.UpperCenter
+                fontSize = layout.TitleFont,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleLeft
             };
-            GUIStyle labelStyle = new GUIStyle(GUI.skin.label)
+            eyebrowStyle.normal.textColor = GuidanceAccentColor;
+            GUIStyle locationStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height / 72f), 13, 17),
+                fontSize = layout.LocationFont,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleLeft,
+                clipping = TextClipping.Clip
+            };
+            locationStyle.normal.textColor = GuidancePrimaryTextColor;
+            GUIStyle objectiveStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = layout.ObjectiveFont,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.UpperLeft,
                 wordWrap = true
             };
-            labelStyle.normal.textColor = Color.white;
-            GUI.Box(panel, currentLocation, boxStyle);
-            GUI.Label(new Rect(panel.x + 18f, panel.y + 30f, panel.width - 36f, 38f),
-                $"현재 목표: {currentObjective}", labelStyle);
-            if (Time.unscaledTime < arrivalNoticeUntil)
-                GUI.Label(new Rect(panel.x + 18f, panel.y + 68f, panel.width - 36f, 36f), arrivalDialogue, labelStyle);
+            objectiveStyle.normal.textColor = Color.white;
+            GUIStyle dialogueStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = layout.DialogueFont,
+                alignment = TextAnchor.MiddleLeft,
+                wordWrap = true,
+                padding = new RectOffset(8, 8, 0, 0)
+            };
+            dialogueStyle.normal.textColor = new Color(0.82f, 0.9f, 1f);
+
+            GUI.Label(layout.Title, GuidanceTitle, eyebrowStyle);
+            GUI.Label(layout.Location, currentLocation, locationStyle);
+            GUI.color = new Color(1f, 1f, 1f, 0.18f);
+            GUI.DrawTexture(new Rect(layout.Title.x, layout.Panel.y + 29f, layout.Title.width, 1f), Texture2D.whiteTexture);
+            GUI.color = previousColor;
+            GUI.Label(layout.ObjectiveHeading, GuidanceObjectiveTitle, eyebrowStyle);
+            GUI.Label(layout.Objective, currentObjective, objectiveStyle);
+            if (layout.HasDialogue)
+            {
+                GUI.color = new Color(0.18f, 0.3f, 0.42f, 0.72f);
+                GUI.DrawTexture(layout.Dialogue, Texture2D.whiteTexture);
+                GUI.color = previousColor;
+                GUI.Label(layout.Dialogue, arrivalDialogue, dialogueStyle);
+            }
         }
 
         public bool TryTravelTo(int index, out string feedback)
