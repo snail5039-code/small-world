@@ -4,7 +4,7 @@
 > 읽는 경우: 모든 작업 시작, 인수인계, 단계 완료 판단 시.
 > 관련 문서: [`INDEX.md`](INDEX.md), [`roadmap/stage-15.md`](roadmap/stage-15.md), [`management/STAGE14_HANDOFF.md`](management/STAGE14_HANDOFF.md), [`management/WORKFLOW.md`](management/WORKFLOW.md)
 
-- 기능 기준 커밋: `cf9ab9e` (`fix(stage15): 프롤로그 현실방 복귀와 화면 구성 수정`)
+- 기능 기준 커밋: `d807ce0` (`feat(stage15): establish baseline UI presentation`)
 - 14단계 인수인계: [`management/STAGE14_HANDOFF.md`](management/STAGE14_HANDOFF.md)
 - 완료 단계: 1~14
 - 현재 구현 단계: **15단계 — 전체 스토리 구현**
@@ -13,9 +13,9 @@
 - 최근 구현: `OpeningStoryAction` 150개를 `04_StoryRoute`의 실제 조사 오브젝트에 정확히 한 번씩 연결했습니다. 2장~최종장의 요약 Dialogue/Puzzle/Memory 표식만 눌러 장을 완료하던 우회 경로를 차단했고, 방별 상호작용 갤러리·발광 비콘·형태와 팔레트 차이를 추가했습니다. 최종 선택 준비 이후에는 명시적으로 중단하며 엔딩은 실행하지 않습니다.
 - 디자인 상태: 반복 상자 갤러리를 제거하고 150개 행동을 의미 오브젝트로 구분했습니다. 프롤로그 공간명을 정면 벽 중앙으로 옮겨 잘림을 막고 유나 표지와 설명을 분리했으며, 유나에 머리·몸·양팔·두 눈과 정면 방향을 갖춘 자체 Primitive 실루엣을 적용했습니다. 최종 캐릭터 모델·텍스처·사운드와 실제 퍼즐 조작 연출은 아직 필요합니다.
 - 방 이동: PageUp/PageDown 및 각 방의 한국어 이전·다음 방 게이트로 해금된 과거 방을 왕복할 수 있습니다. 프롤로그에서는 전용 `현실방으로 돌아가기` 게이트 또는 Home 키로 현재 스토리 상태를 저장한 뒤 RealityRoom으로 복귀합니다. 과거 방문·복귀 중 CurrentChapter·관계·선택은 보존되며 UI가 열려 있으면 차단됩니다.
-- UI 상태: StoryRoute 일시정지·기록 문구를 한국어화하고 Pause 패널을 우상단 반응형 크기로 축소해 중앙 시야를 가리지 않도록 했습니다.
+- UI 상태: 1~15단계의 기본 UI 테마·안전영역·한글·프롬프트·모달 입력 소유권 계약을 통합했습니다. StoryRoute 목표·일시정지·기록은 compact 카드로 통일했고, 프롤로그 조도·한글 월드 표지·대비판 생성 규칙도 보강했습니다.
 - 다음 구현 범위: 장별 조사 스테이션을 실제 퍼즐 조작과 기억 공간 연출로 고도화.
-- 최신 검증: Unity 6000.3.18f1 일반 Editor Test Runner에서 EditMode 208/208, PlayMode 58/58 통과, Windows Development 빌드 성공, 런타임 스모크 PASS.
+- 최신 검증: 직전 기준 Unity 6000.3.18f1 일반 Editor Test Runner에서 EditMode 208/208, PlayMode 58/58 통과, Windows Development 빌드 성공, 런타임 스모크 PASS. `d807ce0` UI 변경은 정적 검사만 통과했으며 LicensingClient 연결 실패로 씬 재생성·Unity 자동 테스트·새 빌드가 아직 필요합니다.
 - 라이선스 참고: 이 환경의 Personal 좌석은 배치 전용 `com.unity.editor.headless` 권한이 없어 `-batchmode` Editor 실행이 return code 198로 종료된다. 관리자 검증은 일반 Editor 자동 실행으로 수행한다.
 - 이후 단계: 시작 금지. 15단계는 가시적 하위 작업을 만들고 진행합니다.
 - 커밋·푸시 권한: 관리자에게만 있으며, 하위 작업은 별도 지시 없이는 금지합니다.
