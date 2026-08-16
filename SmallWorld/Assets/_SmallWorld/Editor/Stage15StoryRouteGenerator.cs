@@ -129,6 +129,7 @@ namespace SmallWorld.Editor
                     Transform[] anchors = CreateFinalChapterGameplay(hub.transform, progress, route, z);
                     dialogue = anchors[0]; puzzle = anchors[1]; memory = anchors[2];
                 }
+                CreateRoomSetDressing(hub.transform, i, z);
                 nodes[i] = new StoryRouteNode { Id = Ids[i], DisplayName = Names[i], Arrival = arrival, DialogueEntry = dialogue, PuzzleEntry = puzzle, MemoryEntry = memory };
                 CreateRoomWayfinding(hub.transform, i, z, arrival, dialogue, puzzle, memory);
                 if (i == 0)
@@ -662,8 +663,6 @@ namespace SmallWorld.Editor
             Color accent = AccentColors[chapterIndex];
             Material stationMaterial = CreateMaterial($"Route Room {chapterIndex} Action Material",
                 Color.Lerp(FloorColors[chapterIndex], accent, 0.42f), accent * 0.35f);
-            Material beaconMaterial = CreateMaterial($"Route Room {chapterIndex} Action Beacon Material",
-                accent, accent * 2.1f);
 
             for (int i = 0; i < count; i++)
             {
@@ -679,13 +678,8 @@ namespace SmallWorld.Editor
                 station.transform.localScale = visual.Scale;
                 ApplyMaterial(station, stationMaterial);
                 station.AddComponent<Stage15StoryActionInteractable>().ConfigureAction(progress, action,
-                    $"진행 단서 조사: {ObjectNames.NicifyVariableName(action.ToString())}");
+                    "조사하기: " + KoreanPropPrompt(action));
 
-                GameObject beacon = CreateBlock($"{station.name} Beacon", parent,
-                    position + Vector3.up * (visual.Scale.y + 0.35f), new Vector3(0.12f, 0.24f, 0.12f));
-                ApplyMaterial(beacon, beaconMaterial);
-                Collider beaconCollider = beacon.GetComponent<Collider>();
-                if (beaconCollider != null) beaconCollider.enabled = false;
                 created[i] = station.transform;
             }
 
@@ -697,6 +691,149 @@ namespace SmallWorld.Editor
             if (actions == null || actions.Length == 0)
                 throw new InvalidOperationException("A story chapter must expose at least one playable action.");
             return new[] { actions[0], actions[actions.Length / 2], actions[actions.Length - 1] };
+        }
+
+        private static void CreateRoomSetDressing(Transform parent, int room, float z)
+        {
+            Color wood = Color.Lerp(FloorColors[room], new Color(0.28f, 0.16f, 0.09f), 0.48f);
+            Color cloth = Color.Lerp(WallColors[room], AccentColors[room], 0.22f);
+            Color metal = Color.Lerp(WallColors[room], new Color(0.16f, 0.18f, 0.21f), 0.55f);
+            Material woodMaterial = CreateMaterial($"Route Room {room} Wood Material", wood);
+            Material clothMaterial = CreateMaterial($"Route Room {room} Cloth Material", cloth);
+            Material metalMaterial = CreateMaterial($"Route Room {room} Metal Material", metal);
+
+            // A real doorway silhouette establishes scale without blocking the two-metre central aisle.
+            DecorBlock($"Route Room {room} Entry Door Left", parent, new Vector3(-2.25f, 1.55f, z - 10.2f),
+                new Vector3(0.28f, 3.1f, 0.32f), woodMaterial);
+            DecorBlock($"Route Room {room} Entry Door Right", parent, new Vector3(2.25f, 1.55f, z - 10.2f),
+                new Vector3(0.28f, 3.1f, 0.32f), woodMaterial);
+            DecorBlock($"Route Room {room} Entry Door Lintel", parent, new Vector3(0f, 3.15f, z - 10.2f),
+                new Vector3(4.8f, 0.28f, 0.32f), woodMaterial);
+
+            switch (room)
+            {
+                case 0:
+                    CreateLivingRoomCluster(parent, z, woodMaterial, clothMaterial);
+                    break;
+                case 1:
+                    CreateApartmentCluster(parent, z, woodMaterial, metalMaterial);
+                    break;
+                case 2:
+                    CreateStationCluster(parent, z, metalMaterial, clothMaterial);
+                    break;
+                case 3:
+                    CreateCafeCluster(parent, z, woodMaterial, clothMaterial);
+                    break;
+                case 4:
+                    CreateOfficeCluster(parent, z, metalMaterial, clothMaterial);
+                    break;
+                case 5:
+                    CreateCemeteryCluster(parent, z, woodMaterial, metalMaterial);
+                    break;
+                case 6:
+                    CreateWindowCityCluster(parent, z, metalMaterial, clothMaterial);
+                    break;
+                default:
+                    CreateFinalRoomCluster(parent, z, woodMaterial, clothMaterial);
+                    break;
+            }
+        }
+
+        private static void CreateLivingRoomCluster(Transform parent, float z, Material wood, Material cloth)
+        {
+            DecorBlock("Prologue Living Rug", parent, new Vector3(0f, 0.025f, z - 1f), new Vector3(7f, 0.04f, 5f), cloth, false);
+            DecorBlock("Prologue Family Sofa", parent, new Vector3(-6.8f, 0.65f, z - 1f), new Vector3(3.6f, 1.3f, 1.25f), cloth);
+            DecorBlock("Prologue Coffee Table", parent, new Vector3(-3.5f, 0.45f, z - 1f), new Vector3(2.3f, 0.18f, 1.4f), wood);
+            for (int leg = 0; leg < 4; leg++)
+                DecorBlock($"Prologue Coffee Table Leg {leg + 1}", parent,
+                    new Vector3(-4.35f + (leg % 2) * 1.7f, 0.22f, z - 1.5f + (leg / 2) * 1f),
+                    new Vector3(0.14f, 0.45f, 0.14f), wood);
+            DecorBlock("Prologue Bookshelf", parent, new Vector3(8.8f, 1.5f, z + 3.5f), new Vector3(2.6f, 3f, 0.55f), wood);
+            DecorBlock("Prologue Floor Lamp", parent, new Vector3(-8.8f, 1.25f, z - 4.5f), new Vector3(0.16f, 2.5f, 0.16f), wood);
+        }
+
+        private static void CreateApartmentCluster(Transform parent, float z, Material wood, Material metal)
+        {
+            DecorBlock("Chapter 1 Kitchen Counter", parent, new Vector3(-7.5f, 0.9f, z + 1f), new Vector3(5f, 1.8f, 1.2f), wood);
+            for (int cabinet = 0; cabinet < 3; cabinet++)
+                DecorBlock($"Chapter 1 Wall Cabinet {cabinet + 1}", parent,
+                    new Vector3(-9f + cabinet * 1.45f, 2.8f, z + 1.35f), new Vector3(1.2f, 1.1f, 0.45f), wood);
+            DecorBlock("Chapter 1 Hall Divider", parent, new Vector3(7.8f, 1.5f, z + 4f), new Vector3(0.28f, 3f, 7f), metal);
+        }
+
+        private static void CreateStationCluster(Transform parent, float z, Material metal, Material cloth)
+        {
+            float[] benchPositions = { -8f, -4.5f, 7.5f };
+            for (int bench = 0; bench < 3; bench++)
+                DecorBlock($"Chapter 2 Platform Bench {bench + 1}", parent,
+                    new Vector3(benchPositions[bench], 0.55f, z - 2f), new Vector3(2.6f, 0.5f, 0.75f), cloth);
+            for (int column = 0; column < 4; column++)
+                DecorBlock($"Chapter 2 Station Column {column + 1}", parent,
+                    new Vector3(column < 2 ? -6.5f : 6.5f, 2f, z - 7f + (column % 2) * 14f),
+                    new Vector3(0.55f, 4f, 0.55f), metal);
+        }
+
+        private static void CreateCafeCluster(Transform parent, float z, Material wood, Material cloth)
+        {
+            DecorBlock("Chapter 3 Cafe Counter", parent, new Vector3(-7.5f, 0.9f, z + 3f), new Vector3(5.5f, 1.8f, 1.2f), wood);
+            for (int table = 0; table < 3; table++)
+            {
+                float tableZ = z - 5f + table * 4.5f;
+                DecorBlock($"Chapter 3 Cafe Table {table + 1}", parent, new Vector3(5.8f, 0.65f, tableZ), new Vector3(2f, 0.18f, 2f), wood);
+                DecorBlock($"Chapter 3 Cafe Seat {table + 1}", parent, new Vector3(8f, 0.55f, tableZ), new Vector3(0.9f, 1.1f, 0.9f), cloth);
+            }
+        }
+
+        private static void CreateOfficeCluster(Transform parent, float z, Material metal, Material cloth)
+        {
+            for (int desk = 0; desk < 4; desk++)
+            {
+                float x = desk < 2 ? -6f : 6f;
+                float deskZ = z - 5f + (desk % 2) * 8f;
+                DecorBlock($"Chapter 4 Work Desk {desk + 1}", parent, new Vector3(x, 0.7f, deskZ), new Vector3(3.5f, 0.18f, 1.6f), metal);
+                DecorBlock($"Chapter 4 Desk Monitor {desk + 1}", parent, new Vector3(x, 1.45f, deskZ), new Vector3(1.4f, 0.85f, 0.16f), cloth);
+            }
+            DecorBlock("Chapter 4 Filing Wall", parent, new Vector3(-9f, 1.4f, z + 7f), new Vector3(3.2f, 2.8f, 0.75f), metal);
+        }
+
+        private static void CreateCemeteryCluster(Transform parent, float z, Material wood, Material stone)
+        {
+            for (int stoneIndex = 0; stoneIndex < 7; stoneIndex++)
+                DecorBlock($"Chapter 5 Procession Stone {stoneIndex + 1}", parent,
+                    new Vector3((stoneIndex % 2 == 0 ? -1f : 1f) * 1.45f, 0.035f, z - 8f + stoneIndex * 2.5f),
+                    new Vector3(1.15f, 0.06f, 0.8f), stone, false);
+            DecorBlock("Chapter 5 Chapel Bench Left", parent, new Vector3(-6f, 0.5f, z + 8f), new Vector3(4f, 1f, 0.75f), wood);
+            DecorBlock("Chapter 5 Chapel Bench Right", parent, new Vector3(6f, 0.5f, z + 8f), new Vector3(4f, 1f, 0.75f), wood);
+        }
+
+        private static void CreateWindowCityCluster(Transform parent, float z, Material metal, Material glow)
+        {
+            DecorBlock("Chapter 6 Observation Console", parent, new Vector3(0f, 0.9f, z + 7f), new Vector3(6f, 1.8f, 1.2f), metal);
+            for (int window = 0; window < 6; window++)
+            {
+                float x = -10f + window * 4f;
+                DecorBlock($"Chapter 6 Interior Window {window + 1}", parent, new Vector3(x, 2.5f, z + 12f), new Vector3(2.7f, 2.5f, 0.18f), glow, false);
+            }
+        }
+
+        private static void CreateFinalRoomCluster(Transform parent, float z, Material wood, Material cloth)
+        {
+            for (int rib = 0; rib < 6; rib++)
+            {
+                float x = -10f + rib * 4f;
+                DecorBlock($"Final Living House Rib {rib + 1}", parent, new Vector3(x, 2.2f, z - 2f), new Vector3(0.35f, 4.4f, 0.5f), wood);
+            }
+            DecorBlock("Final White Room Carpet", parent, new Vector3(0f, 0.03f, z + 11.5f), new Vector3(11f, 0.05f, 6f), cloth, false);
+        }
+
+        private static GameObject DecorBlock(string name, Transform parent, Vector3 position, Vector3 scale,
+            Material material, bool colliderEnabled = true)
+        {
+            GameObject item = CreateBlock(name, parent, position, scale);
+            ApplyMaterial(item, material);
+            Collider collider = item.GetComponent<Collider>();
+            if (collider != null) collider.enabled = colliderEnabled;
+            return item;
         }
 
         private static Transform[] CreateActionGrid(Transform parent, StoryRouteProgressAdapter progress, float z,
@@ -806,6 +943,24 @@ namespace SmallWorld.Editor
             return new SemanticActionVisual(ObjectNames.NicifyVariableName(value), fallback, new Vector3(0.75f, 0.85f, 0.75f));
         }
 
+        private static string KoreanPropPrompt(OpeningStoryAction action)
+        {
+            string value = action.ToString();
+            if (value.Contains("Yuna") || value.StartsWith("HearGirl") || value.Contains("Dohyeon")) return "인물의 기억";
+            if (value.Contains("Sofa") || value.Contains("Furniture") || value.Contains("Chair") || value.StartsWith("Seat")) return "기억 속 가구";
+            if (value.Contains("Door") || value.Contains("Checkpoint") || value.StartsWith("Enter") || value.StartsWith("Return")) return "이어지는 문";
+            if (value.Contains("Photo") || value.Contains("Certificate") || value.Contains("Menu") || value.Contains("Mail") || value.Contains("Board") || value.Contains("Frame")) return "남겨진 기록";
+            if (value.Contains("Clock") || value.Contains("Time")) return "멈춘 시계";
+            if (value.Contains("Badge") || value.Contains("Card") || value.Contains("Band") || value.Contains("Key")) return "신원을 밝히는 물건";
+            if (value.Contains("Grave") || value.Contains("DeadName")) return "이름 없는 묘비";
+            if (value.Contains("Monitor") || value.Contains("Computer") || value.Contains("Server") || value.Contains("Command")) return "기억 단말기";
+            if (value.Contains("Cable") || value.Contains("Power") || value.Contains("Waveform") || value.Contains("Announcement")) return "연결 제어 장치";
+            if (value.Contains("Window") || value.Contains("City")) return "도시가 비치는 창문";
+            if (value.Contains("Egg") || value.Contains("Apple") || value.Contains("Soup") || value.Contains("Bowl") || value.Contains("Coffee") || value.Contains("Drink") || value.Contains("Teacup")) return "식탁 위 흔적";
+            if (value.Contains("Core")) return "관리 핵심";
+            return "주변의 이야기 단서";
+        }
+
         private static Transform CreateMarker(string name, Transform parent, Vector3 position,
             StoryRouteController route, string nodeId, StoryRouteStep step, string prompt, string feedback)
         {
@@ -838,8 +993,9 @@ namespace SmallWorld.Editor
             Transform dialogue, Transform puzzle, Transform memory)
         {
             Color accent = AccentColors[index];
-            Material accentMaterial = CreateMaterial($"Route Room {index} Accent Material", accent, accent * 1.8f);
-            Material pathMaterial = CreateMaterial($"Route Room {index} Path Material", Color.Lerp(FloorColors[index], accent, 0.55f), accent * 0.55f);
+            Material accentMaterial = CreateMaterial($"Route Room {index} Accent Material", accent, accent * 0.55f);
+            Material pathMaterial = CreateMaterial($"Route Room {index} Path Material",
+                Color.Lerp(FloorColors[index], accent, 0.35f), accent * 0.3f);
 
             Vector3 signPosition = index == 0
                 ? new Vector3(0f, 4.15f, z - 1.5f)
@@ -860,7 +1016,7 @@ namespace SmallWorld.Editor
                     Vector3 position = Vector3.Lerp(from, to, step / 4f);
                     position.y = 0.025f;
                     GameObject marker = CreateBlock($"Route Room {index} Path {segment + 1}-{step}", parent,
-                        position, new Vector3(0.5f, 0.05f, 0.9f));
+                        position, new Vector3(0.18f, 0.035f, 0.32f));
                     marker.transform.rotation = Quaternion.LookRotation((to - from).normalized, Vector3.up);
                     ApplyMaterial(marker, pathMaterial);
                     Collider collider = marker.GetComponent<Collider>();
@@ -879,13 +1035,13 @@ namespace SmallWorld.Editor
             frame.transform.position = target;
             Vector3[] positions =
             {
-                new Vector3(-1.25f, 1.1f, 0f), new Vector3(1.25f, 1.1f, 0f),
-                new Vector3(0f, 2.15f, 0f), new Vector3(0f, 0.05f, 0f)
+                new Vector3(-0.65f, 0.65f, 0f), new Vector3(0.65f, 0.65f, 0f),
+                new Vector3(0f, 1.25f, 0f), new Vector3(0f, 0.05f, 0f)
             };
             Vector3[] scales =
             {
-                new Vector3(0.08f, 2.2f, 0.08f), new Vector3(0.08f, 2.2f, 0.08f),
-                new Vector3(2.6f, 0.08f, 0.08f), new Vector3(2.6f, 0.08f, 0.08f)
+                new Vector3(0.035f, 1.3f, 0.035f), new Vector3(0.035f, 1.3f, 0.035f),
+                new Vector3(1.35f, 0.035f, 0.035f), new Vector3(1.35f, 0.035f, 0.035f)
             };
             for (int i = 0; i < positions.Length; i++)
             {

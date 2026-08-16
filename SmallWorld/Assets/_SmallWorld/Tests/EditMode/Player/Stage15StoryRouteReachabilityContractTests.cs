@@ -58,6 +58,40 @@ namespace SmallWorld.Player.Tests
         }
 
         [Test]
+        public void EveryStoryActionStation_RemainsVisiblePhysicalAndSingleOwnerAfterEnvironmentPasses()
+        {
+            Type storyActionType = RequireType("SmallWorld.Flow.Stage15StoryActionInteractable");
+            Type interactableBaseType = RequireType("SmallWorld.Player.InteractableBase");
+            int checkedCount = 0;
+
+            foreach (MonoBehaviour behaviour in Resources.FindObjectsOfTypeAll<MonoBehaviour>())
+            {
+                if (behaviour == null || behaviour.GetType() != storyActionType ||
+                    !behaviour.gameObject.scene.IsValid()) continue;
+                checkedCount++;
+                Assert.That(behaviour.gameObject.activeInHierarchy, Is.True,
+                    behaviour.name + " became inactive during the environment pass.");
+                Assert.That(behaviour.enabled, Is.True, behaviour.name + " has a disabled action component.");
+                Assert.That(behaviour.GetComponents<Component>().Count(component =>
+                        component != null && interactableBaseType.IsAssignableFrom(component.GetType())),
+                    Is.EqualTo(1), behaviour.name + " has competing E interaction owners.");
+                Assert.That(behaviour.GetComponentsInChildren<Collider>(true)
+                        .Any(collider => collider.enabled && collider.gameObject.activeInHierarchy), Is.True,
+                    behaviour.name + " has no enabled physical interaction surface.");
+                Assert.That(behaviour.GetComponentsInChildren<Renderer>(true)
+                        .Any(renderer => renderer.enabled && renderer.gameObject.activeInHierarchy), Is.True,
+                    behaviour.name + " is physically present but no longer visible.");
+
+                var serialized = new SerializedObject(behaviour);
+                SerializedProperty prompt = serialized.FindProperty("prompt");
+                Assert.That(prompt, Is.Not.Null);
+                Assert.That(prompt.stringValue, Is.Not.Empty, behaviour.name + " has no E prompt.");
+            }
+
+            Assert.That(checkedCount, Is.EqualTo(150));
+        }
+
+        [Test]
         public void GenericThreeStepMarkers_CannotCompleteOrAdvanceAChapter()
         {
             var bypasses = new List<string>();
@@ -77,6 +111,34 @@ namespace SmallWorld.Player.Tests
             Assert.That(bypasses, Is.Empty,
                 "Dialogue/Puzzle/Memory summary markers bypass action order, retry, choice and save contracts. " +
                 "Replace them with Stage15StoryActionInteractable objects: " + string.Join(" | ", bypasses));
+        }
+
+        [Test]
+        public void RoomTravelAndRealityReturnGates_RemainVisiblePhysicalAndUniquelyInteractive()
+        {
+            var gates = new List<GameObject> { GameObject.Find("Route Room 0 Reality Return Gate") };
+            for (int room = 0; room < 8; room++)
+            {
+                if (room > 0) gates.Add(GameObject.Find($"Route Room {room} Previous Room Gate"));
+                if (room < 7) gates.Add(GameObject.Find($"Route Room {room} Next Room Gate"));
+            }
+
+            Assert.That(gates, Has.Count.EqualTo(15));
+            foreach (GameObject gate in gates)
+            {
+                Assert.That(gate, Is.Not.Null);
+                Assert.That(gate.activeInHierarchy, Is.True, gate.name + " is inactive.");
+                Assert.That(gate.GetComponentsInChildren<Collider>(true)
+                    .Any(collider => collider.enabled && collider.gameObject.activeInHierarchy), Is.True,
+                    gate.name + " cannot receive an E interaction ray.");
+                Assert.That(gate.GetComponentsInChildren<Renderer>(true)
+                    .Any(renderer => renderer.enabled && renderer.gameObject.activeInHierarchy), Is.True,
+                    gate.name + " is no longer visible after the environment pass.");
+                int interactionOwners = gate.GetComponents<MonoBehaviour>().Count(component =>
+                    component != null && (component.GetType().FullName == "SmallWorld.Flow.StoryRouteInteractable" ||
+                                          component.GetType().FullName == "SmallWorld.Flow.StoryRouteRealityReturnInteractable"));
+                Assert.That(interactionOwners, Is.EqualTo(1), gate.name + " has a missing or competing travel owner.");
+            }
         }
 
         [Test]

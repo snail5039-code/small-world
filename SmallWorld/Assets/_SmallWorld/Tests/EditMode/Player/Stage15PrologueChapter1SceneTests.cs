@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using SmallWorld.Save.Stage10.Integration;
@@ -186,9 +187,13 @@ namespace SmallWorld.Player.Tests
                 SerializedObject serialized = new SerializedObject(behaviour);
                 SerializedProperty progress = serialized.FindProperty("progress");
                 SerializedProperty action = serialized.FindProperty("action");
+                SerializedProperty prompt = serialized.FindProperty("prompt");
                 Assert.That(progress.objectReferenceValue, Is.Not.Null, behaviour.name + " has no progress adapter.");
                 Assert.That(action, Is.Not.Null, behaviour.name + " has no serialized story action.");
+                Assert.That(prompt, Is.Not.Null);
                 expected ??= action.enumNames;
+                Assert.That(prompt.stringValue, Does.Not.Contain(action.enumNames[action.enumValueIndex]),
+                    behaviour.name + " exposes an internal enum name instead of a story-facing Korean prompt.");
                 Assert.That(actions.Add(action.enumNames[action.enumValueIndex]), Is.True,
                     action.enumNames[action.enumValueIndex] + " is connected more than once.");
             }
@@ -214,6 +219,45 @@ namespace SmallWorld.Player.Tests
                 "Ordered actions must be represented by story props, not a station gallery.");
             Assert.That(GameObject.Find("Route Room 7 Interaction Gallery Floor"), Is.Null,
                 "The final chapter must preserve a readable room instead of a station gallery.");
+        }
+
+        [Test]
+        public void StoryRoute_EveryRoomReadsAsAPlaceInsteadOfADebugPropGallery()
+        {
+            string[][] roomEnvironment =
+            {
+                new[] { "Prologue Family Sofa", "Prologue Coffee Table", "Prologue Bookshelf", "Prologue Living Rug" },
+                new[] { "Chapter 1 Kitchen Counter", "Chapter 1 Wall Cabinet 1", "Chapter 1 Hall Divider" },
+                new[] { "Chapter 2 Platform Bench 1", "Chapter 2 Station Column 1", "Last Platform Concourse" },
+                new[] { "Chapter 3 Cafe Counter", "Chapter 3 Cafe Table 1", "Chapter 3 Cafe Seat 1" },
+                new[] { "Chapter 4 Work Desk 1", "Chapter 4 Desk Monitor 1", "Chapter 4 Filing Wall" },
+                new[] { "Chapter 5 Procession Stone 1", "Chapter 5 Chapel Bench Left", "Nameless Grave 1" },
+                new[] { "Chapter 6 Observation Console", "Chapter 6 Interior Window 1", "Scaled Reality City Basin" },
+                new[] { "Final Living House Rib 1", "Final White Room Carpet", "First White Room Chair - Player" }
+            };
+
+            for (int room = 0; room < roomEnvironment.Length; room++)
+            {
+                Assert.That(GameObject.Find($"Route Room {room} Entry Door Left"), Is.Not.Null);
+                Assert.That(GameObject.Find($"Route Room {room} Entry Door Right"), Is.Not.Null);
+                Assert.That(GameObject.Find($"Route Room {room} Entry Door Lintel"), Is.Not.Null);
+                foreach (string environmentObject in roomEnvironment[room])
+                    Assert.That(GameObject.Find(environmentObject), Is.Not.Null,
+                        $"Room {room} lacks its contextual environment object {environmentObject}.");
+
+                GameObject path = GameObject.Find($"Route Room {room} Path 1-1");
+                Assert.That(path.transform.localScale.x, Is.LessThanOrEqualTo(0.2f));
+                Assert.That(path.transform.localScale.z, Is.LessThanOrEqualTo(0.35f),
+                    "Wayfinding should read as a floor inlay, not a debug arrow.");
+
+                GameObject highlightEdge = GameObject.Find($"Route Room {room} Dialogue Highlight Edge 1");
+                Assert.That(highlightEdge.transform.localScale.x, Is.LessThanOrEqualTo(0.04f));
+                Assert.That(highlightEdge.transform.localScale.y, Is.LessThanOrEqualTo(1.35f));
+            }
+
+            GameObject[] sceneObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+            Assert.That(sceneObjects.Count(item => item.scene.IsValid() && item.name.EndsWith(" Beacon")), Is.Zero,
+                "Per-action glowing beacon poles expose the implementation grid instead of the story space.");
         }
 
         [Test]
