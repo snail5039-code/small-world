@@ -63,14 +63,38 @@ namespace SmallWorld.UI
             height = heightField;
             applyButton = apply;
             cancelButton = cancel;
+            ApplyTheme();
             applyButton?.onClick.AddListener(Submit);
             cancelButton?.onClick.AddListener(Cancel);
         }
 
         private void Awake()
         {
+            ApplyTheme();
             applyButton?.onClick.AddListener(Submit);
             cancelButton?.onClick.AddListener(Cancel);
+        }
+
+        private void ApplyTheme()
+        {
+            SmallWorldUiTheme.ApplySlider(master);
+            SmallWorldUiTheme.ApplySlider(music);
+            SmallWorldUiTheme.ApplySlider(sfx);
+            SmallWorldUiTheme.ApplySlider(voice);
+            SmallWorldUiTheme.ApplyButton(applyButton, "적용");
+            SmallWorldUiTheme.ApplyButton(cancelButton, "취소");
+            if (width != null) { SmallWorldUiTheme.ApplyText(width.textComponent, SmallWorldTextRole.Body); SetPlaceholder(width, "가로 해상도"); }
+            if (height != null) { SmallWorldUiTheme.ApplyText(height.textComponent, SmallWorldTextRole.Body); SetPlaceholder(height, "세로 해상도"); }
+            Text fullscreenLabel = fullscreen == null ? null : fullscreen.GetComponentInChildren<Text>(true);
+            if (fullscreenLabel != null) { fullscreenLabel.text = "전체 화면"; SmallWorldUiTheme.ApplyText(fullscreenLabel, SmallWorldTextRole.Body); }
+        }
+
+        private static void SetPlaceholder(InputField field, string value)
+        {
+            Text placeholder = field.placeholder == null ? null : field.placeholder.GetComponent<Text>();
+            if (placeholder == null) return;
+            placeholder.text = value;
+            SmallWorldUiTheme.ApplyText(placeholder, SmallWorldTextRole.Body);
         }
 
         private void OnDestroy()

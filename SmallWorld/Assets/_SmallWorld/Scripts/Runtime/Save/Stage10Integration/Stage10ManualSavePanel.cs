@@ -23,10 +23,14 @@ namespace SmallWorld.Save.Stage10.Integration
         private bool previousCursorVisible;
         private float previousTimeScale;
         public bool IsOpen => IsVisible();
-        public void Configure(CanvasGroup root, Button[] saves, Button[] loads, Button close) { panel = root; saveButtons = saves ?? Array.Empty<Button>(); loadButtons = loads ?? Array.Empty<Button>(); closeButton = close; Bind(); Close(); }
+        public void Configure(CanvasGroup root, Button[] saves, Button[] loads, Button close)
+        {
+            panel = root; saveButtons = saves ?? Array.Empty<Button>(); loadButtons = loads ?? Array.Empty<Button>(); closeButton = close;
+            ApplyTheme(); Bind(); Close();
+        }
         public void Configure(RealityRoomSaveCoordinator value) => coordinator = value;
         public void Configure(FirstPersonPlayerController value) => player = value;
-        private void Awake() { Bind(); Close(); }
+        private void Awake() { ApplyTheme(); Bind(); Close(); }
         private void OnDestroy() { RestoreInputState(); Unbind(); }
         public void Open()
         {
@@ -57,6 +61,15 @@ namespace SmallWorld.Save.Stage10.Integration
             if (saveButtons.Length > 0) saveButtons[0]?.onClick.RemoveListener(Save0); if (saveButtons.Length > 1) saveButtons[1]?.onClick.RemoveListener(Save1); if (saveButtons.Length > 2) saveButtons[2]?.onClick.RemoveListener(Save2);
             if (loadButtons.Length > 0) loadButtons[0]?.onClick.RemoveListener(Load0); if (loadButtons.Length > 1) loadButtons[1]?.onClick.RemoveListener(Load1); if (loadButtons.Length > 2) loadButtons[2]?.onClick.RemoveListener(Load2);
             closeButton?.onClick.RemoveListener(Close);
+        }
+        private void ApplyTheme()
+        {
+            SmallWorldUiTheme.ApplyPanel(panel, true);
+            for (int i = 0; i < saveButtons.Length; i++)
+                SmallWorldUiTheme.ApplyButton(saveButtons[i], $"슬롯 {i + 1} 저장");
+            for (int i = 0; i < loadButtons.Length; i++)
+                SmallWorldUiTheme.ApplyButton(loadButtons[i], $"슬롯 {i + 1} 불러오기");
+            SmallWorldUiTheme.ApplyButton(closeButton, "닫기");
         }
         private void CaptureInputState()
         {

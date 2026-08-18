@@ -55,6 +55,7 @@ namespace SmallWorld.UI.Stage7
             choiceButtons = choices ?? Array.Empty<Button>();
             player = playerController;
             stage6UI = stage6Controller != null ? stage6Controller : stage6UI;
+            ApplyTheme();
             BindButtons();
             SetVisible(historyGroup, false);
         }
@@ -62,8 +63,26 @@ namespace SmallWorld.UI.Stage7
         private void Awake()
         {
             if (stage6UI == null) stage6UI = FindFirstObjectByType<Stage6UIController>();
+            ApplyTheme();
             BindButtons();
             StartDialogue(Stage7DemoDialogue.Create());
+        }
+
+        private void ApplyTheme()
+        {
+            SmallWorldUiTheme.ApplyPanel(dialogueGroup, true);
+            SmallWorldUiTheme.ApplyPanel(historyGroup, true);
+            SmallWorldUiTheme.ApplyText(speakerText, SmallWorldTextRole.Title);
+            SmallWorldUiTheme.ApplyLongText(bodyText, false);
+            SmallWorldUiTheme.ApplyText(relationshipText, SmallWorldTextRole.Feedback);
+            SmallWorldUiTheme.ApplyLongText(historyText, true);
+            SmallWorldUiTheme.ApplyButton(advanceButton, "다음");
+            SmallWorldUiTheme.ApplyButton(skipButton, "건너뛰기");
+            SmallWorldUiTheme.ApplyButton(historyButton, "대화 기록");
+            SmallWorldUiTheme.ApplyButton(closeHistoryButton, "닫기");
+            foreach (Button choice in choiceButtons) SmallWorldUiTheme.ApplyButton(choice);
+            Text autoLabel = autoAdvanceToggle == null ? null : autoAdvanceToggle.GetComponentInChildren<Text>(true);
+            if (autoLabel != null) { autoLabel.text = "자동 진행"; SmallWorldUiTheme.ApplyText(autoLabel, SmallWorldTextRole.Body); }
         }
 
         private void OnDestroy()

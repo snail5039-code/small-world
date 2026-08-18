@@ -55,6 +55,48 @@ namespace SmallWorld.Player.Tests
                 scene + " needs an explicit safe-area root for 1280x720 and 1920x1080.");
         }
 
+        [TestCase("Assets/_SmallWorld/Scenes/00_Boot.unity")]
+        [TestCase("Assets/_SmallWorld/Scenes/01_MainMenu.unity")]
+        [TestCase("Assets/_SmallWorld/Scenes/02_RealityRoom.unity")]
+        [TestCase("Assets/_SmallWorld/Scenes/03_FirstMemory.unity")]
+        [TestCase("Assets/_SmallWorld/Scenes/04_StoryRoute.unity")]
+        public void SerializedLegacyTextSupportsKoreanAndLongCopyWithoutHorizontalClipping(string scene)
+        {
+            EditorSceneManager.OpenScene(scene);
+            Text[] texts = Object.FindObjectsByType<Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            Assert.That(texts, Is.Not.Empty);
+            foreach (Text text in texts)
+            {
+                Assert.That(text.font, Is.Not.Null, text.name + " has no serialized fallback font.");
+                Assert.That(text.fontSize, Is.GreaterThanOrEqualTo(12), text.name + " is unreadably small.");
+                string value = text.text ?? string.Empty;
+                Assert.That(value.IndexOf('\uFFFD'), Is.EqualTo(-1));
+                int hangul = value.Count(character => character >= '\uAC00' && character <= '\uD7A3');
+                if (hangul < 20 && !value.Contains("\n")) continue;
+                Assert.That(text.horizontalOverflow, Is.EqualTo(HorizontalWrapMode.Wrap),
+                    text.name + " can run outside its card at 1280x720.");
+                float height = Mathf.Abs(text.rectTransform.rect.height) > 0.1f
+                    ? Mathf.Abs(text.rectTransform.rect.height)
+                    : Mathf.Abs(text.rectTransform.sizeDelta.y);
+                Assert.That(height, Is.GreaterThanOrEqualTo(text.fontSize * 2f),
+                    text.name + " has no room for 2-4 lines of long Korean copy.");
+            }
+        }
+
+        [Test]
+        public void ExistingSceneApplicatorCoversTheWholePlayableSceneSet()
+        {
+            Type applicator = Type.GetType("SmallWorld.Editor.ExistingSceneUiBaselineApplicator, Assembly-CSharp-Editor");
+            Assert.That(applicator, Is.Not.Null);
+            FieldInfo targets = applicator.GetField("TargetScenes", BindingFlags.Public | BindingFlags.Static);
+            Assert.That(targets, Is.Not.Null);
+            string[] paths = targets.GetValue(null) as string[];
+            Assert.That(paths, Is.Not.Null);
+            CollectionAssert.AreEquivalent(SceneInventory.Cast<object[]>().Select(item => (string)item[0]), paths);
+            Assert.That(applicator.GetMethod("ApplyToLoadedScene", BindingFlags.Public | BindingFlags.Static), Is.Not.Null,
+                "The UI baseline must remain idempotently applicable without regenerating gameplay scenes.");
+        }
+
         [TestCase("Assets/_SmallWorld/Scenes/01_MainMenu.unity")]
         [TestCase("Assets/_SmallWorld/Scenes/02_RealityRoom.unity")]
         public void MenuAndRealityRoomHaveNoPlaceholderOrBrokenUserText(string scene)
@@ -93,6 +135,31 @@ namespace SmallWorld.Player.Tests
                 if (size.x <= 0f || size.y <= 0f) size = rect.sizeDelta;
                 Assert.That(Mathf.Abs(size.x), Is.GreaterThanOrEqualTo(44f), button.name + " hit width is too small.");
                 Assert.That(Mathf.Abs(size.y), Is.GreaterThanOrEqualTo(44f), button.name + " hit height is too small.");
+            }
+        }
+
+        [TestCase("Assets/_SmallWorld/Scenes/01_MainMenu.unity")]
+        [TestCase("Assets/_SmallWorld/Scenes/02_RealityRoom.unity")]
+        public void ButtonsInTheSamePanelHaveDistinctHitAreas(string scene)
+        {
+            EditorSceneManager.OpenScene(scene);
+            Button[] buttons = Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (IGrouping<Transform, Button> group in buttons.GroupBy(button => button.transform.parent))
+            {
+                Button[] siblings = group.ToArray();
+                for (int first = 0; first < siblings.Length; first++)
+                for (int second = first + 1; second < siblings.Length; second++)
+                {
+                    RectTransform a = siblings[first].transform as RectTransform;
+                    RectTransform b = siblings[second].transform as RectTransform;
+                    if (a == null || b == null || !a.gameObject.activeSelf || !b.gameObject.activeSelf) continue;
+                    if (AreMutuallyExclusiveDialogueControls(siblings[first], siblings[second])) continue;
+                    if (IsRuntimeMutuallyExclusiveDialogueControl(siblings[first], siblings[second])) continue;
+                    Rect aRect = AnchoredRect(a);
+                    Rect bRect = AnchoredRect(b);
+                    Assert.That(aRect.Overlaps(bRect), Is.False,
+                        siblings[first].name + " overlaps " + siblings[second].name + " in " + scene + ".");
+                }
             }
         }
 
@@ -168,6 +235,40 @@ namespace SmallWorld.Player.Tests
             while (current != null)
             {
                 if (current.name == "Stage 7 Dialogue UI") return true;
+                current = current.parent;
+            }
+            return false;
+        }
+
+        private static bool AreMutuallyExclusiveDialogueControls(Button first, Button second)
+        {
+            bool advanceAndChoice = first.name == "Advance Button" && second.name.StartsWith("Choice ", StringComparison.Ordinal) ||
+                                    second.name == "Advance Button" && first.name.StartsWith("Choice ", StringComparison.Ordinal);
+            return advanceAndChoice && IsRuntimePopulatedDialogueChoice(
+                first.name.StartsWith("Choice ", StringComparison.Ordinal) ? first : second);
+        }
+
+        private static Rect AnchoredRect(RectTransform rect)
+        {
+            Vector2 size = rect.rect.size;
+            if (size.x <= 0f || size.y <= 0f) size = rect.sizeDelta;
+            Vector2 bottomLeft = rect.anchoredPosition - Vector2.Scale(size, rect.pivot);
+            return new Rect(bottomLeft, size);
+        }
+
+        private static bool IsRuntimeMutuallyExclusiveDialogueControl(Button first, Button second)
+        {
+            bool advanceAndChoice = first.name == "Advance Button" && second.name.StartsWith("Choice ", StringComparison.Ordinal)
+                                    || second.name == "Advance Button" && first.name.StartsWith("Choice ", StringComparison.Ordinal);
+            return advanceAndChoice && IsUnder(first.transform, "Stage 7 Dialogue UI") &&
+                   IsUnder(second.transform, "Stage 7 Dialogue UI");
+        }
+
+        private static bool IsUnder(Transform current, string ancestor)
+        {
+            while (current != null)
+            {
+                if (current.name == ancestor) return true;
                 current = current.parent;
             }
             return false;

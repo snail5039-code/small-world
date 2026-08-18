@@ -341,6 +341,8 @@ namespace SmallWorld.Flow
         private void OnGUI()
         {
             DrawGuidance();
+            if (runtimeOverlay == RuntimeOverlay.None)
+                SmallWorldUiTheme.DrawKeyHelp(SmallWorldUiTheme.StoryRouteKeyHelp, Screen.width, Screen.height);
             if (runtimeOverlay == RuntimeOverlay.None) return;
             bool paused = runtimeOverlay == RuntimeOverlay.Paused;
             Rect panel = RuntimeOverlayRect(Screen.width, Screen.height, paused);

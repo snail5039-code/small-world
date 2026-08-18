@@ -19,7 +19,14 @@ namespace SmallWorld.Editor
             "Assets/_SmallWorld/Scenes/00_Boot.unity",
             "Assets/_SmallWorld/Scenes/01_MainMenu.unity",
             "Assets/_SmallWorld/Scenes/02_RealityRoom.unity",
-            "Assets/_SmallWorld/Scenes/03_FirstMemory.unity"
+            "Assets/_SmallWorld/Scenes/03_FirstMemory.unity",
+            "Assets/_SmallWorld/Scenes/04_StoryRoute.unity"
+        };
+
+        private static readonly string[] ModalLayerTokens =
+        {
+            "Pause", "Settings", "Dialogue", "Record", "Journal", "Inventory", "Inspection",
+            "Puzzle", "Save", "Loading"
         };
 
         private static readonly Dictionary<string, string> LocalizedText =
@@ -27,6 +34,8 @@ namespace SmallWorld.Editor
             {
                 ["Paused"] = "일시정지",
                 ["Press Esc to return to the story."] = "Esc를 누르면 이야기로 돌아갑니다.",
+                ["LOADING"] = "불러오는 중...",
+                ["ESC  -  RETURN TO MENU"] = "Esc  -  메뉴로 돌아가기",
                 ["No route records have been collected yet."] = "아직 수집한 기록이 없습니다.",
                 ["Button"] = "확인",
                 ["New Game"] = "새 게임",
@@ -53,12 +62,19 @@ namespace SmallWorld.Editor
             }
             if (!string.IsNullOrWhiteSpace(previous) && TargetScenes.Contains(previous))
                 EditorSceneManager.OpenScene(previous, OpenSceneMode.Single);
-            Debug.Log("[SmallWorld] Existing scene UI baseline applied to 00_Boot through 03_FirstMemory.");
+            Debug.Log("[SmallWorld] Existing scene UI baseline applied to 00_Boot through 04_StoryRoute.");
         }
 
         public static void ApplyToLoadedScene(Scene scene)
         {
             if (!scene.IsValid() || !scene.isLoaded) throw new ArgumentException("A loaded scene is required.");
+            foreach (GameObject item in FindInScene<GameObject>(scene))
+            {
+                if (!item.activeInHierarchy || item.name.IndexOf("Placeholder", StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+                item.name = item.name.Replace("Placeholder", "Runtime Panel");
+                EditorUtility.SetDirty(item);
+            }
             Canvas[] canvases = FindInScene<Canvas>(scene);
             foreach (Canvas canvas in canvases)
             {
@@ -76,12 +92,21 @@ namespace SmallWorld.Editor
             foreach (Text text in FindInScene<Text>(scene))
             {
                 string value = text.text ?? string.Empty;
-                foreach (KeyValuePair<string, string> replacement in LocalizedText)
-                    if (value.IndexOf(replacement.Key, StringComparison.OrdinalIgnoreCase) >= 0)
-                        value = value.Replace(replacement.Key, replacement.Value);
+                string trimmed = value.Trim();
+                KeyValuePair<string, string> replacement = LocalizedText.FirstOrDefault(item =>
+                    string.Equals(item.Key, trimmed, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrEmpty(replacement.Key)) value = replacement.Value;
+                if (string.IsNullOrWhiteSpace(value) && ContainsAny(text.name, "Inspection Title"))
+                    value = "조사";
                 text.text = value;
                 if (text.font == null) text.font = fallback;
-                text.fontSize = Mathf.Max(12, text.fontSize);
+                text.fontSize = Mathf.Max(14, text.fontSize);
+                text.horizontalOverflow = HorizontalWrapMode.Wrap;
+                text.verticalOverflow = VerticalWrapMode.Truncate;
+                text.resizeTextForBestFit = true;
+                text.resizeTextMinSize = 12;
+                text.resizeTextMaxSize = Mathf.Max(12, text.fontSize);
+                text.lineSpacing = Mathf.Max(1f, text.lineSpacing);
                 if (text.text.Contains("�")) text.text = text.text.Replace("�", string.Empty);
                 Image card = FindOpaqueBackground(text.transform.parent);
                 if (card != null && Contrast(text.color, card.color) < (text.fontSize >= 18 ? 3f : 4.5f))
@@ -92,6 +117,8 @@ namespace SmallWorld.Editor
             }
 
             foreach (Button button in FindInScene<Button>(scene)) ApplyButton(button, fallback);
+            ApplySemanticTheme(scene);
+            OrderScreenLayers(scene);
             foreach (CanvasGroup group in FindInScene<CanvasGroup>(scene))
             {
                 if (!group.gameObject.activeInHierarchy || group.alpha <= 0.01f)
@@ -135,16 +162,90 @@ namespace SmallWorld.Editor
             if (label == null) return;
             if (string.IsNullOrWhiteSpace(label.text)) label.text = LocalizeObjectName(button.name);
             if (label.font == null) label.font = fallback;
-            label.fontSize = Mathf.Max(14, label.fontSize);
+            label.fontSize = Mathf.Max(16, label.fontSize);
             Image background = button.GetComponent<Image>();
-            if (background != null && Contrast(label.color, background.color) < 4.5f)
+            if (background != null)
             {
-                background.color = new Color(0.06f, 0.08f, 0.11f, Mathf.Max(0.9f, background.color.a));
-                label.color = Color.white;
+                background.color = SmallWorldUiTheme.SurfaceRaised;
+                ColorBlock colors = button.colors;
+                colors.normalColor = Color.white;
+                colors.highlightedColor = new Color(1f, 0.78f, 0.57f, 1f);
+                colors.pressedColor = new Color(0.86f, 0.48f, 0.2f, 1f);
+                colors.selectedColor = colors.highlightedColor;
+                colors.disabledColor = new Color(0.45f, 0.48f, 0.52f, 0.65f);
+                button.colors = colors;
+                label.color = SmallWorldUiTheme.PrimaryText;
                 EditorUtility.SetDirty(background);
+                EditorUtility.SetDirty(button);
             }
             EditorUtility.SetDirty(label);
         }
+
+        private static void ApplySemanticTheme(Scene scene)
+        {
+            foreach (Image image in FindInScene<Image>(scene))
+            {
+                string name = image.name ?? string.Empty;
+                if (ContainsAny(name, "Backdrop", "Shade", "Dimmer"))
+                    image.color = new Color(0.015f, 0.02f, 0.03f, Mathf.Max(0.68f, image.color.a));
+                else if (ContainsAny(name, "Card", "Dialog Box", "Dialogue Box"))
+                    image.color = SmallWorldUiTheme.SurfaceRaised;
+                else continue;
+                EditorUtility.SetDirty(image);
+            }
+
+            foreach (Text text in FindInScene<Text>(scene))
+            {
+                string name = text.name ?? string.Empty;
+                if (ContainsAny(name, "Title", "Heading"))
+                {
+                    int size = Mathf.Max(20, text.fontSize);
+                    SmallWorldUiTheme.ApplyText(text, SmallWorldTextRole.Title);
+                    text.fontSize = size;
+                    text.resizeTextMaxSize = size;
+                }
+                else if (ContainsAny(name, "Prompt"))
+                {
+                    int size = Mathf.Max(17, text.fontSize);
+                    SmallWorldUiTheme.ApplyText(text, SmallWorldTextRole.Prompt);
+                    text.fontSize = size;
+                    text.resizeTextMaxSize = size;
+                }
+                else if (ContainsAny(name, "Feedback", "Status", "Hint"))
+                {
+                    int size = Mathf.Max(15, text.fontSize);
+                    SmallWorldUiTheme.ApplyText(text, SmallWorldTextRole.Feedback);
+                    text.fontSize = size;
+                    text.resizeTextMaxSize = size;
+                }
+                else continue;
+                text.resizeTextForBestFit = true;
+                text.resizeTextMinSize = 12;
+                EditorUtility.SetDirty(text);
+            }
+        }
+
+        private static void OrderScreenLayers(Scene scene)
+        {
+            foreach (Canvas canvas in FindInScene<Canvas>(scene).Where(item => item.renderMode != RenderMode.WorldSpace))
+            {
+                Transform parent = canvas.GetComponentInChildren<SafeAreaFitter>(true)?.transform ?? canvas.transform;
+                Transform[] children = parent.Cast<Transform>().ToArray();
+                foreach (Transform child in children.OrderBy(LayerRank).ThenBy(item => item.GetSiblingIndex()))
+                    child.SetAsLastSibling();
+            }
+        }
+
+        private static int LayerRank(Transform item)
+        {
+            string name = item.name ?? string.Empty;
+            if (ContainsAny(name, "HUD", "Objective", "Guidance")) return 0;
+            if (ContainsAny(name, "Prompt", "Feedback")) return 1;
+            return ModalLayerTokens.Any(token => name.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0) ? 2 : 0;
+        }
+
+        private static bool ContainsAny(string value, params string[] tokens) =>
+            tokens.Any(token => value.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0);
 
         private static void EnsureRealityModalOwnership(Scene scene)
         {

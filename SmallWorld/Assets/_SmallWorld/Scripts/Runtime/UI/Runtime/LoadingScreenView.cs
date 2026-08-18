@@ -8,10 +8,18 @@ namespace SmallWorld.UI
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private Slider progressBar;
 
+        private void Awake()
+        {
+            SmallWorldUiTheme.ApplyPanel(canvasGroup, true);
+            SmallWorldUiTheme.ApplySlider(progressBar);
+        }
+
         public void Configure(CanvasGroup group, Slider slider)
         {
             canvasGroup = group;
             progressBar = slider;
+            SmallWorldUiTheme.ApplyPanel(canvasGroup, true);
+            SmallWorldUiTheme.ApplySlider(progressBar);
             HideImmediate();
         }
 

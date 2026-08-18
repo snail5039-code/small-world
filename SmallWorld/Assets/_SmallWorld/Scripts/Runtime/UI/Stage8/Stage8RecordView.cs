@@ -56,6 +56,7 @@ namespace SmallWorld.UI.Stage8
             player = playerController;
             stage6UI = stage6Controller;
             dialogueView = dialogue;
+            ApplyTheme();
             Bind();
             SetVisible(panel, false);
             SelectTab(RecordTab.Inventory);
@@ -63,8 +64,21 @@ namespace SmallWorld.UI.Stage8
 
         private void Awake()
         {
+            ApplyTheme();
             Bind();
             SetVisible(panel, false);
+        }
+
+        private void ApplyTheme()
+        {
+            SmallWorldUiTheme.ApplyPanel(panel, true);
+            SmallWorldUiTheme.ApplyText(tabTitle, SmallWorldTextRole.Title);
+            SmallWorldUiTheme.ApplyLongText(recordList, true);
+            SmallWorldUiTheme.ApplyLongText(recordDetails, true);
+            SmallWorldUiTheme.ApplyButton(inventoryTab, "소지품");
+            SmallWorldUiTheme.ApplyButton(memoryTab, "기억");
+            SmallWorldUiTheme.ApplyButton(recordsTab, "기록");
+            SmallWorldUiTheme.ApplyButton(closeButton, "닫기");
         }
 
         private void OnDestroy() => Unbind();

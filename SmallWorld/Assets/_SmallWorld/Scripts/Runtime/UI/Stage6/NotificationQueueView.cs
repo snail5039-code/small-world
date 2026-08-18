@@ -27,6 +27,8 @@ namespace SmallWorld.UI
             Clear();
             group = canvasGroup;
             messageText = message;
+            SmallWorldUiTheme.ApplyPanel(group, false);
+            SmallWorldUiTheme.ApplyText(messageText, SmallWorldTextRole.Feedback);
             if (messageText != null) messageText.text = string.Empty;
             SetVisible(false);
         }
@@ -55,7 +57,11 @@ namespace SmallWorld.UI
             while (queue.Count > 0)
             {
                 Entry entry = queue.Dequeue();
-                if (messageText != null) messageText.text = entry.message;
+                if (messageText != null)
+                {
+                    messageText.text = entry.message;
+                    messageText.color = SmallWorldUiTheme.FeedbackColor(entry.message);
+                }
                 SetVisible(true);
                 yield return new WaitForSecondsRealtime(entry.duration);
                 SetVisible(false);

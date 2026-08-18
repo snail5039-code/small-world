@@ -14,13 +14,16 @@ namespace SmallWorld.UI
             group = canvasGroup;
             progress = progressSlider;
             statusText = status;
+            SmallWorldUiTheme.ApplyPanel(group, true);
+            SmallWorldUiTheme.ApplyText(statusText, SmallWorldTextRole.Body);
+            SmallWorldUiTheme.ApplySlider(progress);
             SetProgress(0f);
             Hide();
         }
 
         public void Show(string status = null)
         {
-            if (statusText != null) statusText.text = status ?? string.Empty;
+            if (statusText != null) statusText.text = status ?? "불러오는 중…";
             SetVisible(true);
         }
 

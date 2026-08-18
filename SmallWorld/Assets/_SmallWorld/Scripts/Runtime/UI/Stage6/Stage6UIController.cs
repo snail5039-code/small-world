@@ -59,6 +59,7 @@ namespace SmallWorld.UI
             pauseSettingsButton = openPauseSettings;
             returnToTitleButton = returnToTitle;
             controlTimeScale = manageTimeScale;
+            ApplyTheme();
             BindButtons();
             SetCanContinue(false);
             RefreshPanels(StateMachine.Current);
@@ -66,10 +67,24 @@ namespace SmallWorld.UI
 
         private void Awake()
         {
+            ApplyTheme();
             StateMachine.Changed += OnStateChanged;
             BindButtons();
             RefreshPanels(StateMachine.Current);
             SetCanContinue(false);
+        }
+
+        private void ApplyTheme()
+        {
+            foreach (PanelBinding binding in panels)
+                SmallWorldUiTheme.ApplyPanel(binding.panel, binding.state != UIState.Gameplay);
+            SmallWorldUiTheme.ApplyButton(newGameButton, "새 게임");
+            SmallWorldUiTheme.ApplyButton(continueButton, "이어하기");
+            SmallWorldUiTheme.ApplyButton(settingsButton, "설정");
+            SmallWorldUiTheme.ApplyButton(quitButton, "종료");
+            SmallWorldUiTheme.ApplyButton(resumeButton, "계속하기");
+            SmallWorldUiTheme.ApplyButton(pauseSettingsButton, "설정");
+            SmallWorldUiTheme.ApplyButton(returnToTitleButton, "타이틀로 돌아가기");
         }
 
         private void OnDestroy()

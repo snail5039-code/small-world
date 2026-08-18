@@ -20,14 +20,24 @@ namespace SmallWorld.UI
             titleText = title;
             bodyText = body;
             closeButton = close;
+            ApplyTheme();
             closeButton?.onClick.AddListener(RequestClose);
             Hide();
         }
 
         private void Awake()
         {
+            ApplyTheme();
             closeButton?.onClick.AddListener(RequestClose);
             Hide();
+        }
+
+        private void ApplyTheme()
+        {
+            SmallWorldUiTheme.ApplyPanel(group, true);
+            SmallWorldUiTheme.ApplyText(titleText, SmallWorldTextRole.Title);
+            SmallWorldUiTheme.ApplyText(bodyText, SmallWorldTextRole.Body);
+            SmallWorldUiTheme.ApplyButton(closeButton, "닫기");
         }
 
         private void OnDestroy()
