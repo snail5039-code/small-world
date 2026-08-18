@@ -5,6 +5,7 @@ using SmallWorld.Save.Stage10.Integration;
 using SmallWorld.Save.Stage12;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using SmallWorld.UI;
 
 namespace SmallWorld.Flow
 {
@@ -20,6 +21,15 @@ namespace SmallWorld.Flow
         [SerializeField] private string progressKey = "stage12.memory.first.entered";
         public bool HasEntered { get; private set; }
         public bool IsExitBlocked { get; private set; }
+        public string CurrentGuidance
+        {
+            get
+            {
+                if (puzzleController == null) return "현재 목표 · 기억 순서 장치를 찾을 수 없습니다.";
+                if (puzzleController.IsCompleted) return "현재 목표 · 빛나는 출구로 돌아가 [E]를 누르세요.";
+                return $"현재 목표 · 기억 표식을 1 → 2 → 3 순서로 조사하세요.\n다음 대상 · 기억 {puzzleController.Progress + 1}번   [E] 조사";
+            }
+        }
 
         private Stage13MemoryPuzzleController puzzleController;
         private MemoryJourneyFlow journeyFlow;
@@ -69,6 +79,25 @@ namespace SmallWorld.Flow
         }
 
         private void LateUpdate() => UpdatePresentation();
+
+        private void OnGUI()
+        {
+            Rect panel = new Rect(18f, 18f, Mathf.Min(540f, Screen.width - 36f), Screen.height <= 720 ? 78f : 88f);
+            Color previous = GUI.color;
+            GUI.color = SmallWorldUiTheme.Surface;
+            GUI.DrawTexture(panel, Texture2D.whiteTexture);
+            GUI.color = previous;
+            GUIStyle style = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = Screen.height <= 720 ? 16 : 18,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleLeft,
+                wordWrap = true,
+                padding = new RectOffset(16, 16, 8, 8)
+            };
+            style.normal.textColor = SmallWorldUiTheme.PrimaryText;
+            GUI.Label(panel, CurrentGuidance, style);
+        }
 
         private void ApplyPresentation(bool completed)
         {

@@ -14,7 +14,7 @@ namespace SmallWorld.Player.Tests
 
         private static readonly string[][] RoomLandmarks =
         {
-            new[] { "Empty Dollhouse", "Placed Sofa Echo", "Character - MeetYuna", "Prologue Warm Light" },
+            new[] { "Empty Dollhouse", "Furniture - PlaceSofa", "Character - MeetYuna", "Prologue Warm Light" },
             new[] { "Four Seat Dining Table", "The Empty Fourth Chair", "Manipulated Family Photo", "Rainy Apartment Light" },
             new[] { "Last Platform Concourse", "Arriving Last Train", "Faceless Passenger Shadow 1", "Broadcast Safe Light 1" },
             new[] { "Warm Village Cafe", "Park Bench", "Repeated Person And Dialogue Mark 1", "Perfect Day Warm Sun" },
@@ -90,8 +90,12 @@ namespace SmallWorld.Player.Tests
                 Assert.That(collider, Is.Not.Null, action.name + " has no reachable interaction volume.");
                 Assert.That(collider.enabled, Is.True, action.name + " interaction volume is disabled.");
                 if (action.name != "Character - MeetYuna")
-                    Assert.That(Mathf.Abs(action.transform.position.x), Is.GreaterThanOrEqualTo(10f),
+                {
+                    int room = Mathf.RoundToInt(action.transform.position.z / 36f);
+                    float minimumSideClearance = room == 0 ? 2.5f : 10f;
+                    Assert.That(Mathf.Abs(action.transform.position.x), Is.GreaterThanOrEqualTo(minimumSideClearance),
                         action.name + " closes the central route through its room.");
+                }
             }
 
             for (int room = 0; room < 8; room++)

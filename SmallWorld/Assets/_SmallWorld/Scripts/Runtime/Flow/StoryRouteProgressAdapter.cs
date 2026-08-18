@@ -78,6 +78,8 @@ namespace SmallWorld.Flow
             OpeningStoryResult result = openingStory.TryPerform(save, progress, action);
             if (result.Accepted) Persist();
             string objective = StoryRouteGuidance.NextObjective(progress.CurrentChapter, action, result.Accepted);
+            if (progress.CurrentChapter == StoryChapterId.Prologue)
+                objective = "다음 대상 · " + StoryRouteGuidance.PrologueNextTarget(progress);
             if (route != null) route.UpdateObjective(objective);
             string status = result.Accepted ? "완료" : "잠김";
             return new OpeningStoryResult(result.Accepted,
@@ -90,7 +92,9 @@ namespace SmallWorld.Flow
             StoryRouteController route = GetComponent<StoryRouteController>();
             if (route == null) return;
             route.UpdateGuidance(StoryRouteGuidance.Location(chapter),
-                StoryRouteGuidance.ArrivalObjective(chapter),
+                chapter == StoryChapterId.Prologue
+                    ? "다음 대상 · " + StoryRouteGuidance.PrologueNextTarget(progress)
+                    : StoryRouteGuidance.ArrivalObjective(chapter),
                 StoryRouteGuidance.ArrivalDialogue(progress,
                     new StoryRelationshipService().Get(save, "girl")));
         }

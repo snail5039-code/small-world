@@ -6,10 +6,10 @@ namespace SmallWorld.Flow
     public sealed class MemoryExitInteractable : InteractableBase
     {
         [SerializeField] private Stage12MemorySpaceController memorySpaceController;
-        [SerializeField] private string blockedFeedback = "Complete the memory sequence before leaving.";
+        [SerializeField] private string blockedFeedback = "아직 나갈 수 없습니다. 기억 표식을 1 → 2 → 3 순서로 조사하세요.";
 
         public void ConfigureExit(Stage12MemorySpaceController controller,
-            string interactionPrompt = "Return to the white room")
+            string interactionPrompt = "하얀 방으로 돌아가기")
         {
             memorySpaceController = controller;
             Configure(interactionPrompt, GetComponentsInChildren<Renderer>(true));
@@ -25,7 +25,7 @@ namespace SmallWorld.Flow
         {
             if (memorySpaceController == null)
             {
-                context.ShowFeedback("The memory-space controller is unavailable.");
+                context.ShowFeedback("기억 공간 출구가 연결되지 않았습니다.");
                 CompleteInteraction();
                 return;
             }
@@ -37,4 +37,3 @@ namespace SmallWorld.Flow
         }
     }
 }
-

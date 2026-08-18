@@ -175,10 +175,18 @@ namespace SmallWorld.Editor
                 "7년 전 예약 메일을 읽는다", "첫 기억 문을 연다", "유나에게 설명을 요구한다", "오늘은 문을 열지 않는다"
             };
             Transform[] created = CreateActionGrid(parent, progress, z, actions, prompts, PrimitiveType.Cube);
-            CreateBlock("Empty Dollhouse", parent, new Vector3(9.5f, 1f, z - 8f), new Vector3(3f, 2f, 3f));
-            CreateBlock("Placed Sofa Echo", parent, new Vector3(8.5f, 0.5f, z - 3f), new Vector3(3f, 1f, 1.2f));
-            CreateBlock("Reserved Email Monitor", parent, new Vector3(11f, 1.2f, z), new Vector3(1.6f, 1.2f, 0.2f));
-            CreateBlock("Loop 109 Display", parent, new Vector3(11f, 1.4f, z + 4f), new Vector3(1.8f, 0.8f, 0.2f));
+            ArrangePrologueActions(parent, created, z);
+            GameObject dollhouse = CreateBlock("Empty Dollhouse", parent, new Vector3(9f, 0.85f, z - 7.2f), new Vector3(1.6f, 1.25f, 1.15f));
+            ApplyMaterial(dollhouse, CreateMaterial("Empty Dollhouse Material", new Color(0.46f, 0.28f, 0.18f)));
+            GameObject dollhouseRoof = CreateBlock("Empty Dollhouse Roof", parent,
+                new Vector3(9f, 1.65f, z - 7.2f), new Vector3(1.85f, 0.22f, 1.35f));
+            dollhouseRoof.transform.rotation = Quaternion.Euler(0f, 0f, 18f);
+            ApplyMaterial(dollhouseRoof, dollhouse.GetComponent<Renderer>().sharedMaterial);
+            GameObject dollhouseWindow = CreateBlock("Empty Dollhouse Window", parent,
+                new Vector3(9f, 0.95f, z - 6.61f), new Vector3(0.38f, 0.42f, 0.04f));
+            ApplyMaterial(dollhouseWindow, CreateMaterial("Empty Dollhouse Window Material",
+                new Color(0.14f, 0.24f, 0.34f), new Color(0.03f, 0.08f, 0.12f)));
+            CreateBlock("Loop 109 Display", parent, new Vector3(8.7f, 1.45f, z + 4f), new Vector3(1.5f, 0.7f, 0.16f));
             CreatePointLight("Prologue Yuna Key Light", parent, new Vector3(4.2f, 2.8f, z - 5.5f), new Color(1f, 0.62f, 0.32f), 3.1f, 7f);
             CreatePointLight("Prologue Warm Light", parent, new Vector3(0f, 3.2f, z), new Color(1f, 0.78f, 0.58f), 2.6f, 15f);
             CreatePointLight("Prologue Route Fill Light", parent, new Vector3(0f, 3.1f, z - 6f),
@@ -190,6 +198,53 @@ namespace SmallWorld.Editor
                     new Color(1f, 0.9f, 0.76f), 2f, 14f);
             }
             return new[] { created[0], created[1], created[9] };
+        }
+
+        private static void ArrangePrologueActions(Transform parent, Transform[] actions, float z)
+        {
+            Vector3[] positions =
+            {
+                new Vector3(4.2f, 0.9f, z - 5.5f),
+                new Vector3(-4.5f, 0.48f, z - 4f),
+                new Vector3(-3.9f, 0.66f, z - 1.25f),
+                new Vector3(-3.35f, 0.7f, z - 1.1f),
+                new Vector3(-3.55f, 0.62f, z - 0.55f),
+                new Vector3(7.8f, 1.1f, z + 2.6f),
+                new Vector3(8.25f, 1.1f, z + 2.6f),
+                new Vector3(8.7f, 1.1f, z + 2.6f),
+                new Vector3(-4.2f, 1.35f, z + 7.9f),
+                new Vector3(7.6f, 1.35f, z + 7.95f),
+                new Vector3(6.9f, 1.35f, z + 7.72f),
+                new Vector3(8.35f, 1.05f, z + 7.7f)
+            };
+            Vector3[] scales =
+            {
+                new Vector3(0.42f, 0.85f, 0.34f),
+                new Vector3(3.4f, 0.55f, 1.15f),
+                Vector3.one * 0.16f,
+                new Vector3(0.22f, 0.22f, 0.22f),
+                new Vector3(0.5f, 0.04f, 0.35f),
+                new Vector3(0.24f, 0.38f, 0.12f),
+                new Vector3(0.24f, 0.38f, 0.12f),
+                new Vector3(0.24f, 0.38f, 0.12f),
+                new Vector3(1.7f, 1.05f, 0.16f),
+                new Vector3(1.35f, 2.55f, 0.18f),
+                new Vector3(0.25f, 0.4f, 0.14f),
+                new Vector3(0.32f, 0.18f, 0.14f)
+            };
+            for (int i = 0; i < actions.Length; i++)
+            {
+                actions[i].position = positions[i];
+                actions[i].localScale = scales[i];
+            }
+
+            Material sofaMaterial = actions[1].GetComponent<Renderer>().sharedMaterial;
+            DecorBlock("Prologue Interactive Sofa Back", parent, new Vector3(-4.5f, 1.05f, z - 3.48f),
+                new Vector3(3.4f, 1.2f, 0.24f), sofaMaterial, false);
+            DecorBlock("Prologue Interactive Sofa Left Arm", parent, new Vector3(-6.15f, 0.78f, z - 4f),
+                new Vector3(0.25f, 0.75f, 1.2f), sofaMaterial, false);
+            DecorBlock("Prologue Interactive Sofa Right Arm", parent, new Vector3(-2.85f, 0.78f, z - 4f),
+                new Vector3(0.25f, 0.75f, 1.2f), sofaMaterial, false);
         }
 
         private static Transform[] CreateFourthSeatGameplay(Transform parent, StoryRouteProgressAdapter progress, float z)
@@ -746,8 +801,11 @@ namespace SmallWorld.Editor
                 new Vector3(11.5f, 3.4f, 0.28f), cloth);
             DecorBlock("Prologue Interior Door Lintel", parent, new Vector3(0f, 3.15f, z + 8.5f),
                 new Vector3(4.5f, 0.3f, 0.32f), wood);
+            DecorBlock("Prologue Left Room Wall", parent, new Vector3(-10.9f, 1.7f, z - 0.5f),
+                new Vector3(0.28f, 3.4f, 19f), cloth);
+            DecorBlock("Prologue Right Room Wall", parent, new Vector3(10.9f, 1.7f, z - 0.5f),
+                new Vector3(0.28f, 3.4f, 19f), cloth);
             DecorBlock("Prologue Living Rug", parent, new Vector3(0f, 0.025f, z - 1f), new Vector3(7f, 0.04f, 5f), cloth, false);
-            DecorBlock("Prologue Family Sofa", parent, new Vector3(-6.8f, 0.65f, z - 1f), new Vector3(3.6f, 1.3f, 1.25f), cloth);
             DecorBlock("Prologue Coffee Table", parent, new Vector3(-3.5f, 0.45f, z - 1f), new Vector3(2.3f, 0.18f, 1.4f), wood);
             for (int leg = 0; leg < 4; leg++)
                 DecorBlock($"Prologue Coffee Table Leg {leg + 1}", parent,
@@ -755,8 +813,18 @@ namespace SmallWorld.Editor
                     new Vector3(0.14f, 0.45f, 0.14f), wood);
             DecorBlock("Prologue Bookshelf", parent, new Vector3(8.8f, 1.5f, z + 3.5f), new Vector3(2.6f, 3f, 0.55f), wood);
             DecorBlock("Prologue Floor Lamp", parent, new Vector3(-8.8f, 1.25f, z - 4.5f), new Vector3(0.16f, 2.5f, 0.16f), wood);
-            DecorBlock("Prologue Media Console", parent, new Vector3(0f, 0.55f, z + 7.9f),
-                new Vector3(3.4f, 1.1f, 0.65f), wood);
+            DecorBlock("Prologue Media Console", parent, new Vector3(-4.2f, 0.55f, z + 7.9f),
+                new Vector3(2.8f, 1.1f, 0.65f), wood);
+            Material windowMaterial = CreateMaterial("Prologue Window Material",
+                new Color(0.18f, 0.3f, 0.42f), new Color(0.08f, 0.16f, 0.24f));
+            DecorBlock("Prologue Window Glass", parent, new Vector3(-7.2f, 2f, z + 8.32f),
+                new Vector3(4.2f, 1.8f, 0.06f), windowMaterial, false);
+            DecorBlock("Prologue Window Left Frame", parent, new Vector3(-9.35f, 2f, z + 8.24f),
+                new Vector3(0.14f, 2.1f, 0.12f), wood, false);
+            DecorBlock("Prologue Window Right Frame", parent, new Vector3(-5.05f, 2f, z + 8.24f),
+                new Vector3(0.14f, 2.1f, 0.12f), wood, false);
+            DecorBlock("Prologue Window Crossbar", parent, new Vector3(-7.2f, 2f, z + 8.22f),
+                new Vector3(4.4f, 0.12f, 0.12f), wood, false);
         }
 
         private static void CreateApartmentCluster(Transform parent, float z, Material wood, Material metal)
@@ -847,6 +915,9 @@ namespace SmallWorld.Editor
             OpeningStoryAction[] actions, string[] prompts, PrimitiveType primitive)
         {
             var created = new Transform[actions.Length];
+            int room = Mathf.Clamp(Mathf.RoundToInt(z / 36f), 0, AccentColors.Length - 1);
+            Material propMaterial = CreateMaterial($"Route Room {room} Story Prop Material",
+                Color.Lerp(WallColors[room], AccentColors[room], 0.38f));
             for (int i = 0; i < actions.Length; i++)
             {
                 int row = i / 2;
@@ -858,6 +929,7 @@ namespace SmallWorld.Editor
                 station.transform.SetParent(parent, true);
                 station.transform.position = position;
                 station.transform.localScale = visual.Scale;
+                ApplyMaterial(station, propMaterial);
                 station.AddComponent<Stage15StoryActionInteractable>().ConfigureAction(progress, actions[i], prompts[i]);
                 if (actions[i] == OpeningStoryAction.MeetYuna)
                 {

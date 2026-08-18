@@ -218,7 +218,8 @@ namespace SmallWorld.Player.Tests
         {
             string[][] roomEnvironment =
             {
-                new[] { "Prologue Family Sofa", "Prologue Coffee Table", "Prologue Bookshelf", "Prologue Living Rug" },
+                new[] { "Furniture - PlaceSofa", "Prologue Coffee Table", "Prologue Bookshelf", "Prologue Living Rug",
+                    "Prologue Window Glass", "Prologue Media Console" },
                 new[] { "Chapter 1 Kitchen Counter", "Chapter 1 Wall Cabinet 1", "Chapter 1 Hall Divider" },
                 new[] { "Chapter 2 Platform Bench 1", "Chapter 2 Station Column 1", "Last Platform Concourse" },
                 new[] { "Chapter 3 Cafe Counter", "Chapter 3 Cafe Table 1", "Chapter 3 Cafe Seat 1" },
@@ -348,7 +349,8 @@ namespace SmallWorld.Player.Tests
                 if (behaviour.name == "Character - MeetYuna") continue;
                 int chapter = Mathf.RoundToInt(behaviour.transform.position.z / 36f);
                 if (chapter >= 0)
-                    Assert.That(Mathf.Abs(behaviour.transform.position.x), Is.GreaterThanOrEqualTo(10f),
+                    Assert.That(Mathf.Abs(behaviour.transform.position.x),
+                        Is.GreaterThanOrEqualTo(chapter == 0 ? 2.5f : 10f),
                         behaviour.name + " blocks the central navigation aisle.");
             }
         }

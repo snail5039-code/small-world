@@ -7,6 +7,7 @@ namespace SmallWorld.Flow
     {
         [SerializeField] private StoryRouteProgressAdapter progress;
         [SerializeField] private OpeningStoryAction action;
+        public OpeningStoryAction Action => action;
 
         public void ConfigureAction(StoryRouteProgressAdapter adapter, OpeningStoryAction storyAction, string prompt)
         {

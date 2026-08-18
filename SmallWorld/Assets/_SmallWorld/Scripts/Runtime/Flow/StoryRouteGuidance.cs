@@ -23,7 +23,7 @@ namespace SmallWorld.Flow
         {
             switch (chapter)
             {
-                case StoryChapterId.Prologue: return "유나와 대화하고 방 안의 이상한 물건을 조사한다.";
+                case StoryChapterId.Prologue: return "앞쪽의 빛나는 ‘유나’ 표식으로 이동해 [E]로 대화한다.";
                 case StoryChapterId.Chapter1: return "가족의 목소리를 듣고 멈춘 저녁 식사의 시각을 복원한다.";
                 case StoryChapterId.Chapter2: return "도현의 기억과 전광판을 조사해 존재하지 않는 노선을 잇는다.";
                 case StoryChapterId.Chapter3: return "유나와 대화한 뒤 완벽한 하루의 반복 규칙을 깨뜨린다.";
@@ -32,6 +32,20 @@ namespace SmallWorld.Flow
                 case StoryChapterId.Chapter6: return "시간·가구·비의 방향으로 현실 개발자의 창문을 찾는다.";
                 default: return "살아 있는 집으로 들어가되, 최종 선택은 실행하지 않는다.";
             }
+        }
+
+        public static string PrologueNextTarget(StoryProgress progress)
+        {
+            if (progress == null) return "빛나는 ‘유나’ 표식 · [E] 대화";
+            bool Has(OpeningStoryAction action) => progress.ForeshadowFlags.Contains("s15-opening:" + action);
+            if (!Has(OpeningStoryAction.MeetYuna)) return "빛나는 ‘유나’ 표식 · [E] 대화";
+            if (!Has(OpeningStoryAction.PlaceSofa)) return "‘소파 배치’ 표식 · [E] 조사";
+            if (!Has(OpeningStoryAction.FindKey)) return "‘열쇠’ 조사 표식 · [E] 조사";
+            if (!Has(OpeningStoryAction.FindTeacup)) return "‘찻잔’ 조사 표식 · [E] 조사";
+            if (!Has(OpeningStoryAction.FindPhotoFragment)) return "‘사진 조각’ 조사 표식 · [E] 조사";
+            if (!progress.ImportantChoices.Exists(x => x.ChoiceId == "prologue-stay")) return "유나의 세 선택 표식 중 하나 · [E] 선택";
+            if (!Has(OpeningStoryAction.ReadScheduledMail)) return "‘7년 전 예약 메일’ 표식 · [E] 읽기";
+            return "‘첫 기억 문’의 세 선택 표식 중 하나 · [E] 선택 후 다음 방 게이트";
         }
 
         public static string ArrivalDialogue(StoryProgress progress, int relationship)

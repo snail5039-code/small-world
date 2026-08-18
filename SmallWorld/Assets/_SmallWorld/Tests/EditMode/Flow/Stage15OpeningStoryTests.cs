@@ -696,6 +696,22 @@ namespace SmallWorld.Tests.EditMode.Flow
                 Assert.That(story.TryPerform(save, progress, action).Accepted, Is.True, action.ToString());
         }
 
+        [Test]
+        public void PrologueGuidance_NamesTheExactNextPlayableMarker()
+        {
+            var story = new Stage15OpeningStoryService();
+            SaveData save = SaveData.CreateNew();
+            var progress = new StoryProgress();
+
+            Assert.That(StoryRouteGuidance.PrologueNextTarget(progress), Does.Contain("유나"));
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.MeetYuna).Accepted, Is.True);
+            Assert.That(StoryRouteGuidance.PrologueNextTarget(progress), Does.Contain("소파 배치"));
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.PlaceSofa).Accepted, Is.True);
+            Assert.That(StoryRouteGuidance.PrologueNextTarget(progress), Does.Contain("열쇠"));
+            Assert.That(story.TryPerform(save, progress, OpeningStoryAction.FindKey).Accepted, Is.True);
+            Assert.That(StoryRouteGuidance.PrologueNextTarget(progress), Does.Contain("찻잔"));
+        }
+
         private sealed class RouteSessionSaveService : IGameSaveService
         {
             public SaveReadResult Latest = SaveReadResult.Failure(SaveReadStatus.Missing);

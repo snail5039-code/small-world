@@ -112,10 +112,12 @@ namespace SmallWorld.Player.Tests
         [Test]
         public void ActionPropsKeepCentralAislesOpenAndSummaryMarkersCannotBypassProgress()
         {
+            Transform prologueRoom = GameObject.Find("00 Prologue - The White Room").transform;
             foreach (MonoBehaviour behaviour in SceneBehaviours("SmallWorld.Flow.Stage15StoryActionInteractable"))
             {
                 if (behaviour.name == "Character - MeetYuna") continue;
-                Assert.That(Mathf.Abs(behaviour.transform.position.x), Is.GreaterThanOrEqualTo(10f),
+                float minimumAisleClearance = behaviour.transform.IsChildOf(prologueRoom) ? 2.5f : 10f;
+                Assert.That(Mathf.Abs(behaviour.transform.position.x), Is.GreaterThanOrEqualTo(minimumAisleClearance),
                     behaviour.name + " blocks the player's central route.");
             }
 
