@@ -58,9 +58,10 @@ namespace SmallWorld.Player.Tests
                 Assert.That(item.name, Does.Not.Contain("Debug"));
                 Assert.That(item.name, Does.Not.Contain("Placeholder"));
                 Assert.That(item.name, Does.Not.StartWith("Story Action"));
+                Assert.That(item.name, Does.Not.Match("^Route Room [0-7] Path "),
+                    "Removed floor path markers must not return as exposed debug arrows.");
 
-                bool helper = item.name.Contains(" Beacon") || item.name.Contains(" Highlight") ||
-                              item.name.Contains(" Path ");
+                bool helper = item.name.Contains(" Beacon") || item.name.Contains(" Highlight");
                 if (!helper) continue;
                 Collider[] colliders = item.GetComponentsInChildren<Collider>(true);
                 Assert.That(colliders.All(collider => !collider.enabled), Is.True,
@@ -94,12 +95,13 @@ namespace SmallWorld.Player.Tests
             }
 
             for (int room = 0; room < 8; room++)
-            for (int segment = 1; segment <= 3; segment++)
-            for (int step = 1; step <= 3; step++)
             {
-                GameObject path = Require($"Route Room {room} Path {segment}-{step}");
-                Assert.That(Mathf.Abs(path.transform.position.x), Is.LessThan(13.5f));
-                Assert.That(path.transform.position.y, Is.LessThan(0.1f));
+                Assert.That(GameObject.Find($"Route Room {room} Path 1-1"), Is.Null,
+                    "Exposed floor path cubes are debug geometry, not environmental navigation.");
+                Transform left = Require($"Route Room {room} Entry Door Left").transform;
+                Transform right = Require($"Route Room {room} Entry Door Right").transform;
+                Assert.That(right.position.x - left.position.x, Is.GreaterThanOrEqualTo(4f),
+                    $"Room {room} needs a readable, unobstructed central doorway.");
             }
         }
 

@@ -7,7 +7,7 @@ namespace SmallWorld.Flow
 {
     [RequireComponent(typeof(StoryRouteController))]
     public sealed class StoryRouteProgressAdapter : MonoBehaviour, IStoryRouteProgressSource, IStoryRouteChapterPositionSource,
-        IStoryRouteRealityReturnSource
+        IStoryRouteRealityReturnSource, IStoryRouteRecordSource
     {
         private readonly SaveDataStoryProgressStore store = new SaveDataStoryProgressStore();
         private readonly StoryFlowService flow = new StoryFlowService();
@@ -35,6 +35,8 @@ namespace SmallWorld.Flow
             EnsureLoaded();
             StoryRouteController route = GetComponent<StoryRouteController>();
             route.BindProgressSource(this);
+            Stage10ManualSavePanel manualSave = FindFirstObjectByType<Stage10ManualSavePanel>(FindObjectsInactive.Include);
+            manualSave?.Configure(CaptureCurrentForManualSave, LoadManualSave);
             route.RestoreToNodeOrPrologue(CurrentChapterNodeIndex(progress.CurrentChapter));
             PresentArrival(progress.CurrentChapter);
         }
@@ -120,6 +122,41 @@ namespace SmallWorld.Flow
             Stage10SaveRuntime.QueueLoad(save);
             feedback = "현실방 복귀 상태를 저장했습니다.";
             return true;
+        }
+
+        public SaveData CaptureCurrentForManualSave()
+        {
+            EnsureLoaded();
+            store.Save(save, progress);
+            save.ActiveSceneId = "04_StoryRoute";
+            return save;
+        }
+
+        public bool LoadManualSave(int slot)
+        {
+            SaveReadResult result = Stage10SaveRuntime.Service.LoadManual(slot);
+            if (!result.IsSuccess || result.Data == null) return false;
+            save = result.Data;
+            progress = store.Load(save);
+            StoryRouteController route = GetComponent<StoryRouteController>();
+            route?.RestoreToNodeOrPrologue(CurrentChapterNodeIndex(progress.CurrentChapter));
+            PresentArrival(progress.CurrentChapter);
+            return true;
+        }
+
+        public string BuildRecordSummary(string nextObjective)
+        {
+            EnsureLoaded();
+            StoryChapterProgress chapter = progress.GetChapter(progress.CurrentChapter);
+            int completedActions = 0;
+            for (int i = 0; i < progress.ForeshadowFlags.Count; i++)
+                if (progress.ForeshadowFlags[i].StartsWith("opening-action-", System.StringComparison.Ordinal)) completedActions++;
+            string completion = chapter.IsComplete ? "완료" : "진행 중";
+            string choices = progress.ImportantChoices.Count == 0 ? "아직 선택 없음" : $"중요 선택 {progress.ImportantChoices.Count}개";
+            string objective = string.IsNullOrWhiteSpace(nextObjective) ? StoryRouteGuidance.ArrivalObjective(progress.CurrentChapter) : nextObjective;
+            return $"현재 장 · {StoryRouteGuidance.Location(progress.CurrentChapter)} ({completion})\n" +
+                   $"완료한 조사/행동 · {completedActions}개\n선택 기록 · {choices}\n\n" +
+                   $"다음 목표 · {objective}\n[E] 조사   [Tab/Esc] 기록 닫기";
         }
 
         private void EnsureLoaded()

@@ -1,5 +1,6 @@
 using System;
 using SmallWorld.Player;
+using SmallWorld.Save.Stage10;
 using SmallWorld.Puzzle.Stage9Integration;
 using SmallWorld.UI;
 using SmallWorld.UI.Stage7;
@@ -15,7 +16,11 @@ namespace SmallWorld.Save.Stage10.Integration
         [SerializeField] private Button[] saveButtons = Array.Empty<Button>();
         [SerializeField] private Button[] loadButtons = Array.Empty<Button>();
         [SerializeField] private Button closeButton;
+        [SerializeField] private Text feedbackText;
+        [SerializeField] private Text[] slotMetadataTexts = Array.Empty<Text>();
         private RealityRoomSaveCoordinator coordinator;
+        private Func<SaveData> captureSave;
+        private Func<int, bool> loadSave;
         [SerializeField] private FirstPersonPlayerController player;
         private bool inputStateCaptured;
         private bool playerWasEnabled;
@@ -23,12 +28,29 @@ namespace SmallWorld.Save.Stage10.Integration
         private bool previousCursorVisible;
         private float previousTimeScale;
         public bool IsOpen => IsVisible();
+        public string LastFeedback { get; private set; } = string.Empty;
+        public string DisplayedFeedback => feedbackText != null ? feedbackText.text : LastFeedback;
         public void Configure(CanvasGroup root, Button[] saves, Button[] loads, Button close)
         {
             panel = root; saveButtons = saves ?? Array.Empty<Button>(); loadButtons = loads ?? Array.Empty<Button>(); closeButton = close;
             ApplyTheme(); Bind(); Close();
         }
+        public void ConfigureFeedback(Text feedback, Text[] slotMetadata)
+        {
+            feedbackText = feedback;
+            slotMetadataTexts = slotMetadata ?? Array.Empty<Text>();
+            SmallWorldUiTheme.ApplyText(feedbackText, SmallWorldTextRole.Feedback);
+            for (int i = 0; i < slotMetadataTexts.Length; i++)
+                SmallWorldUiTheme.ApplyText(slotMetadataTexts[i], SmallWorldTextRole.Body);
+            RefreshLoads();
+            PresentFeedback(LastFeedback);
+        }
         public void Configure(RealityRoomSaveCoordinator value) => coordinator = value;
+        public void Configure(Func<SaveData> capture, Func<int, bool> load = null)
+        {
+            captureSave = capture;
+            loadSave = load;
+        }
         public void Configure(FirstPersonPlayerController value) => player = value;
         private void Awake() { ApplyTheme(); Bind(); Close(); }
         private void OnDestroy() { RestoreInputState(); Unbind(); }
@@ -38,6 +60,7 @@ namespace SmallWorld.Save.Stage10.Integration
             CaptureInputState();
             SetVisible(true);
             RefreshLoads();
+            if (string.IsNullOrWhiteSpace(LastFeedback)) PresentFeedback("저장하거나 불러올 슬롯을 선택하세요.");
         }
         public void Close()
         {
@@ -46,9 +69,52 @@ namespace SmallWorld.Save.Stage10.Integration
         }
         public void Save0() => Save(0); public void Save1() => Save(1); public void Save2() => Save(2);
         public void Load0() => Load(0); public void Load1() => Load(1); public void Load2() => Load(2);
-        private void Save(int slot) { coordinator?.SaveManual(slot); RefreshLoads(); }
-        private void Load(int slot) { if (coordinator != null && coordinator.LoadManual(slot)) Close(); }
-        private void RefreshLoads() { for (int i = 0; i < loadButtons.Length && i < 3; i++) if (loadButtons[i] != null) loadButtons[i].interactable = Stage10SaveRuntime.Service.LoadManual(i).IsSuccess; }
+        private void Save(int slot)
+        {
+            bool saved = coordinator != null
+                ? coordinator.SaveManual(slot)
+                : captureSave != null && Stage10SaveRuntime.Service.SaveManual(slot, captureSave());
+            PresentFeedback(saved ? $"슬롯 {slot + 1}에 저장했습니다." : $"슬롯 {slot + 1} 저장에 실패했습니다.");
+            RefreshLoads();
+        }
+        private void Load(int slot)
+        {
+            bool loaded = coordinator != null ? coordinator.LoadManual(slot) : loadSave != null && loadSave(slot);
+            PresentFeedback(loaded ? $"슬롯 {slot + 1}을 불러왔습니다." : $"슬롯 {slot + 1}을 불러오지 못했습니다.");
+            if (loaded) Close(); else RefreshLoads();
+        }
+        private void RefreshLoads()
+        {
+            for (int i = 0; i < loadButtons.Length && i < 3; i++)
+            {
+                Button button = loadButtons[i];
+                if (button == null) continue;
+                SaveReadResult read = Stage10SaveRuntime.Service.LoadManual(i);
+                button.interactable = read.IsSuccess;
+                Text label = button.GetComponentInChildren<Text>(true);
+                if (label != null) label.text = read.IsSuccess
+                    ? $"슬롯 {i + 1} 불러오기 · {SceneLabel(read.Data)}"
+                    : $"슬롯 {i + 1} · 비어 있음";
+                if (i < slotMetadataTexts.Length && slotMetadataTexts[i] != null)
+                    slotMetadataTexts[i].text = read.IsSuccess
+                        ? $"저장됨 · {SceneLabel(read.Data)}"
+                        : "비어 있는 슬롯";
+            }
+        }
+        private void PresentFeedback(string message)
+        {
+            LastFeedback = message ?? string.Empty;
+            if (feedbackText == null) return;
+            feedbackText.text = LastFeedback;
+            feedbackText.color = SmallWorldUiTheme.FeedbackColor(LastFeedback);
+            feedbackText.gameObject.SetActive(!string.IsNullOrWhiteSpace(LastFeedback));
+        }
+        private static string SceneLabel(SaveData data)
+        {
+            if (data == null) return "알 수 없음";
+            if (!string.IsNullOrWhiteSpace(data.CheckpointId)) return data.CheckpointId;
+            return string.IsNullOrWhiteSpace(data.ActiveSceneId) ? "진행 기록" : data.ActiveSceneId;
+        }
         private void Bind()
         {
             Unbind();
@@ -70,6 +136,9 @@ namespace SmallWorld.Save.Stage10.Integration
             for (int i = 0; i < loadButtons.Length; i++)
                 SmallWorldUiTheme.ApplyButton(loadButtons[i], $"슬롯 {i + 1} 불러오기");
             SmallWorldUiTheme.ApplyButton(closeButton, "닫기");
+            SmallWorldUiTheme.ApplyText(feedbackText, SmallWorldTextRole.Feedback);
+            for (int i = 0; i < slotMetadataTexts.Length; i++)
+                SmallWorldUiTheme.ApplyText(slotMetadataTexts[i], SmallWorldTextRole.Body);
         }
         private void CaptureInputState()
         {

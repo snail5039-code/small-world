@@ -90,19 +90,37 @@ namespace SmallWorld.Editor
         private static Stage10ManualSavePanel CreatePanel(Transform parent)
         {
             GameObject root = new GameObject("Manual Save Slots", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Stage10ManualSavePanel));
-            root.transform.SetParent(parent, false); RectTransform rect = (RectTransform)root.transform;
-            rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f); rect.sizeDelta = new Vector2(900f, 620f);
-            root.GetComponent<Image>().color = new Color(.05f, .06f, .08f, .98f);
-            Text heading = Label("Heading", root.transform, "저장 슬롯", 38); SetRect(heading.rectTransform, new Vector2(0f, 245f), new Vector2(700f, 70f));
+            root.transform.SetParent(parent, false);
+            Stretch((RectTransform)root.transform);
+            Image backdrop = root.GetComponent<Image>();
+            backdrop.color = new Color(.01f, .015f, .025f, .78f);
+            backdrop.raycastTarget = true;
+            var cardObject = new GameObject("Save Card", typeof(RectTransform), typeof(Image));
+            cardObject.transform.SetParent(root.transform, false);
+            SetRect((RectTransform)cardObject.transform, Vector2.zero, new Vector2(900f, 620f));
+            cardObject.GetComponent<Image>().color = new Color(.05f, .06f, .08f, .98f);
+            Transform card = cardObject.transform;
+            Text heading = Label("Heading", card, "저장 슬롯", 38); SetRect(heading.rectTransform, new Vector2(0f, 245f), new Vector2(700f, 70f));
             var saves = new Button[3]; var loads = new Button[3];
+            var metadata = new Text[3];
             for (int i = 0; i < 3; i++)
             {
-                Label("Slot " + (i + 1), root.transform, "슬롯 " + (i + 1), 26).rectTransform.anchoredPosition = new Vector2(-280f, 135f - i * 120f);
-                saves[i] = MakeButton("Save Slot " + (i + 1), root.transform, "저장", new Vector2(30f, 135f - i * 120f));
-                loads[i] = MakeButton("Load Slot " + (i + 1), root.transform, "불러오기", new Vector2(270f, 135f - i * 120f));
+                float rowY = 130f - i * 110f;
+                Text slot = Label("Slot " + (i + 1), card, "슬롯 " + (i + 1), 22);
+                SetRect(slot.rectTransform, new Vector2(-390f, rowY), new Vector2(90f, 60f));
+                metadata[i] = Label("Slot Metadata " + (i + 1), card, "비어 있음", 16);
+                metadata[i].alignment = TextAnchor.MiddleLeft;
+                SetRect(metadata[i].rectTransform, new Vector2(-225f, rowY), new Vector2(240f, 60f));
+                saves[i] = MakeButton("Save Slot " + (i + 1), card, "저장", new Vector2(40f, rowY));
+                loads[i] = MakeButton("Load Slot " + (i + 1), card, "불러오기", new Vector2(280f, rowY));
             }
-            Button close = MakeButton("Close Save Panel", root.transform, "닫기", new Vector2(0f, -245f));
-            Stage10ManualSavePanel panel = root.GetComponent<Stage10ManualSavePanel>(); panel.Configure(root.GetComponent<CanvasGroup>(), saves, loads, close); return panel;
+            Text feedback = Label("Save Feedback", card, string.Empty, 18);
+            SetRect(feedback.rectTransform, new Vector2(0f, -180f), new Vector2(700f, 44f));
+            Button close = MakeButton("Close Save Panel", card, "닫기", new Vector2(0f, -245f));
+            Stage10ManualSavePanel panel = root.GetComponent<Stage10ManualSavePanel>();
+            panel.Configure(root.GetComponent<CanvasGroup>(), saves, loads, close);
+            panel.ConfigureFeedback(feedback, metadata);
+            return panel;
         }
 
         private static Button MakeButton(string name, Transform parent, string text, Vector2 position)
@@ -116,6 +134,8 @@ namespace SmallWorld.Editor
         {
             GameObject go = new GameObject(name, typeof(RectTransform), typeof(Text)); go.transform.SetParent(parent, false);
             Text label = go.GetComponent<Text>(); label.font = font; label.text = text; label.fontSize = size; label.color = Color.white; label.alignment = TextAnchor.MiddleCenter;
+            label.horizontalOverflow = HorizontalWrapMode.Wrap; label.verticalOverflow = VerticalWrapMode.Truncate;
+            label.resizeTextForBestFit = true; label.resizeTextMinSize = 14; label.resizeTextMaxSize = size;
             ((RectTransform)go.transform).sizeDelta = new Vector2(300f, 70f); return label;
         }
         private static void SetRect(RectTransform rect, Vector2 position, Vector2 size) { rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f); rect.anchoredPosition = position; rect.sizeDelta = size; }

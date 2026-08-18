@@ -82,9 +82,9 @@ namespace SmallWorld.Player.Tests
             Assert.That(Luminance(RenderSettings.ambientLight), Is.GreaterThanOrEqualTo(0.16f));
 
             Vector3 yuna = Require("Character - MeetYuna").transform.position + Vector3.up;
-            Vector3 objective = Require("Prologue First Objective Label").transform.position;
             Assert.That(IlluminationProxy(roomLights, yuna), Is.GreaterThanOrEqualTo(1.2f));
-            Assert.That(IlluminationProxy(roomLights, objective), Is.GreaterThanOrEqualTo(1.2f));
+            Assert.That(Require("Prologue Yuna Key Light").GetComponent<Light>().intensity,
+                Is.GreaterThanOrEqualTo(2.5f));
         }
 
         [TestCase(1280, 720)]
@@ -105,8 +105,8 @@ namespace SmallWorld.Player.Tests
                 Assert.That(sign.text, Does.Contain(KoreanRoomNames[room]));
                 Assert.That(sign.text, Does.Not.Contain("Chapter"));
                 Assert.That(sign.text, Does.Not.Contain("Prologue"));
-                Assert.That(sign.fontSize, Is.GreaterThanOrEqualTo(64));
-                Assert.That(sign.characterSize, Is.GreaterThanOrEqualTo(0.09f));
+                Assert.That(sign.fontSize, Is.EqualTo(48));
+                Assert.That(sign.characterSize, Is.LessThanOrEqualTo(0.04f));
                 Assert.That(Quaternion.Angle(sign.transform.rotation, Quaternion.identity), Is.LessThan(0.1f));
 
                 camera.transform.SetPositionAndRotation(arrival.position + Vector3.up * 1.65f, arrival.rotation);
@@ -124,7 +124,7 @@ namespace SmallWorld.Player.Tests
 
         [TestCase(1280, 720)]
         [TestCase(1920, 1080)]
-        public void PrologueYunaAndObjectiveAreVisibleWithoutWorldTextOverlap(int width, int height)
+        public void PrologueYunaIsVisibleWithoutAWorldTextOverlay(int width, int height)
         {
             GameObject hub = Require("00 Prologue - The White Room");
             Transform arrival = hub.transform.Find("Arrival");
@@ -133,15 +133,11 @@ namespace SmallWorld.Player.Tests
             camera.transform.SetPositionAndRotation(arrival.position, arrival.rotation);
 
             Renderer yuna = Require("Character - MeetYuna").GetComponent<Renderer>();
-            Renderer objective = Require("Prologue First Objective Label").GetComponent<Renderer>();
             Vector3 yunaView = camera.WorldToViewportPoint(yuna.bounds.center);
-            Vector3 objectiveView = camera.WorldToViewportPoint(objective.bounds.center);
             Assert.That(yunaView.z, Is.GreaterThan(0f));
             Assert.That(yunaView.x, Is.InRange(0.08f, 0.92f));
             Assert.That(yunaView.y, Is.InRange(0.08f, 0.92f));
-            Assert.That(objectiveView.z, Is.GreaterThan(0f));
-            Assert.That(objectiveView.x, Is.InRange(0.08f, 0.92f));
-            Assert.That(objectiveView.y, Is.InRange(0.08f, 0.92f));
+            Assert.That(GameObject.Find("Prologue First Objective Label"), Is.Null);
 
             TextMesh[] labels = hub.GetComponentsInChildren<TextMesh>(true);
             for (int first = 0; first < labels.Length; first++)

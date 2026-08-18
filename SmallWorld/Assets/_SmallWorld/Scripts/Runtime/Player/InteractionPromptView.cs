@@ -10,6 +10,7 @@ namespace SmallWorld.Player
         [SerializeField] private Text promptText;
         [SerializeField] private Text feedbackText;
         private Coroutine feedbackRoutine;
+        private int feedbackVersion;
         private bool suppressed;
 
         public string CurrentPrompt => promptText != null ? promptText.text : string.Empty;
@@ -45,17 +46,21 @@ namespace SmallWorld.Player
         {
             if (feedbackText == null || suppressed) return;
             CancelFeedbackRoutine();
-            feedbackRoutine = StartCoroutine(ShowFeedbackRoutine(message, duration));
+            int version = feedbackVersion;
+            feedbackRoutine = StartCoroutine(ShowFeedbackRoutine(message, duration, version));
         }
 
-        private IEnumerator ShowFeedbackRoutine(string message, float duration)
+        private IEnumerator ShowFeedbackRoutine(string message, float duration, int version)
         {
             feedbackText.text = message;
             feedbackText.color = SmallWorldUiTheme.FeedbackColor(message);
             feedbackText.gameObject.SetActive(!string.IsNullOrWhiteSpace(message));
             yield return new WaitForSecondsRealtime(duration);
-            feedbackText.gameObject.SetActive(false);
-            feedbackRoutine = null;
+            if (version == feedbackVersion && feedbackText != null)
+            {
+                feedbackText.gameObject.SetActive(false);
+                feedbackRoutine = null;
+            }
         }
 
         public void SetSuppressed(bool value)
@@ -74,10 +79,22 @@ namespace SmallWorld.Player
 
         private void CancelFeedbackRoutine()
         {
-            // A Coroutine native handle may already be invalidated when a sibling detector's
-            // OnDisable runs. StopAllCoroutines does not dereference that stale/null handle.
+            // Never call a native coroutine stop API from a sibling's teardown path. Scene
+            // unload can destroy this MonoBehaviour before the detector receives OnDisable.
+            feedbackVersion++;
             feedbackRoutine = null;
-            StopAllCoroutines();
+        }
+
+        private void OnDisable()
+        {
+            feedbackVersion++;
+            feedbackRoutine = null;
+        }
+
+        private void OnDestroy()
+        {
+            feedbackVersion++;
+            feedbackRoutine = null;
         }
     }
 }

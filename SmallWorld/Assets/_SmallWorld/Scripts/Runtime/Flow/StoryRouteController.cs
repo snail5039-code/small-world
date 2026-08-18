@@ -31,6 +31,11 @@ namespace SmallWorld.Flow
         bool PrepareRealityRoomReturn(out string feedback);
     }
 
+    public interface IStoryRouteRecordSource
+    {
+        string BuildRecordSummary(string nextObjective);
+    }
+
     public readonly struct StoryRouteReturnResult
     {
         public StoryRouteReturnResult(bool accepted, string feedback)
@@ -132,6 +137,17 @@ namespace SmallWorld.Flow
         public bool IsRuntimePaused => runtimeOverlay == RuntimeOverlay.Paused;
         public string CurrentLocation => currentLocation;
         public string CurrentObjective => currentObjective;
+        public string CurrentRecordsMessage
+        {
+            get
+            {
+                if (progressSource is IStoryRouteRecordSource records)
+                    return records.BuildRecordSummary(currentObjective);
+                if (!string.IsNullOrWhiteSpace(currentLocation) || !string.IsNullOrWhiteSpace(currentObjective))
+                    return $"{currentLocation}\n\n현재 목표: {currentObjective}\n다음: {currentObjective}\n\nTab 또는 Esc를 누르면 닫힙니다.";
+                return EmptyRecordsMessage;
+            }
+        }
         public int ActiveNodeIndex => activeNodeIndex;
         public static string PauseTitle => "일시정지";
         public static string PauseMessage => "Esc를 누르면 이야기로 돌아갑니다.";
@@ -370,7 +386,8 @@ namespace SmallWorld.Flow
             GUI.Label(new Rect(panel.x + 18f, panel.y + 8f, panel.width - 36f, 24f),
                 paused ? PauseTitle : RecordsTitle, titleStyle);
             Rect message = new Rect(panel.x + 18f, panel.y + 34f, panel.width - 36f, panel.height - 42f);
-            GUI.Label(message, paused ? PauseMessage : EmptyRecordsMessage, messageStyle);
+            string overlayMessage = paused ? PauseMessage : CurrentRecordsMessage;
+            GUI.Label(message, overlayMessage, messageStyle);
         }
 
         private void DrawGuidance()

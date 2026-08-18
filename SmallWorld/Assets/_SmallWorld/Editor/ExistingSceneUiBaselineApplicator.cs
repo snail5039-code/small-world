@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SmallWorld.Save.Stage10.Integration;
 using SmallWorld.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -130,7 +131,144 @@ namespace SmallWorld.Editor
             }
 
             EnsureRealityModalOwnership(scene);
+            EnsureRealityDoorAlignment(scene);
+            EnsureRealitySaveSurface(scene);
             EditorSceneManager.MarkSceneDirty(scene);
+        }
+
+        private static void EnsureRealityDoorAlignment(Scene scene)
+        {
+            if (!scene.path.EndsWith("02_RealityRoom.unity", StringComparison.OrdinalIgnoreCase)) return;
+            GameObject door = FindInScene<GameObject>(scene).FirstOrDefault(item => item.name == "Door");
+            GameObject hinge = FindInScene<GameObject>(scene).FirstOrDefault(item => item.name == "Door Hinge");
+            if (door == null || hinge == null) return;
+
+            hinge.transform.position = new Vector3(-1.43f, 1.1f, -4.92f);
+            hinge.transform.rotation = Quaternion.identity;
+            if (door.transform.parent != hinge.transform) Undo.SetTransformParent(door.transform, hinge.transform, "Align door leaf");
+            door.transform.position = new Vector3(-0.99f, 1.1f, -4.92f);
+            door.transform.localScale = new Vector3(0.82f, 2.18f, 0.1f);
+            GameObject handle = FindInScene<GameObject>(scene).FirstOrDefault(item => item.name == "Door Handle");
+            if (handle != null && handle.transform.parent != hinge.transform)
+                Undo.SetTransformParent(handle.transform, hinge.transform, "Attach door handle");
+
+            Transform architecture = door.transform.parent.parent;
+            Material frameMaterial = door.GetComponent<Renderer>()?.sharedMaterial;
+            EnsureDoorFramePart(scene, architecture, "Door Frame Left", new Vector3(-1.49f, 1.25f, -4.84f),
+                new Vector3(0.12f, 2.5f, 0.18f), frameMaterial);
+            EnsureDoorFramePart(scene, architecture, "Door Frame Right", new Vector3(-0.51f, 1.25f, -4.84f),
+                new Vector3(0.12f, 2.5f, 0.18f), frameMaterial);
+            EnsureDoorFramePart(scene, architecture, "Door Frame Top", new Vector3(-1f, 2.44f, -4.84f),
+                new Vector3(1.1f, 0.12f, 0.18f), frameMaterial);
+        }
+
+        private static void EnsureDoorFramePart(Scene scene, Transform parent, string name, Vector3 position,
+            Vector3 scale, Material material)
+        {
+            GameObject item = FindInScene<GameObject>(scene).FirstOrDefault(candidate => candidate.name == name);
+            if (item == null)
+            {
+                item = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                item.name = name;
+                Undo.RegisterCreatedObjectUndo(item, "Create aligned door frame");
+                item.transform.SetParent(parent, true);
+            }
+            item.transform.position = position;
+            item.transform.localScale = scale;
+            if (material != null) item.GetComponent<Renderer>().sharedMaterial = material;
+            EditorUtility.SetDirty(item);
+        }
+
+        private static void EnsureRealitySaveSurface(Scene scene)
+        {
+            if (!scene.path.EndsWith("02_RealityRoom.unity", StringComparison.OrdinalIgnoreCase)) return;
+            GameObject root = FindInScene<GameObject>(scene).FirstOrDefault(item => item.name == "Manual Save Slots");
+            if (root == null || !(root.transform is RectTransform rootRect)) return;
+            Image backdrop = root.GetComponent<Image>() ?? Undo.AddComponent<Image>(root);
+            GameObject card = FindInScene<GameObject>(scene).FirstOrDefault(item => item.name == "Save Card");
+            if (card == null)
+            {
+                card = new GameObject("Save Card", typeof(RectTransform), typeof(Image));
+                Undo.RegisterCreatedObjectUndo(card, "Create save modal card");
+                card.transform.SetParent(root.transform, false);
+                card.GetComponent<Image>().color = backdrop.color.a > 0.8f
+                    ? backdrop.color
+                    : SmallWorldUiTheme.SurfaceRaised;
+                Transform[] content = root.transform.Cast<Transform>().Where(child => child != card.transform).ToArray();
+                foreach (Transform child in content) Undo.SetTransformParent(child, card.transform, "Move save content into card");
+            }
+            RectTransform cardRect = (RectTransform)card.transform;
+            cardRect.anchorMin = cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRect.pivot = new Vector2(0.5f, 0.5f);
+            cardRect.anchoredPosition = Vector2.zero;
+            cardRect.sizeDelta = new Vector2(900f, 620f);
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.offsetMin = Vector2.zero;
+            rootRect.offsetMax = Vector2.zero;
+            backdrop.color = new Color(0.01f, 0.015f, 0.025f, 0.78f);
+            backdrop.raycastTarget = true;
+            root.transform.SetAsLastSibling();
+
+            Font fallback = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            var metadata = new Text[3];
+            for (int i = 0; i < metadata.Length; i++)
+            {
+                Text slot = FindInScene<Text>(scene).FirstOrDefault(item => item.name == $"Slot {i + 1}");
+                if (slot != null) ConfigureSaveTextRect(slot, new Vector2(-390f, 130f - i * 110f), new Vector2(90f, 60f));
+                metadata[i] = EnsureSaveText(card.transform, $"Slot Metadata {i + 1}", "비어 있음", fallback,
+                    new Vector2(-225f, 130f - i * 110f), new Vector2(240f, 60f), TextAnchor.MiddleLeft, 16);
+            }
+            Text feedback = EnsureSaveText(card.transform, "Save Feedback", string.Empty, fallback,
+                new Vector2(0f, -180f), new Vector2(700f, 44f), TextAnchor.MiddleCenter, 18);
+            Stage10ManualSavePanel panel = root.GetComponent<Stage10ManualSavePanel>();
+            if (panel != null)
+            {
+                panel.ConfigureFeedback(feedback, metadata);
+                EditorUtility.SetDirty(panel);
+            }
+            EditorUtility.SetDirty(rootRect);
+            EditorUtility.SetDirty(cardRect);
+            EditorUtility.SetDirty(backdrop);
+        }
+
+        private static Text EnsureSaveText(Transform parent, string name, string value, Font font,
+            Vector2 position, Vector2 size, TextAnchor alignment, int fontSize)
+        {
+            Transform child = parent.Find(name);
+            GameObject item;
+            if (child == null)
+            {
+                item = new GameObject(name, typeof(RectTransform), typeof(Text));
+                Undo.RegisterCreatedObjectUndo(item, "Create save status text");
+                item.transform.SetParent(parent, false);
+            }
+            else item = child.gameObject;
+            Text text = item.GetComponent<Text>() ?? Undo.AddComponent<Text>(item);
+            text.font = font;
+            if (string.IsNullOrWhiteSpace(text.text)) text.text = value;
+            text.fontSize = fontSize;
+            text.color = SmallWorldUiTheme.SecondaryText;
+            text.alignment = alignment;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 14;
+            text.resizeTextMaxSize = fontSize;
+            text.raycastTarget = false;
+            ConfigureSaveTextRect(text, position, size);
+            EditorUtility.SetDirty(text);
+            return text;
+        }
+
+        private static void ConfigureSaveTextRect(Text text, Vector2 position, Vector2 size)
+        {
+            RectTransform rect = text.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            EditorUtility.SetDirty(rect);
         }
 
         private static void EnsureSafeArea(Canvas canvas)
@@ -241,6 +379,7 @@ namespace SmallWorld.Editor
             string name = item.name ?? string.Empty;
             if (ContainsAny(name, "HUD", "Objective", "Guidance")) return 0;
             if (ContainsAny(name, "Prompt", "Feedback")) return 1;
+            if (ContainsAny(name, "Manual Save", "Save Integration", "Save Panel")) return 3;
             return ModalLayerTokens.Any(token => name.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0) ? 2 : 0;
         }
 

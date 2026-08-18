@@ -138,17 +138,10 @@ namespace SmallWorld.Tests.EditMode.Flow
 
                 Assert.That(GameObject.Find($"Route Room {room} Entrance Sign")?.GetComponent<TextMesh>(), Is.Not.Null);
                 Assert.That(GameObject.Find($"Route Room {room} Objective Light")?.GetComponent<Light>(), Is.Not.Null);
-                Assert.That(GameObject.Find($"Route Room {room} Dialogue Highlight"), Is.Not.Null);
-                Assert.That(GameObject.Find($"Route Room {room} Puzzle Highlight"), Is.Not.Null);
-                Assert.That(GameObject.Find($"Route Room {room} Memory Highlight"), Is.Not.Null);
-
-                for (int segment = 1; segment <= 3; segment++)
-                for (int step = 1; step <= 3; step++)
-                {
-                    GameObject marker = GameObject.Find($"Route Room {room} Path {segment}-{step}");
-                    Assert.That(marker, Is.Not.Null);
-                    Assert.That(marker.GetComponent<Collider>().enabled, Is.False);
-                }
+                Assert.That(GameObject.Find($"Route Room {room} Dialogue Highlight"), Is.Null);
+                Assert.That(GameObject.Find($"Route Room {room} Puzzle Highlight"), Is.Null);
+                Assert.That(GameObject.Find($"Route Room {room} Memory Highlight"), Is.Null);
+                Assert.That(GameObject.Find($"Route Room {room} Path 1-1"), Is.Null);
             }
             Assert.That(floorColors.Count, Is.EqualTo(8));
         }

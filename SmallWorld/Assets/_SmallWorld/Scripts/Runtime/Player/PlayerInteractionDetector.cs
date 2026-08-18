@@ -149,7 +149,8 @@ namespace SmallWorld.Player
         private void OnDisable()
         {
             ClearDetection();
-            promptView?.SetSuppressed(true);
+            if (promptView != null && promptView.isActiveAndEnabled)
+                promptView.SetSuppressed(true);
         }
 
         private void ClearDetection()

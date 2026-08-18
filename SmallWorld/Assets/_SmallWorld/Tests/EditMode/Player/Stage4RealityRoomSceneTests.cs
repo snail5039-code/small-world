@@ -17,6 +17,7 @@ namespace SmallWorld.Player.Tests
             string[] requiredNames =
             {
                 "Stage 4 Reality Room", "Floor", "Ceiling", "Door", "Window Glass", "Bed",
+                "Door Frame Left", "Door Frame Right", "Door Frame Top",
                 "Computer Desk", "Monitor Screen", "Wardrobe", "Bookshelf", "Model House Table",
                 "Door Corridor", "Empty Frame", "Old Telephone", "Midnight Clock",
                 "Reality Room Audio Zone", "First Person Player"
@@ -69,6 +70,13 @@ namespace SmallWorld.Player.Tests
             InteractionPromptView[] views = Object.FindObjectsByType<InteractionPromptView>(FindObjectsSortMode.None);
             Assert.That(views, Has.Length.EqualTo(1));
             Assert.That(GameObject.Find("Door Hinge"), Is.Not.Null);
+            Assert.That(doorHinge.transform.position.y, Is.EqualTo(1.1f).Within(0.01f),
+                "The interaction origin belongs at the visible door centre, not on the floor.");
+            GameObject leaf = GameObject.Find("Door");
+            Assert.That(leaf.transform.parent, Is.EqualTo(doorHinge.transform));
+            Assert.That(GameObject.Find("Door Handle").transform.parent, Is.EqualTo(doorHinge.transform));
+            Assert.That(leaf.transform.localScale.x, Is.LessThan(0.85f),
+                "The leaf needs clearance inside the visible jambs.");
             Text[] labels = views[0].GetComponentsInChildren<Text>(true);
             Assert.That(labels, Has.Exactly(1).Matches<Text>(text => text.name == "Interaction Prompt"));
             Assert.That(labels, Has.Exactly(1).Matches<Text>(text => text.name == "Interaction Feedback"));

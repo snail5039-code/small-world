@@ -124,8 +124,13 @@ namespace SmallWorld.Editor
             Block("South Wall A", architecture, new Vector3(-3.7f, 1.45f, -5f), new Vector3(4.6f, 3.1f, 0.2f), "WarmWall");
             Block("South Wall B", architecture, new Vector3(2.75f, 1.45f, -5f), new Vector3(6.5f, 3.1f, 0.2f), "WarmWall");
             Block("Door Header", architecture, new Vector3(-1f, 2.65f, -5f), new Vector3(1f, 0.7f, 0.2f), "WarmWall");
-            Block("Door", architecture, new Vector3(-1f, 1.1f, -4.92f), new Vector3(0.9f, 2.2f, 0.12f), "Wood");
-            Sphere("Door Handle", architecture, new Vector3(-0.68f, 1.05f, -4.82f), new Vector3(0.08f, 0.08f, 0.08f), "Metal");
+            Block("Door Frame Left", architecture, new Vector3(-1.49f, 1.25f, -4.84f), new Vector3(0.12f, 2.5f, 0.18f), "DarkWood");
+            Block("Door Frame Right", architecture, new Vector3(-0.51f, 1.25f, -4.84f), new Vector3(0.12f, 2.5f, 0.18f), "DarkWood");
+            Block("Door Frame Top", architecture, new Vector3(-1f, 2.44f, -4.84f), new Vector3(1.1f, 0.12f, 0.18f), "DarkWood");
+            Transform doorHinge = Group("Door Hinge", architecture);
+            doorHinge.position = new Vector3(-1.43f, 1.1f, -4.92f);
+            Block("Door", doorHinge, new Vector3(-0.99f, 1.1f, -4.92f), new Vector3(0.82f, 2.18f, 0.1f), "Wood");
+            Sphere("Door Handle", doorHinge, new Vector3(-0.68f, 1.05f, -4.82f), new Vector3(0.08f, 0.08f, 0.08f), "Metal");
             Block("Window Glass", architecture, new Vector3(5.94f, 1.55f, 0f), new Vector3(0.05f, 1.9f, 3.6f), "Glass");
             Block("Window Frame Vertical", architecture, new Vector3(5.88f, 1.55f, 0f), new Vector3(0.08f, 1.95f, 0.08f), "Metal");
             Block("Window Frame Horizontal", architecture, new Vector3(5.88f, 1.55f, 0f), new Vector3(0.08f, 0.08f, 3.7f), "Metal");

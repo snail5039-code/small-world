@@ -76,9 +76,18 @@ namespace SmallWorld.Editor
             {
                 hingeObject = new GameObject("Door Hinge");
                 hingeObject.transform.SetParent(panel.transform.parent, true);
-                hingeObject.transform.position = new Vector3(-1.45f, 0f, -4.92f);
+                hingeObject.transform.position = new Vector3(-1.43f, 1.1f, -4.92f);
                 panel.transform.SetParent(hingeObject.transform, true);
             }
+            else
+            {
+                hingeObject.transform.position = new Vector3(-1.43f, 1.1f, -4.92f);
+            }
+            if (panel.transform.parent != hingeObject.transform)
+                panel.transform.SetParent(hingeObject.transform, true);
+            GameObject handle = GameObject.Find("Door Handle");
+            if (handle != null && handle.transform.parent != hingeObject.transform)
+                handle.transform.SetParent(hingeObject.transform, true);
 
             DoorInteractable door = hingeObject.AddComponent<DoorInteractable>();
             door.ConfigureDoor("문 열기", hingeObject.transform, -95f, 0.45f);

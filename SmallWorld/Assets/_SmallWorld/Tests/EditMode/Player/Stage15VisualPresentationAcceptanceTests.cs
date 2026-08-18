@@ -33,13 +33,13 @@ namespace SmallWorld.Player.Tests
             GameObject arrival = RequireChild(room.transform, "Arrival").gameObject;
             GameObject yuna = RequireObject("Character - MeetYuna");
             GameObject face = RequireObject("Yuna Face");
-            GameObject label = RequireObject("Prologue First Objective Label");
             Light keyLight = RequireObject("Prologue Yuna Key Light").GetComponent<Light>();
 
             Assert.That(yuna.GetComponent<CapsuleCollider>(), Is.Not.Null,
                 "The first objective must look like a character, not another cube.");
             Assert.That(face.GetComponent<Renderer>(), Is.Not.Null);
-            Assert.That(label.GetComponent<TextMesh>()?.text, Does.Contain("유나"));
+            Assert.That(GameObject.Find("Prologue First Objective Label"), Is.Null,
+                "Yuna guidance belongs in the compact HUD and proximity prompt.");
             Assert.That(keyLight, Is.Not.Null);
             Assert.That(keyLight.intensity, Is.GreaterThan(2.5f));
             Assert.That(Vector3.Distance(arrival.transform.position, yuna.transform.position), Is.LessThan(9f),
@@ -63,23 +63,17 @@ namespace SmallWorld.Player.Tests
         }
 
         [Test]
-        public void WorldLabelsStayInsideWallMarginsAndDoNotOverlapTheFirstObjective()
+        public void EnvironmentalNameplatesStayInsideWallMarginsAndRemainSmall()
         {
-            TextMesh objective = RequireObject("Prologue First Objective Label").GetComponent<TextMesh>();
             TextMesh entrance = RequireObject("Route Room 0 Entrance Sign").GetComponent<TextMesh>();
-            Assert.That(objective.text, Does.Contain("유나"));
-            Assert.That(Mathf.Abs(objective.transform.position.x), Is.LessThanOrEqualTo(11f));
-            Assert.That(objective.characterSize, Is.InRange(0.09f, 0.1f));
-            Assert.That(entrance.characterSize, Is.InRange(0.09f, 0.1f));
-            Assert.That(objective.GetComponent<Renderer>().bounds.Intersects(entrance.GetComponent<Renderer>().bounds),
-                Is.False, "The Yuna objective and room description overlap in the starting view.");
+            Assert.That(entrance.characterSize, Is.LessThanOrEqualTo(0.04f));
 
             for (int room = 0; room < 8; room++)
             {
                 TextMesh sign = RequireObject($"Route Room {room} Entrance Sign").GetComponent<TextMesh>();
                 Assert.That(Mathf.Abs(sign.transform.position.x), Is.LessThanOrEqualTo(11f));
-                Assert.That(sign.characterSize, Is.InRange(0.09f, 0.1f),
-                    sign.name + " can clip through the room's side walls.");
+                Assert.That(sign.characterSize, Is.LessThanOrEqualTo(0.04f),
+                    sign.name + " dominates the room instead of reading as a nameplate.");
             }
         }
 
@@ -270,12 +264,11 @@ namespace SmallWorld.Player.Tests
         {
             GameObject room = RequireObject("00 Prologue - The White Room");
             GameObject gate = RequireObject("Route Room 0 Reality Return Gate");
-            GameObject sign = RequireObject("Route Room 0 Reality Return Sign");
             Type returnType = RequireType("SmallWorld.Flow.StoryRouteRealityReturnInteractable");
 
             Assert.That(gate.transform.parent, Is.EqualTo(room.transform));
             Assert.That(gate.GetComponent(returnType), Is.Not.Null);
-            Assert.That(sign.GetComponent<TextMesh>()?.text, Does.Contain("현실방"));
+            Assert.That(GameObject.Find("Route Room 0 Reality Return Sign"), Is.Null);
             int count = Resources.FindObjectsOfTypeAll(returnType).Cast<Component>()
                 .Count(component => component != null && component.gameObject.scene.IsValid());
             Assert.That(count, Is.EqualTo(1), "Duplicate return gates can start overlapping scene transitions.");

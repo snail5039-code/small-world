@@ -156,18 +156,10 @@ namespace SmallWorld.Player.Tests
 
                 Assert.That(GameObject.Find($"Route Room {i} Entrance Sign").GetComponent<TextMesh>(), Is.Not.Null);
                 Assert.That(GameObject.Find($"Route Room {i} Objective Light").GetComponent<Light>(), Is.Not.Null);
-                Assert.That(GameObject.Find($"Route Room {i} Dialogue Highlight"), Is.Not.Null);
-                Assert.That(GameObject.Find($"Route Room {i} Puzzle Highlight"), Is.Not.Null);
-                Assert.That(GameObject.Find($"Route Room {i} Memory Highlight"), Is.Not.Null);
-
-                for (int segment = 1; segment <= 3; segment++)
-                for (int step = 1; step <= 3; step++)
-                {
-                    GameObject marker = GameObject.Find($"Route Room {i} Path {segment}-{step}");
-                    Assert.That(marker, Is.Not.Null);
-                    Assert.That(marker.GetComponent<Collider>().enabled, Is.False,
-                        marker.name + " must never obstruct the player route.");
-                }
+                Assert.That(GameObject.Find($"Route Room {i} Dialogue Highlight"), Is.Null);
+                Assert.That(GameObject.Find($"Route Room {i} Puzzle Highlight"), Is.Null);
+                Assert.That(GameObject.Find($"Route Room {i} Memory Highlight"), Is.Null);
+                Assert.That(GameObject.Find($"Route Room {i} Path 1-1"), Is.Null);
             }
             Assert.That(floorColors.Count, Is.EqualTo(8));
         }
@@ -245,14 +237,10 @@ namespace SmallWorld.Player.Tests
                     Assert.That(GameObject.Find(environmentObject), Is.Not.Null,
                         $"Room {room} lacks its contextual environment object {environmentObject}.");
 
-                GameObject path = GameObject.Find($"Route Room {room} Path 1-1");
-                Assert.That(path.transform.localScale.x, Is.LessThanOrEqualTo(0.2f));
-                Assert.That(path.transform.localScale.z, Is.LessThanOrEqualTo(0.35f),
-                    "Wayfinding should read as a floor inlay, not a debug arrow.");
-
-                GameObject highlightEdge = GameObject.Find($"Route Room {room} Dialogue Highlight Edge 1");
-                Assert.That(highlightEdge.transform.localScale.x, Is.LessThanOrEqualTo(0.04f));
-                Assert.That(highlightEdge.transform.localScale.y, Is.LessThanOrEqualTo(1.35f));
+                Assert.That(GameObject.Find($"Route Room {room} Path 1-1"), Is.Null,
+                    "Floor arrows expose debug routing instead of environmental navigation.");
+                Assert.That(GameObject.Find($"Route Room {room} Dialogue Highlight"), Is.Null,
+                    "Giant glowing frames must not replace natural light and proximity prompts.");
             }
 
             GameObject[] sceneObjects = Resources.FindObjectsOfTypeAll<GameObject>();
@@ -265,7 +253,6 @@ namespace SmallWorld.Player.Tests
         {
             GameObject yuna = GameObject.Find("Character - MeetYuna");
             GameObject yunaFace = GameObject.Find("Yuna Face");
-            GameObject yunaLabel = GameObject.Find("Prologue First Objective Label");
             GameObject yunaLight = GameObject.Find("Prologue Yuna Key Light");
             GameObject arrival = GameObject.Find("00 Prologue - The White Room").transform.Find("Arrival").gameObject;
 
@@ -276,10 +263,8 @@ namespace SmallWorld.Player.Tests
             Assert.That(GameObject.Find("Yuna Right Arm"), Is.Not.Null);
             Assert.That(GameObject.Find("Yuna Left Eye"), Is.Not.Null);
             Assert.That(GameObject.Find("Yuna Right Eye"), Is.Not.Null);
-            Assert.That(yunaLabel.GetComponent<TextMesh>(), Is.Not.Null);
-            Assert.That(yunaLabel.GetComponent<TextMesh>().text, Does.Contain("유나"));
-            Assert.That(yunaLabel.transform.rotation, Is.EqualTo(Quaternion.identity),
-                "World text must show its readable front face to a player looking into the room.");
+            Assert.That(GameObject.Find("Prologue First Objective Label"), Is.Null,
+                "The objective belongs in the HUD and proximity prompt, not in giant world text.");
             Assert.That(yunaLight.GetComponent<Light>().intensity, Is.GreaterThan(2.5f));
             Assert.That(Vector3.Distance(arrival.transform.position, yuna.transform.position), Is.LessThan(9f));
             Assert.That(Vector3.Distance(arrival.transform.position, yuna.transform.position), Is.GreaterThan(7f),
@@ -288,10 +273,13 @@ namespace SmallWorld.Player.Tests
             Assert.That(yuna.transform.localScale.y, Is.LessThan(1.4f));
             Assert.That(Mathf.Abs(yuna.transform.position.x - arrival.transform.position.x), Is.GreaterThan(4f),
                 "The first objective must remain beside, not directly across, the central sight line.");
-            Assert.That(yuna.transform.position.x, Is.GreaterThan(4f),
-                "Yuna stays on the right side so the upper-left objective HUD never covers her label.");
-            Assert.That(yunaLabel.transform.position.y - yuna.transform.position.y, Is.GreaterThan(2.8f),
-                "The label must stay above the objective frame and character silhouette.");
+            Assert.That(yuna.transform.position.x, Is.GreaterThan(3.5f),
+                "Yuna stays on the right side so the upper-left objective HUD never covers her silhouette.");
+            Assert.That(yuna.transform.localScale.y, Is.InRange(0.75f, 1f),
+                "Yuna needs a restrained human silhouette rather than an oversized capsule.");
+            Assert.That(GameObject.Find("Prologue Interior Wall Left"), Is.Not.Null);
+            Assert.That(GameObject.Find("Prologue Interior Wall Right"), Is.Not.Null);
+            Assert.That(GameObject.Find("Prologue Interior Door Lintel"), Is.Not.Null);
 
             TextMesh prologueSign = GameObject.Find("Route Room 0 Entrance Sign").GetComponent<TextMesh>();
             Assert.That(prologueSign.transform.position.x, Is.Zero.Within(0.01f));
@@ -304,8 +292,9 @@ namespace SmallWorld.Player.Tests
             {
                 Assert.That(worldText.transform.rotation, Is.EqualTo(Quaternion.identity),
                     worldText.name + " is mirrored or tilted away from the route arrival.");
-                Assert.That(worldText.fontSize, Is.GreaterThanOrEqualTo(64));
-                Assert.That(worldText.characterSize, Is.GreaterThanOrEqualTo(0.09f));
+                Assert.That(worldText.fontSize, Is.EqualTo(48));
+                Assert.That(worldText.characterSize, Is.LessThanOrEqualTo(0.04f),
+                    worldText.name + " is too large for an environmental nameplate.");
                 GameObject plate = GameObject.Find(worldText.name + " Backplate");
                 Assert.That(plate, Is.Not.Null, worldText.name + " needs a dark contrast backplate.");
                 Assert.That(plate.GetComponent<Collider>().enabled, Is.False,
@@ -340,10 +329,7 @@ namespace SmallWorld.Player.Tests
             Material yunaMaterial = yuna.GetComponent<Renderer>().sharedMaterial;
             Assert.That(yunaMaterial.IsKeywordEnabled("_EMISSION"), Is.True);
             Assert.That(yunaMaterial.GetColor("_EmissionColor").maxColorComponent, Is.GreaterThan(0.3f));
-            Renderer firstPath = GameObject.Find("Route Room 0 Path 1-1").GetComponent<Renderer>();
-            Assert.That(firstPath.sharedMaterial.IsKeywordEnabled("_EMISSION"), Is.True);
-            Assert.That(firstPath.sharedMaterial.GetColor("_EmissionColor").maxColorComponent,
-                Is.GreaterThan(0.25f), "The first route markers need to remain visible above the floor value.");
+            Assert.That(GameObject.Find("Route Room 0 Path 1-1"), Is.Null);
 
             string[] representativeProps =
             {
@@ -370,7 +356,7 @@ namespace SmallWorld.Player.Tests
         [Test]
         public void StoryRoute_PrologueArrivalShowsFirstObjectiveAndExitAsDifferentSignals()
         {
-            GameObject objective = GameObject.Find("Route Room 0 Dialogue Highlight");
+            GameObject objective = GameObject.Find("Character - MeetYuna");
             GameObject exit = GameObject.Find("Route Room 0 Next Room Gate");
             GameObject arrival = GameObject.Find("00 Prologue - The White Room").transform.Find("Arrival").gameObject;
 
@@ -392,8 +378,8 @@ namespace SmallWorld.Player.Tests
             Assert.That(serializedReturn.FindProperty("route").objectReferenceValue, Is.Not.Null);
             Assert.That(serializedReturn.FindProperty("prompt").stringValue, Does.Contain("현실방으로 돌아가기"));
             Assert.That(realityReturn.transform.position.x, Is.GreaterThan(8f));
-            Assert.That(GameObject.Find("Route Room 0 Reality Return Sign").GetComponent<TextMesh>().text,
-                Does.Contain("현실방으로 돌아가기"));
+            Assert.That(GameObject.Find("Route Room 0 Reality Return Sign"), Is.Null,
+                "The return instruction is provided by the gate proximity prompt, not giant world text.");
 
             int previousCount = 0;
             int nextCount = 0;
