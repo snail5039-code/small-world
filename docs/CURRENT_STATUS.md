@@ -4,7 +4,7 @@
 > 읽는 경우: 모든 작업 시작, 인수인계, 단계 완료 판단 시.
 > 관련 문서: [`INDEX.md`](INDEX.md), [`roadmap/stage-15.md`](roadmap/stage-15.md), [`management/STAGE14_HANDOFF.md`](management/STAGE14_HANDOFF.md), [`management/WORKFLOW.md`](management/WORKFLOW.md)
 
-- 기능 기준 커밋: `2380f75` (`fix(stage15): restore usable room progression`)
+- 기능 기준 커밋: `581236d` (`fix(stage15): make the prologue playable`)
 - 14단계 인수인계: [`management/STAGE14_HANDOFF.md`](management/STAGE14_HANDOFF.md)
 - 완료 단계: 1~14
 - 현재 구현 단계: **15단계 — 전체 스토리 구현**
